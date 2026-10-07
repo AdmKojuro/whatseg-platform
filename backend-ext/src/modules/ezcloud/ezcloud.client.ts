@@ -1,73 +1,102 @@
 /**
- * EZCloud (Uniview) Open Platform API client.
- * Authenticates with appId + secretKey (from EZCloud portal → My App).
- * Base URL: https://os.ezcloud.uniview.com
- * Docs: /openapi/user/app/token/get  (code 200 = success)
+ * EZCloud (Uniview) REST API client.
+ *
+ * Flujo de autenticación:
+ *   1. Resolver servidor regional:  POST global.ezcloud.uniview.com/openapi/user/account/server/getbyloginname
+ *   2. Login con MD5(password):      POST <server>/openapi/user/account/token/get
+ *   3. Usar accessToken en cabecera Authorization para todos los endpoints.
+ *
+ * No requiere appKey/appSecret — funciona con el correo y contraseña de la app EZView.
  */
+
+import crypto from 'crypto'
 
 interface TokenCache {
   accessToken: string
-  expiresAt: number // epoch ms
+  expiresAt: number   // epoch ms
+  server: string      // servidor regional resuelto
 }
 
-interface EzDevice {
-  deviceSerial: string
-  deviceName: string
-  status: number // 1=online, 0=offline
-  channelNum: number
+export interface EzDevice {
+  deviceSerial:   string
+  deviceName:     string
+  deviceModel:    string
+  deviceType:     number  // 0=IPC, 1=NVR, 7=DoorBell
+  deviceTypeName: string
+  status:         number  // 1=online, 0=offline
+  channelNum?:    number
 }
 
-interface TokenResponse {
-  code: number | string
+interface LoginResponse {
+  code:    number
   message: string
   data?: {
-    accessToken: string
-    expireTime?: number // UTC timestamp in seconds
+    accessToken:    string
+    expireTime:     number  // epoch seconds
+    serverAddress?: string
+    userName?:      string
   }
 }
 
+interface ServerResponse {
+  code:    number
+  message: string
+  data?: { serverAddress: string }
+}
+
 interface DeviceListResponse {
-  code: number | string
+  code:    number
   message: string
   data?: {
-    total: number
+    total:       number
     deviceList?: EzDevice[]
-    list?: EzDevice[]
   }
 }
 
 interface LiveUrlResponse {
-  code: number | string
+  code:    number
   message: string
-  data?: { url?: string; p2pUrl?: string; hls?: string }
+  data?: { url?: string; URL?: string; p2pUrl?: string; rtspUrl?: string; flvUrl?: string }
 }
 
 interface SnapshotResponse {
-  code: number | string
+  code:    number
   message: string
   data?: { picUrl?: string; imageBase64?: string }
 }
+
+const GLOBAL_SERVER = 'global.ezcloud.uniview.com'
+const USER_AGENT    = 'UNVDesktop/1.0'
 
 export class EzcloudClient {
   private tokenCache: TokenCache | null = null
 
   constructor(
-    /** Application ID — desde el portal EZCloud → Mi App */
-    private readonly appId: string,
-    /** Secret Key — desde el portal EZCloud → Mi App → ver secretKey */
-    private readonly secretKey: string,
-    private readonly baseUrl: string = 'https://os.ezcloud.uniview.com'
+    /** Correo de la cuenta EZCloud (app EZView) */
+    private readonly username: string,
+    /** Contraseña de la cuenta EZCloud */
+    private readonly password: string,
+    /** No se usa para la resolución del servidor; se mantiene por compatibilidad */
+    private readonly _baseUrl: string = `https://${GLOBAL_SERVER}`
   ) {}
 
   // ─── helpers ────────────────────────────────────────────────────────────────
 
+  private md5(text: string): string {
+    return crypto.createHash('md5').update(text, 'utf8').digest('hex')
+  }
+
   private async post<T>(
+    server: string,
     path: string,
     body: Record<string, unknown>,
     accessToken?: string
   ): Promise<T> {
-    const url = `${this.baseUrl}${path}`
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const url = `https://${server}${path}`
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'User-Agent':   USER_AGENT,
+    }
     if (accessToken) headers['Authorization'] = accessToken
 
     const res = await fetch(url, {
@@ -77,92 +106,123 @@ export class EzcloudClient {
     })
     if (!res.ok) throw new Error(`EZCloud HTTP ${res.status} at ${path}`)
 
-    const json = (await res.json()) as T & { code?: number | string; message?: string; msg?: string }
+    const json = (await res.json()) as T & { code?: number; message?: string }
     const code = (json as any).code
-    // Success codes: 200 (documented) or 0 (some endpoints)
-    if (code !== undefined && code !== 200 && code !== '200' && code !== 0 && code !== '0') {
-      const msg = (json as any).message || (json as any).msg || ''
-      throw new Error(`EZCloud API error ${code}: ${msg}`)
+    if (code !== undefined && code !== 200 && code !== 0) {
+      throw new Error(`EZCloud API error ${code}: ${(json as any).message || ''}`)
     }
     return json
   }
 
-  // ─── token ──────────────────────────────────────────────────────────────────
+  // ─── autenticación ──────────────────────────────────────────────────────────
+
+  private async resolveServer(): Promise<string> {
+    const resp = await this.post<ServerResponse>(
+      GLOBAL_SERVER,
+      '/openapi/user/account/server/getbyloginname',
+      { loginName: this.username }
+    )
+    return resp.data?.serverAddress || GLOBAL_SERVER
+  }
 
   async getToken(): Promise<string> {
     if (this.tokenCache && Date.now() < this.tokenCache.expiresAt - 60_000) {
       return this.tokenCache.accessToken
     }
-    const resp = await this.post<TokenResponse>('/openapi/user/app/token/get', {
-      appId:     this.appId,
-      secretKey: this.secretKey,
-    })
+
+    const server   = await this.resolveServer()
+    const md5pass  = this.md5(this.password)
+
+    const resp = await this.post<LoginResponse>(
+      server,
+      '/openapi/user/account/token/get',
+      { username: this.username, password: md5pass }
+    )
+
     const token = resp.data?.accessToken
-    if (!token) throw new Error('EZCloud: no accessToken in response')
+    if (!token) throw new Error('EZCloud: no accessToken en la respuesta')
 
-    // expireTime is a UTC timestamp in seconds
+    // expireTime es epoch en segundos
     const expireTime = resp.data?.expireTime ?? 7200
-    const expiresAt = expireTime < 1e10
-      ? Date.now() + expireTime * 1000   // relative seconds
-      : expireTime * 1000                // absolute epoch seconds
+    const expiresAt  = expireTime < 1e10
+      ? Date.now() + expireTime * 1000
+      : expireTime * 1000
 
-    this.tokenCache = { accessToken: token, expiresAt }
+    this.tokenCache = {
+      accessToken: token,
+      expiresAt,
+      server: resp.data?.serverAddress || server,
+    }
     return token
   }
 
-  // ─── device list ────────────────────────────────────────────────────────────
+  private async getServer(): Promise<string> {
+    await this.getToken()  // asegura que tokenCache esté poblado
+    return this.tokenCache!.server
+  }
+
+  // ─── dispositivos ────────────────────────────────────────────────────────────
 
   async listDevices(): Promise<EzDevice[]> {
-    const accessToken = await this.getToken()
+    const [accessToken, server] = await Promise.all([this.getToken(), this.getServer()])
     const devices: EzDevice[] = []
-    let pageNo = 1
-    const pageSize = 50
+    let pageNum  = 1
+    const pageSize = 100
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const resp = await this.post<DeviceListResponse>(
+        server,
         '/openapi/device/list',
-        { pageNo, pageSize },
+        { pageNum, pageSize },
         accessToken
       )
-      const list = resp.data?.deviceList ?? resp.data?.list ?? []
+      const list = resp.data?.deviceList ?? []
       devices.push(...list)
       if (list.length < pageSize) break
-      pageNo++
+      pageNum++
     }
     return devices
   }
 
-  // ─── live URL ───────────────────────────────────────────────────────────────
+  // ─── stream en vivo ──────────────────────────────────────────────────────────
 
   async getLiveUrl(serial: string, channelNo: number | string = 0): Promise<string> {
-    const accessToken = await this.getToken()
-    const resp = await this.post<LiveUrlResponse>(
-      '/openapi/device/media/url/get',
-      {
-        deviceSerial: serial,
-        channelNo:    Number(channelNo),
-        quality:      0,
-        protocol:     0,
-      },
-      accessToken
-    )
-    const url = resp.data?.url ?? resp.data?.p2pUrl ?? resp.data?.hls
-    if (!url) throw new Error(`EZCloud: no live URL for ${serial}`)
-    return url
+    const [accessToken, server] = await Promise.all([this.getToken(), this.getServer()])
+
+    // Probar protocol 0 (P2P) y 1 (relay) hasta obtener URL
+    for (const protocol of [0, 1, 2]) {
+      const resp = await this.post<LiveUrlResponse>(
+        server,
+        '/openapi/device/media/url/get',
+        {
+          deviceSerial: serial,
+          channelNo:    Number(channelNo),
+          quality:      0,
+          protocol,
+        },
+        accessToken
+      ).catch(() => null)
+
+      const d   = resp?.data
+      const url = d?.URL || d?.url || d?.p2pUrl || d?.rtspUrl || d?.flvUrl
+      if (url) return url
+    }
+    throw new Error(`EZCloud: no se encontró URL de stream para ${serial}`)
   }
 
   // ─── snapshot ───────────────────────────────────────────────────────────────
 
   async captureSnapshot(serial: string, channelNo: number | string = 0): Promise<string> {
-    const accessToken = await this.getToken()
+    const [accessToken, server] = await Promise.all([this.getToken(), this.getServer()])
     const resp = await this.post<SnapshotResponse>(
+      server,
       '/openapi/device/capture',
       { deviceSerial: serial, channelNo: Number(channelNo) },
       accessToken
     )
     const url = resp.data?.picUrl
-    if (!url) throw new Error(`EZCloud: no snapshot URL for ${serial}`)
+    if (!url) throw new Error(`EZCloud: no snapshot URL para ${serial}`)
     return url
   }
 }
