@@ -262,6 +262,7 @@ export default function ComunidadDetailPage() {
       await dispositivoService.asignar(dispositivo.id, {
         comunidad_id: id,
         nombre: dispositivo.nombre || dispositivo.id_interno || dispositivo.id,
+        tipo: dispositivo.tipo || 'CAMARA',
       })
       setShowAsignarDispositivo(false)
       showSuccess('Dispositivo asignado a la comunidad')

@@ -193,6 +193,7 @@ export default function DispositivoListPage() {
       await dispositivoService.asignar(selected.id, {
         comunidad_id: asignarComunidadId,
         nombre: selected.nombre || selected.id_interno || selected.id,
+        tipo: selected.tipo || 'CAMARA',
       })
       setShowAsignar(false)
       setAsignarComunidadId('')
