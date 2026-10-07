@@ -154,24 +154,28 @@ async function upsertDispositivoEzcloud(
         online            = ${online},
         ezcloud_serial    = ${dev.deviceSerial},
         ezcloud_channel   = '1',
-        cuenta_ezcloud_id = ${cuentaId}::uuid
+        cuenta_ezcloud_id = ${cuentaId}::uuid,
+        updated_at        = now()
       WHERE id_interno = ${idInterno}
     `
     return 'updated'
   } else {
     await prisma.$executeRaw`
       INSERT INTO dispositivos (
-        nombre, tipo, id_interno, online,
-        ezcloud_serial, ezcloud_channel, cuenta_ezcloud_id
+        id, nombre, tipo, id_interno, online,
+        ezcloud_serial, ezcloud_channel, cuenta_ezcloud_id,
+        updated_at
       )
       VALUES (
+        gen_random_uuid()::text,
         ${dev.deviceName},
         'CAMARA',
         ${idInterno},
         ${online},
         ${dev.deviceSerial},
         '1',
-        ${cuentaId}::uuid
+        ${cuentaId}::uuid,
+        now()
       )
     `
     return 'created'
