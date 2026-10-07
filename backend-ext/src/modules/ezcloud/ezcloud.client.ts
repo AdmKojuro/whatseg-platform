@@ -1,6 +1,7 @@
 /**
  * EZCloud (Uniview) Open Platform API client.
- * Requires appKey + appSecret from https://global-open.uniview.com (Unisee portal).
+ * Authenticates with the regular EZCloud account (usuario + contraseña de la app EZView).
+ * Base URL: https://global.ezcloud.uniview.com
  */
 
 interface TokenCache {
@@ -50,8 +51,10 @@ export class EzcloudClient {
   private tokenCache: TokenCache | null = null
 
   constructor(
-    private readonly appKey: string,
-    private readonly appSecret: string,
+    /** Correo o usuario de la cuenta EZCloud */
+    private readonly username: string,
+    /** Contraseña de la cuenta EZCloud */
+    private readonly password: string,
     private readonly baseUrl: string = 'https://global.ezcloud.uniview.com'
   ) {}
 
@@ -78,9 +81,10 @@ export class EzcloudClient {
     if (this.tokenCache && Date.now() < this.tokenCache.expiresAt - 60_000) {
       return this.tokenCache.accessToken
     }
+    // EZCloud Open Platform accepts loginAccount + loginPassword for end-user auth
     const resp = await this.post<TokenResponse>('/api/lapp/token/get', {
-      appKey: this.appKey,
-      appSecret: this.appSecret,
+      loginAccount:  this.username,
+      loginPassword: this.password,
     })
     const token = resp.data?.accessToken
     if (!token) throw new Error('EZCloud: no accessToken in response')

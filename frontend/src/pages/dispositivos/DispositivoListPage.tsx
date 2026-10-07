@@ -698,32 +698,35 @@ export default function DispositivoListPage() {
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
                   {ezForm.id ? 'Editar cuenta' : 'Nueva cuenta'}
                 </p>
+                <p className="text-xs text-gray-500">
+                  Usa las mismas credenciales de tu cuenta EZCloud (app EZView).
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">Nombre</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Nombre de la cuenta</label>
                     <input type="text" required value={ezForm.nombre}
                       onChange={e => setEzForm(f => ({ ...f, nombre: e.target.value }))}
                       placeholder="Mi cuenta UNV"
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">Base URL</label>
-                    <input type="text" value={ezForm.base_url}
-                      onChange={e => setEzForm(f => ({ ...f, base_url: e.target.value }))}
-                      className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">App Key</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Usuario (correo EZCloud)</label>
                     <input type="text" required value={ezForm.app_key}
                       onChange={e => setEzForm(f => ({ ...f, app_key: e.target.value }))}
-                      placeholder="Desde global-open.uniview.com"
+                      placeholder="correo@ejemplo.com"
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">App Secret</label>
-                    <input type="text" required={!ezForm.id} value={ezForm.app_secret}
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Contraseña EZCloud</label>
+                    <input type="password" required={!ezForm.id} value={ezForm.app_secret}
                       onChange={e => setEzForm(f => ({ ...f, app_secret: e.target.value }))}
-                      placeholder={ezForm.id ? '(sin cambios)' : 'App Secret'}
+                      placeholder={ezForm.id ? '(sin cambios)' : 'Contraseña'}
+                      className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Región (URL base)</label>
+                    <input type="text" value={ezForm.base_url}
+                      onChange={e => setEzForm(f => ({ ...f, base_url: e.target.value }))}
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                 </div>
@@ -748,8 +751,8 @@ export default function DispositivoListPage() {
                 <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div>
               ) : cuentasEz.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No hay cuentas configuradas. Necesitas App Key + App Secret del portal{' '}
-                  <span className="text-violet-400">global-open.uniview.com</span>.
+                  No hay cuentas configuradas. Agrega tu usuario y contraseña de la{' '}
+                  <span className="text-violet-400">app EZView (EZCloud)</span>.
                 </p>
               ) : (
                 <div className="space-y-2">
