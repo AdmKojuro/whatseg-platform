@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg — Iniciar sesion</title>
+  <link rel="icon" type="image/webp" href="/whatseg_favicon.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;display:flex;background:#0a0f1a}
+
+    /* Left panel */
+    .left{display:none;width:55%;position:relative;overflow:hidden;background:linear-gradient(135deg,#071a0e 0%,#0d2818 40%,#0a1628 100%)}
+    .left::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(22,163,74,.08) 0%,transparent 70%)}
+    .left-content{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    @media(min-width:1024px){.left{display:flex;align-items:center;justify-content:center}}
+
+    /* Logo area */
+    .logo-area{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:36px}
+    .logo-area img{height:56px;width:auto;filter:drop-shadow(0 0 24px rgba(34,197,94,.3))}
+    .logo-area .logo-text{font-size:13px;color:#64748b;font-weight:400;letter-spacing:.5px;text-align:left}
+
+    /* Carousel */
+    .carousel{position:relative;width:420px;max-width:90%;height:420px}
+    .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateX(60px);transition:all .6s cubic-bezier(.4,0,.2,1);pointer-events:none}
+    .slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+    .slide.exit{opacity:0;transform:translateX(-60px)}
+
+    /* SVG illustration container */
+    .illustration{width:340px;height:280px;margin:0 auto 24px auto;position:relative}
+    .illustration svg{width:100%;height:100%;display:block}
+
+    /* Slide text */
+    .slide-title{font-size:24px;font-weight:700;color:#fff;text-align:center;margin-bottom:10px;letter-spacing:-.3px;width:100%}
+    .slide-desc{font-size:14px;color:#94a3b8;text-align:center;max-width:380px;line-height:1.5;margin:0 auto}
+
+    /* Carousel dots */
+    .dots{display:flex;gap:8px;justify-content:center;margin-top:28px}
+    .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:all .3s;border:none;padding:0}
+    .dot.active{background:#22c55e;width:24px;border-radius:4px;box-shadow:0 0 12px rgba(34,197,94,.4)}
+
+    /* Animated particles background */
+    .particles{position:absolute;inset:0;overflow:hidden;z-index:0}
+    .particle{position:absolute;width:2px;height:2px;background:rgba(34,197,94,.3);border-radius:50%;animation:float linear infinite}
+    @keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-20px) scale(1);opacity:0}}
+
+    /* Grid lines */
+    .grid-bg{position:absolute;inset:0;z-index:0;opacity:.04;background-image:linear-gradient(rgba(34,197,94,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.5) 1px,transparent 1px);background-size:40px 40px}
+
+    /* Footer */
+    .left-footer{position:absolute;bottom:24px;left:0;right:0;display:flex;align-items:center;gap:8px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);z-index:1;justify-content:center}
+    .left-footer span{font-size:10px;color:#475569;letter-spacing:.5px;text-transform:uppercase}
+
+    /* Right panel */
+    .right{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;background:#fff}
+    .form-wrap{width:100%;max-width:380px}
+    .mobile-logo{display:flex;justify-content:center;margin-bottom:32px}
+    .mobile-logo img{height:48px;width:auto}
+    @media(min-width:1024px){.mobile-logo{display:none}}
+
+    .form-header{margin-bottom:32px}
+    .form-header .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(22,163,74,.08);margin-bottom:16px}
+    .form-header .badge svg{color:#16a34a;width:16px;height:16px}
+    .form-header .badge span{font-size:12px;font-weight:600;color:#16a34a;text-transform:uppercase;letter-spacing:.5px}
+    .form-header h2{font-size:26px;font-weight:700;color:#0f172a;margin-bottom:4px}
+    .form-header p{font-size:14px;color:#94a3b8}
+
+    .error{background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;display:none;border:1px solid #fecaca}
+    .field{margin-bottom:20px}
+    .field label{display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px}
+    .field input{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;color:#0f172a;background:#f8fafc;outline:none;transition:all .2s}
+    .field input:focus{border-color:#16a34a;background:#fff;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+    .field input::placeholder{color:#94a3b8}
+    .btn-submit{width:100%;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(22,163,74,.3)}
+    .btn-submit:hover{box-shadow:0 6px 20px rgba(22,163,74,.4);transform:translateY(-1px)}
+    .btn-submit:active{transform:translateY(0)}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-3px;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .form-footer{margin-top:32px;text-align:center}
+    .form-footer a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#94a3b8;transition:color .2s}
+    .form-footer a:hover{color:#64748b}
+    .form-footer span{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+    .form-footer img{height:20px;width:auto;opacity:.7;transition:opacity .2s}
+    .form-footer a:hover img{opacity:1}
+
+    .divider{display:flex;align-items:center;gap:12px;margin:24px 0}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#e2e8f0}
+    .divider span{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+  </style>
+</head>
+<body>
+  <div class="left">
+    <div class="particles" id="particles"></div>
+    <div class="grid-bg"></div>
+
+    <div class="left-content">
+      <!-- Logo -->
+      <div class="logo-area">
+        <img src="/edison.webp" alt="WhatsEg">
+        <div class="logo-text">Plataforma de<br>Seguridad Inteligente</div>
+      </div>
+
+      <!-- Carousel -->
+      <div class="carousel" id="carousel">
+
+        <!-- Slide 1: Activacion de Alarmas -->
+        <div class="slide active" data-index="0">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Building silhouette -->
+              <rect x="80" y="120" width="180" height="130" rx="8" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+              <rect x="105" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <rect x="157" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <rect x="209" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <rect x="105" y="190" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <rect x="209" y="190" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <!-- Door -->
+              <rect x="155" y="202" width="32" height="48" rx="3" fill="#164e28" stroke="#22c55e" stroke-width="1.5"/>
+              <!-- Alarm bell -->
+              <g transform="translate(170,60)">
+                <path d="M0-24c-15 0-24 11-24 28h48c0-17-9-28-24-28z" fill="#22c55e" opacity=".9"/>
+                <rect x="-28" y="4" width="56" height="7" rx="3.5" fill="#22c55e"/>
+                <circle cx="0" cy="18" r="5.5" fill="#22c55e"/>
+                <rect x="-3" y="-32" width="6" height="11" rx="3" fill="#22c55e"/>
+              </g>
+              <!-- Pulse rings -->
+              <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="2" fill="none" opacity=".6">
+                <animate attributeName="r" values="32;68" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".6;0" dur="1.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="1.5" fill="none" opacity=".4">
+                <animate attributeName="r" values="32;80" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".4;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="1" fill="none" opacity=".3">
+                <animate attributeName="r" values="32;95" dur="1.5s" begin="1s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".3;0" dur="1.5s" begin="1s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Status indicator -->
+              <circle cx="275" cy="40" r="6" fill="#ef4444">
+                <animate attributeName="opacity" values="1;.3;1" dur=".8s" repeatCount="indefinite"/>
+              </circle>
+              <text x="275" y="60" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600" font-family="IBM Plex Sans">ALERTA</text>
+              <!-- WhatsEg notification -->
+              <g transform="translate(20,35)">
+                <rect width="65" height="28" rx="6" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="15" cy="14" r="5" fill="#22c55e" opacity=".6"/>
+                <rect x="26" y="9" width="30" height="3" rx="1.5" fill="#22c55e" opacity=".4"/>
+                <rect x="26" y="15" width="20" height="3" rx="1.5" fill="#22c55e" opacity=".3"/>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Activaci&oacute;n de Alarmas</div>
+          <div class="slide-desc">Activa alarmas de p&aacute;nico en tiempo real con notificaci&oacute;n instant&aacute;nea a la central de monitoreo y cuadrantes</div>
+        </div>
+
+        <!-- Slide 2: Control de Puertas -->
+        <div class="slide" data-index="1">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Gate pillars -->
+              <rect x="30" y="50" width="22" height="190" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+              <rect x="288" y="50" width="22" height="190" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+              <!-- Top bar -->
+              <rect x="30" y="42" width="280" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+              <!-- Left gate -->
+              <g>
+                <rect x="52" y="58" width="115" height="174" fill="#164e28" stroke="#22c55e" stroke-width="1" opacity=".5">
+                  <animate attributeName="width" values="115;12;12;115" dur="4s" repeatCount="indefinite"/>
+                </rect>
+                <line x1="75" y1="58" x2="75" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="75;54;54;75" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="75;54;54;75" dur="4s" repeatCount="indefinite"/>
+                </line>
+                <line x1="105" y1="58" x2="105" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="105;56;56;105" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="105;56;56;105" dur="4s" repeatCount="indefinite"/>
+                </line>
+                <line x1="135" y1="58" x2="135" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="135;58;58;135" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="135;58;58;135" dur="4s" repeatCount="indefinite"/>
+                </line>
+              </g>
+              <!-- Right gate -->
+              <g>
+                <rect x="173" y="58" width="115" height="174" fill="#164e28" stroke="#22c55e" stroke-width="1" opacity=".5">
+                  <animate attributeName="x" values="173;296;296;173" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="width" values="115;12;12;115" dur="4s" repeatCount="indefinite"/>
+                </rect>
+                <line x1="210" y1="58" x2="210" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="210;298;298;210" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="210;298;298;210" dur="4s" repeatCount="indefinite"/>
+                </line>
+                <line x1="245" y1="58" x2="245" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="245;300;300;245" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="245;300;300;245" dur="4s" repeatCount="indefinite"/>
+                </line>
+                <line x1="270" y1="58" x2="270" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <animate attributeName="x1" values="270;302;302;270" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="x2" values="270;302;302;270" dur="4s" repeatCount="indefinite"/>
+                </line>
+              </g>
+              <!-- Lock icon -->
+              <g transform="translate(170,145)">
+                <rect x="-16" y="-3" width="32" height="24" rx="4" fill="#22c55e" opacity=".8">
+                  <animate attributeName="opacity" values=".8;.2;.2;.8" dur="4s" repeatCount="indefinite"/>
+                </rect>
+                <path d="M-8-3v-11a8 8 0 0116 0v11" stroke="#22c55e" stroke-width="2.5" fill="none" opacity=".6">
+                  <animate attributeName="opacity" values=".6;.15;.15;.6" dur="4s" repeatCount="indefinite"/>
+                </path>
+                <circle cx="0" cy="9" r="3" fill="#0a1628">
+                  <animate attributeName="fill" values="#0a1628;#22c55e;#22c55e;#0a1628" dur="4s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <!-- Status badge -->
+              <g transform="translate(170,20)">
+                <rect x="-38" y="-10" width="76" height="20" rx="10" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/>
+                <text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="600" font-family="IBM Plex Sans">ABRIENDO</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Control de Accesos</div>
+          <div class="slide-desc">Apertura remota de puertas y portones desde el panel, con registro autom&aacute;tico de cada evento</div>
+        </div>
+
+        <!-- Slide 3: Snapshots de Camaras -->
+        <div class="slide" data-index="2">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Camera body -->
+              <g transform="translate(170,95)">
+                <rect x="-8" y="-72" width="16" height="28" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1"/>
+                <rect x="-54" y="-44" width="108" height="68" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5"/>
+                <circle cx="0" cy="-10" r="24" fill="#0d2818" stroke="#22c55e" stroke-width="1.5"/>
+                <circle cx="0" cy="-10" r="16" fill="#0a1628" stroke="#22c55e" stroke-width="1"/>
+                <circle cx="0" cy="-10" r="8" fill="#164e28" stroke="#22c55e" stroke-width=".8">
+                  <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="-38" cy="-28" r="4" fill="#ef4444" opacity=".6">
+                  <animate attributeName="opacity" values=".6;.2;.6" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="38" cy="-28" r="4" fill="#22c55e" opacity=".8">
+                  <animate attributeName="opacity" values=".8;.3;.8" dur="1s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <!-- Scan line -->
+              <rect x="55" y="50" width="230" height="3" rx="1.5" fill="#22c55e" opacity=".3">
+                <animate attributeName="y" values="50;195;50" dur="3s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".5;.1;.5" dur="3s" repeatCount="indefinite"/>
+              </rect>
+              <!-- Capture frame corners -->
+              <g stroke="#22c55e" stroke-width="2.5" opacity=".7">
+                <path d="M60 60h28M60 60v20"/>
+                <path d="M280 60h-28M280 60v20"/>
+                <path d="M60 210h28M60 210v-20"/>
+                <path d="M280 210h-28M280 210v-20"/>
+              </g>
+              <!-- Flash effect -->
+              <rect x="55" y="50" width="230" height="168" rx="6" fill="#fff" opacity="0">
+                <animate attributeName="opacity" values="0;0;0;0;0;.5;0;0;0;0" dur="4s" repeatCount="indefinite"/>
+              </rect>
+              <!-- Snapshot badge -->
+              <g transform="translate(170,240)">
+                <rect x="-42" y="-10" width="84" height="20" rx="10" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/>
+                <text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600" font-family="IBM Plex Sans">SNAPSHOT</text>
+              </g>
+              <!-- Thumbnails -->
+              <g transform="translate(18,230)" opacity=".5">
+                <rect width="36" height="26" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8"/>
+                <text x="18" y="17" text-anchor="middle" fill="#22c55e" font-size="8" font-family="IBM Plex Sans">CAM1</text>
+              </g>
+              <g transform="translate(286,230)" opacity=".5">
+                <rect width="36" height="26" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8"/>
+                <text x="18" y="17" text-anchor="middle" fill="#22c55e" font-size="8" font-family="IBM Plex Sans">CAM2</text>
+              </g>
+              <!-- REC indicator -->
+              <g transform="translate(255,68)">
+                <circle r="5" fill="#ef4444">
+                  <animate attributeName="opacity" values="1;.3;1" dur="1s" repeatCount="indefinite"/>
+                </circle>
+                <text x="12" y="5" fill="#ef4444" font-size="10" font-weight="700" font-family="IBM Plex Sans">REC</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Snapshots de C&aacute;maras</div>
+          <div class="slide-desc">Captura instant&aacute;nea desde c&aacute;maras IP con evidencia fotogr&aacute;fica autom&aacute;tica ante cada evento</div>
+        </div>
+
+        <!-- Slide 4: Monitoreo de Rondas -->
+        <div class="slide" data-index="3">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Map background -->
+              <rect x="15" y="10" width="310" height="220" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <!-- Grid streets -->
+              <g stroke="#22c55e" stroke-width=".5" opacity=".2">
+                <line x1="80" y1="10" x2="80" y2="230"/>
+                <line x1="145" y1="10" x2="145" y2="230"/>
+                <line x1="210" y1="10" x2="210" y2="230"/>
+                <line x1="275" y1="10" x2="275" y2="230"/>
+                <line x1="15" y1="65" x2="325" y2="65"/>
+                <line x1="15" y1="120" x2="325" y2="120"/>
+                <line x1="15" y1="175" x2="325" y2="175"/>
+              </g>
+              <!-- Blocks -->
+              <rect x="85" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="150" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="215" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="85" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="150" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="215" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+              <!-- Patrol route -->
+              <path d="M40 60 L80 60 L80 118 L145 118 L145 60 L210 60 L210 173 L145 173 L145 118"
+                    stroke="#22c55e" stroke-width="2" stroke-dasharray="8 4" fill="none" opacity=".4"/>
+              <!-- Patrol dot -->
+              <circle r="8" fill="#22c55e" opacity=".9">
+                <animateMotion dur="6s" repeatCount="indefinite" path="M40,60 L80,60 L80,118 L145,118 L145,60 L210,60 L210,173 L145,173 L145,118"/>
+                <animate attributeName="opacity" values=".9;.5;.9" dur="1s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Radar ring -->
+              <circle r="8" fill="none" stroke="#22c55e" stroke-width="1">
+                <animateMotion dur="6s" repeatCount="indefinite" path="M40,60 L80,60 L80,118 L145,118 L145,60 L210,60 L210,173 L145,173 L145,118"/>
+                <animate attributeName="r" values="8;30" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".5;0" dur="1.5s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Checkpoints -->
+              <g transform="translate(80,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+              <g transform="translate(145,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+              <g transform="translate(210,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+              <g transform="translate(210,173)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+              <g transform="translate(145,173)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+              <!-- Status panels -->
+              <g transform="translate(15,248)">
+                <rect width="120" height="18" rx="4" fill="#22c55e" opacity=".1"/>
+                <text x="10" y="13" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">Ronda 3/5 - 68%</text>
+              </g>
+              <g transform="translate(205,248)">
+                <rect width="120" height="18" rx="4" fill="#22c55e" opacity=".1"/>
+                <circle cx="14" cy="9" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/>
+                </circle>
+                <text x="24" y="13" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">EN RONDA</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Monitoreo de Rondas</div>
+          <div class="slide-desc">Seguimiento GPS de rondas de vigilancia con checkpoints, tiempos y verificaci&oacute;n autom&aacute;tica del recorrido</div>
+        </div>
+
+        <!-- Slide 5: Reportes PTT -->
+        <div class="slide" data-index="4">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Walkie-talkie device -->
+              <g transform="translate(120,30)">
+                <!-- Antenna -->
+                <rect x="-4" y="-20" width="8" height="30" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <circle cx="0" cy="-24" r="4" fill="#22c55e" opacity=".5">
+                  <animate attributeName="opacity" values=".5;1;.5" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Body -->
+                <rect x="-30" y="10" width="60" height="110" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".8"/>
+                <!-- Speaker grille -->
+                <g opacity=".4">
+                  <line x1="-18" y1="25" x2="18" y2="25" stroke="#22c55e" stroke-width="1"/>
+                  <line x1="-18" y1="31" x2="18" y2="31" stroke="#22c55e" stroke-width="1"/>
+                  <line x1="-18" y1="37" x2="18" y2="37" stroke="#22c55e" stroke-width="1"/>
+                  <line x1="-18" y1="43" x2="18" y2="43" stroke="#22c55e" stroke-width="1"/>
+                  <line x1="-18" y1="49" x2="18" y2="49" stroke="#22c55e" stroke-width="1"/>
+                </g>
+                <!-- PTT button -->
+                <rect x="-34" y="40" width="8" height="30" rx="3" fill="#22c55e" opacity=".6">
+                  <animate attributeName="opacity" values=".6;1;.6" dur="2s" repeatCount="indefinite"/>
+                </rect>
+                <!-- Screen -->
+                <rect x="-18" y="60" width="36" height="20" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".8"/>
+                <rect x="-14" y="64" width="28" height="3" rx="1.5" fill="#22c55e" opacity=".4"/>
+                <rect x="-14" y="70" width="18" height="3" rx="1.5" fill="#22c55e" opacity=".3"/>
+                <!-- Buttons -->
+                <circle cx="-10" cy="95" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="0" cy="95" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="10" cy="95" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="-10" cy="108" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="0" cy="108" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="10" cy="108" r="4" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+              </g>
+              <!-- Sound waves from walkie -->
+              <g transform="translate(155,60)" opacity=".5">
+                <path d="M5 -10 Q15 0 5 10" stroke="#22c55e" stroke-width="1.5" fill="none">
+                  <animate attributeName="opacity" values=".5;0;.5" dur="1.5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M12 -18 Q28 0 12 18" stroke="#22c55e" stroke-width="1.5" fill="none">
+                  <animate attributeName="opacity" values=".4;0;.4" dur="1.5s" begin=".3s" repeatCount="indefinite"/>
+                </path>
+                <path d="M19 -26 Q42 0 19 26" stroke="#22c55e" stroke-width="1.5" fill="none">
+                  <animate attributeName="opacity" values=".3;0;.3" dur="1.5s" begin=".6s" repeatCount="indefinite"/>
+                </path>
+              </g>
+              <!-- Report document -->
+              <g transform="translate(220,40)">
+                <rect x="0" y="0" width="90" height="120" rx="6" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <!-- Header -->
+                <rect x="10" y="10" width="70" height="14" rx="3" fill="#22c55e" opacity=".12"/>
+                <text x="45" y="21" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="600" font-family="IBM Plex Sans">REPORTE PTT</text>
+                <!-- Audio waveform lines -->
+                <g transform="translate(10,35)" opacity=".5">
+                  <rect x="0" y="4" width="3" height="8" rx="1" fill="#22c55e"/>
+                  <rect x="5" y="2" width="3" height="12" rx="1" fill="#22c55e"/>
+                  <rect x="10" y="6" width="3" height="4" rx="1" fill="#22c55e"/>
+                  <rect x="15" y="0" width="3" height="16" rx="1" fill="#22c55e"/>
+                  <rect x="20" y="3" width="3" height="10" rx="1" fill="#22c55e"/>
+                  <rect x="25" y="5" width="3" height="6" rx="1" fill="#22c55e"/>
+                  <rect x="30" y="1" width="3" height="14" rx="1" fill="#22c55e"/>
+                  <rect x="35" y="4" width="3" height="8" rx="1" fill="#22c55e"/>
+                  <rect x="40" y="6" width="3" height="4" rx="1" fill="#22c55e"/>
+                  <rect x="45" y="2" width="3" height="12" rx="1" fill="#22c55e"/>
+                  <rect x="50" y="5" width="3" height="6" rx="1" fill="#22c55e"/>
+                  <rect x="55" y="3" width="3" height="10" rx="1" fill="#22c55e"/>
+                  <rect x="60" y="7" width="3" height="2" rx="1" fill="#22c55e"/>
+                </g>
+                <!-- Text lines -->
+                <rect x="10" y="58" width="55" height="3" rx="1.5" fill="#22c55e" opacity=".3"/>
+                <rect x="10" y="66" width="65" height="3" rx="1.5" fill="#22c55e" opacity=".25"/>
+                <rect x="10" y="74" width="45" height="3" rx="1.5" fill="#22c55e" opacity=".2"/>
+                <!-- Timestamp -->
+                <rect x="10" y="90" width="70" height="14" rx="3" fill="#22c55e" opacity=".08"/>
+                <text x="45" y="100" text-anchor="middle" fill="#22c55e" font-size="7" font-family="IBM Plex Sans" opacity=".5">14:32 - 2min 15s</text>
+              </g>
+              <!-- Arrow from walkie to report -->
+              <path d="M155 85 Q185 85 210 70" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".4">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1s" repeatCount="indefinite"/>
+              </path>
+              <!-- Status badges -->
+              <g transform="translate(40,220)">
+                <rect width="100" height="20" rx="10" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="14" cy="10" r="3" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/>
+                </circle>
+                <text x="24" y="14" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">GRABANDO</text>
+              </g>
+              <g transform="translate(200,220)">
+                <rect width="105" height="20" rx="10" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".8"/>
+                <text x="12" y="14" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">12 reportes hoy</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Reportes PTT</div>
+          <div class="slide-desc">Env&iacute;a reportes de voz Push-to-Talk desde radios y dispositivos, con transcripci&oacute;n y registro autom&aacute;tico de cada comunicaci&oacute;n</div>
+        </div>
+
+        <!-- Slide 6: PTT con Asistente IA -->
+        <div class="slide" data-index="5">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- AI Brain/Circuit -->
+              <g transform="translate(170,100)">
+                <!-- Central brain circle -->
+                <circle cx="0" cy="0" r="50" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+                <circle cx="0" cy="0" r="38" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <!-- AI neural connections -->
+                <g stroke="#22c55e" stroke-width=".8" opacity=".4">
+                  <line x1="-20" y1="-15" x2="5" y2="-25"/>
+                  <line x1="5" y1="-25" x2="20" y2="-10"/>
+                  <line x1="20" y1="-10" x2="15" y2="15"/>
+                  <line x1="15" y1="15" x2="-10" y2="20"/>
+                  <line x1="-10" y1="20" x2="-25" y2="5"/>
+                  <line x1="-25" y1="5" x2="-20" y2="-15"/>
+                  <line x1="-20" y1="-15" x2="15" y2="15"/>
+                  <line x1="5" y1="-25" x2="-10" y2="20"/>
+                  <line x1="20" y1="-10" x2="-25" y2="5"/>
+                </g>
+                <!-- Neural nodes -->
+                <circle cx="-20" cy="-15" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="5" cy="-25" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".3s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="20" cy="-10" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".6s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="15" cy="15" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".9s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="-10" cy="20" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="-25" cy="5" r="4" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin="1.5s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Central AI icon -->
+                <text x="0" y="5" text-anchor="middle" fill="#22c55e" font-size="16" font-weight="700" font-family="IBM Plex Sans" opacity=".8">IA</text>
+              </g>
+              <!-- Pulse ring around brain -->
+              <circle cx="170" cy="100" r="50" stroke="#22c55e" stroke-width="1" fill="none" opacity=".3">
+                <animate attributeName="r" values="50;75" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".3;0" dur="2s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Left: Microphone/PTT input -->
+              <g transform="translate(40,80)">
+                <!-- Mic body -->
+                <rect x="-12" y="-30" width="24" height="50" rx="12" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <rect x="-8" y="-25" width="16" height="20" rx="8" fill="#164e28" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <!-- Mic grille -->
+                <line x1="-5" y1="-20" x2="5" y2="-20" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+                <line x1="-5" y1="-16" x2="5" y2="-16" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+                <line x1="-5" y1="-12" x2="5" y2="-12" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+                <!-- Stand -->
+                <rect x="-3" y="20" width="6" height="15" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8"/>
+                <rect x="-14" y="35" width="28" height="5" rx="2.5" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8"/>
+                <!-- Sound waves -->
+                <path d="M16 -10 Q24 0 16 10" stroke="#22c55e" stroke-width="1.5" fill="none" opacity=".5">
+                  <animate attributeName="opacity" values=".5;0;.5" dur="1s" repeatCount="indefinite"/>
+                </path>
+                <path d="M22 -18 Q36 0 22 18" stroke="#22c55e" stroke-width="1" fill="none" opacity=".3">
+                  <animate attributeName="opacity" values=".3;0;.3" dur="1s" begin=".3s" repeatCount="indefinite"/>
+                </path>
+              </g>
+              <!-- Arrow: mic to brain -->
+              <path d="M75 80 Q100 80 120 90" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".4">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1s" repeatCount="indefinite"/>
+              </path>
+              <!-- Right: Response output -->
+              <g transform="translate(260,55)">
+                <!-- Chat bubble -->
+                <rect x="-40" y="0" width="80" height="90" rx="8" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <!-- Response text lines (appearing animation) -->
+                <rect x="-30" y="12" width="50" height="3" rx="1.5" fill="#22c55e" opacity=".5">
+                  <animate attributeName="width" values="0;50" dur="2s" repeatCount="indefinite"/>
+                </rect>
+                <rect x="-30" y="20" width="60" height="3" rx="1.5" fill="#22c55e" opacity=".4">
+                  <animate attributeName="width" values="0;60" dur="2s" begin=".4s" repeatCount="indefinite"/>
+                </rect>
+                <rect x="-30" y="28" width="40" height="3" rx="1.5" fill="#22c55e" opacity=".3">
+                  <animate attributeName="width" values="0;40" dur="2s" begin=".8s" repeatCount="indefinite"/>
+                </rect>
+                <rect x="-30" y="36" width="55" height="3" rx="1.5" fill="#22c55e" opacity=".35">
+                  <animate attributeName="width" values="0;55" dur="2s" begin="1.2s" repeatCount="indefinite"/>
+                </rect>
+                <!-- Suggestions -->
+                <rect x="-30" y="50" width="25" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".5"/>
+                <rect x="0" y="50" width="30" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".5"/>
+                <rect x="-30" y="66" width="35" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".5"/>
+                <!-- Bubble tail -->
+                <path d="M-40 45 L-52 55 L-40 55" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+              </g>
+              <!-- Arrow: brain to response -->
+              <path d="M220 95 Q235 85 225 70" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".4">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1s" repeatCount="indefinite"/>
+              </path>
+              <!-- Bottom status -->
+              <g transform="translate(60,220)">
+                <rect width="105" height="20" rx="10" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".8"/>
+                <text x="12" y="14" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">Procesando voz...</text>
+              </g>
+              <g transform="translate(190,220)">
+                <rect width="95" height="20" rx="10" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".8"/>
+                <circle cx="14" cy="10" r="3" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/>
+                </circle>
+                <text x="24" y="14" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">IA ACTIVA</text>
+              </g>
+              <!-- AI badge -->
+              <g transform="translate(170,10)">
+                <rect x="-48" y="-10" width="96" height="20" rx="10" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/>
+                <text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600" font-family="IBM Plex Sans">ASISTENTE IA</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">PTT con Asistente IA</div>
+          <div class="slide-desc">Inteligencia artificial que analiza comunicaciones de voz PTT, genera res&uacute;menes, detecta incidentes y sugiere acciones en tiempo real</div>
+        </div>
+
+        <!-- Slide 7: Boton de Panico Personal -->
+        <div class="slide" data-index="6">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Person silhouette -->
+              <g transform="translate(100,100)">
+                <!-- Head -->
+                <circle cx="0" cy="-30" r="14" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <!-- Body -->
+                <path d="M-18 0c0-12 8-20 18-20s18 8 18 20v40h-36z" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+                <!-- Arm holding device -->
+                <path d="M18 10 L50 -10" stroke="#22c55e" stroke-width="2" opacity=".6" stroke-linecap="round"/>
+              </g>
+              <!-- Panic device (remote control) -->
+              <g transform="translate(160,70)">
+                <!-- Device body -->
+                <rect x="-20" y="-35" width="40" height="70" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="2" opacity=".8"/>
+                <!-- Big panic button -->
+                <circle cx="0" cy="-5" r="14" fill="#ef4444" opacity=".8">
+                  <animate attributeName="r" values="14;16;14" dur="1.2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values=".8;1;.8" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <text x="0" y="0" text-anchor="middle" fill="#fff" font-size="8" font-weight="700" font-family="IBM Plex Sans">SOS</text>
+                <!-- LED indicator -->
+                <circle cx="0" cy="-24" r="3" fill="#22c55e" opacity=".7">
+                  <animate attributeName="opacity" values=".7;.2;.7" dur=".6s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Small button -->
+                <rect x="-8" y="18" width="16" height="6" rx="3" fill="#164e28" stroke="#22c55e" stroke-width=".8"/>
+              </g>
+              <!-- GPS signal waves from device -->
+              <circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width="1.5" fill="none" opacity=".5">
+                <animate attributeName="r" values="30;60" dur="1.8s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".5;0" dur="1.8s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width="1" fill="none" opacity=".3">
+                <animate attributeName="r" values="30;80" dur="1.8s" begin=".6s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".3;0" dur="1.8s" begin=".6s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width=".8" fill="none" opacity=".2">
+                <animate attributeName="r" values="30;100" dur="1.8s" begin="1.2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".2;0" dur="1.8s" begin="1.2s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Signal path to WhatsEg panel (arrow) -->
+              <path d="M210 50 Q240 30 260 50 Q280 70 300 55" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".5">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1s" repeatCount="indefinite"/>
+              </path>
+              <!-- WhatsEg panel (destination) -->
+              <g transform="translate(260,80)">
+                <rect x="-30" y="-30" width="60" height="80" rx="6" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <!-- Screen -->
+                <rect x="-24" y="-24" width="48" height="55" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".8"/>
+                <!-- Alert on screen -->
+                <rect x="-18" y="-18" width="36" height="12" rx="2" fill="#ef4444" opacity=".3">
+                  <animate attributeName="opacity" values=".3;.6;.3" dur="1s" repeatCount="indefinite"/>
+                </rect>
+                <text x="0" y="-9" text-anchor="middle" fill="#ef4444" font-size="6" font-weight="700" font-family="IBM Plex Sans">ALERTA SOS</text>
+                <!-- Map pin on screen -->
+                <circle cx="-6" cy="10" r="4" fill="#ef4444" opacity=".5">
+                  <animate attributeName="opacity" values=".5;1;.5" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <rect x="2" y="4" width="16" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+                <rect x="2" y="9" width="12" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+                <rect x="2" y="14" width="18" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+                <rect x="2" y="19" width="10" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+                <!-- Home button -->
+                <circle cx="0" cy="38" r="4" fill="none" stroke="#22c55e" stroke-width=".8" opacity=".4"/>
+              </g>
+              <!-- GPS pin above person -->
+              <g transform="translate(100,40)">
+                <path d="M0 12L-8-2a10 10 0 1116 0z" fill="#22c55e" opacity=".5"/>
+                <circle cx="0" cy="-6" r="4" fill="#0a1628"/>
+                <text x="0" y="-3" text-anchor="middle" fill="#22c55e" font-size="5" font-weight="700" font-family="IBM Plex Sans">GPS</text>
+              </g>
+              <!-- "EMERGENCIA" badge -->
+              <g transform="translate(130,230)">
+                <rect x="-55" y="-10" width="110" height="20" rx="10" fill="#ef4444" opacity=".12" stroke="#ef4444" stroke-width=".8"/>
+                <circle cx="-38" cy="0" r="3" fill="#ef4444">
+                  <animate attributeName="opacity" values="1;.3;1" dur=".7s" repeatCount="indefinite"/>
+                </circle>
+                <text x="5" y="4" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600" font-family="IBM Plex Sans">EMERGENCIA</text>
+              </g>
+              <!-- Location coordinates -->
+              <g transform="translate(50,250)" opacity=".5">
+                <text x="0" y="0" fill="#64748b" font-size="8" font-family="IBM Plex Sans">4.6097&deg;N, 74.0817&deg;W</text>
+              </g>
+            </svg>
+          </div>
+          <div class="slide-title">Bot&oacute;n de P&aacute;nico Personal</div>
+          <div class="slide-desc">Control f&iacute;sico con GPS: al presionar el bot&oacute;n SOS, la ubicaci&oacute;n exacta llega al instante a la central WhatsEg</div>
+        </div>
+
+        <!-- Slide 8: Soporte Bilingüe -->
+        <div class="slide" data-index="7">
+          <div class="illustration">
+            <svg viewBox="0 0 340 280" fill="none">
+              <!-- Burbuja izquierda (extranjero) -->
+              <rect x="20" y="55" width="140" height="58" rx="14" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".85"/>
+              <text x="90" y="82" text-anchor="middle" fill="#22c55e" font-size="17" font-weight="700" font-family="IBM Plex Sans">Hello!</text>
+              <text x="90" y="100" text-anchor="middle" fill="#22c55e" font-size="10" font-family="IBM Plex Sans" opacity=".7">How can I get help?</text>
+              <polygon points="48,113 30,136 78,113" fill="#0f2d1a" stroke="#22c55e" stroke-width="1"/>
+              <!-- Burbuja derecha (respuesta en español) -->
+              <rect x="180" y="128" width="140" height="58" rx="14" fill="#0a1f10" stroke="#22c55e" stroke-width="1.5" opacity=".8"/>
+              <text x="250" y="155" text-anchor="middle" fill="#22c55e" font-size="17" font-weight="700" font-family="IBM Plex Sans">¡Hola!</text>
+              <text x="250" y="173" text-anchor="middle" fill="#22c55e" font-size="10" font-family="IBM Plex Sans" opacity=".7">¿En qué te ayudamos?</text>
+              <polygon points="295,186 316,208 270,186" fill="#0a1f10" stroke="#22c55e" stroke-width="1"/>
+              <!-- Flecha traducción → -->
+              <path d="M148 90 Q165 74 192 100" stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3" fill="none">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1.2s" repeatCount="indefinite"/>
+              </path>
+              <polygon points="192,100 181,91 186,106" fill="#22c55e"/>
+              <!-- Flecha traducción ← -->
+              <path d="M192,148 Q165,166 148,150" stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3" fill="none">
+                <animate attributeName="stroke-dashoffset" values="0;-16" dur="1.2s" repeatCount="indefinite"/>
+              </path>
+              <polygon points="148,150 159,158 153,144" fill="#22c55e"/>
+              <!-- Globo terráqueo -->
+              <circle cx="170" cy="238" r="22" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".5"/>
+              <ellipse cx="170" cy="238" rx="11" ry="22" fill="none" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+              <line x1="148" y1="238" x2="192" y2="238" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+              <line x1="151" y1="227" x2="189" y2="227" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+              <line x1="151" y1="249" x2="189" y2="249" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+              <!-- Badge EN -->
+              <rect x="22" y="228" width="28" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+              <text x="36" y="240" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700" font-family="IBM Plex Sans">EN</text>
+              <!-- Badge ES -->
+              <rect x="290" y="228" width="28" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+              <text x="304" y="240" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700" font-family="IBM Plex Sans">ES</text>
+            </svg>
+          </div>
+          <div class="slide-title">Soporte Biling&uuml;e</div>
+          <div class="slide-desc">Atenci&oacute;n a extranjeros en su idioma con traducci&oacute;n autom&aacute;tica — los chats llegan a la central en tiempo real</div>
+        </div>
+
+      </div>
+
+      <!-- Dots -->
+      <div class="dots" id="dots">
+        <button class="dot active" data-slide="0"></button>
+        <button class="dot" data-slide="1"></button>
+        <button class="dot" data-slide="2"></button>
+        <button class="dot" data-slide="3"></button>
+        <button class="dot" data-slide="4"></button>
+        <button class="dot" data-slide="5"></button>
+        <button class="dot" data-slide="6"></button>
+        <button class="dot" data-slide="7"></button>
+      </div>
+    </div>
+
+    <div class="left-footer">
+      <span>WhatsEg v2.0 &middot; Seguridad Ciudadana Inteligente</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="form-wrap">
+      <div class="mobile-logo"><img src="/edison.webp" alt="WhatsEg"></div>
+
+      <div class="form-header">
+        <div class="badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Acceso seguro</span>
+        </div>
+        <h2>Bienvenido</h2>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <div class="error" id="err"></div>
+
+      <form id="frm">
+        <div class="field">
+          <label>Correo electr&oacute;nico</label>
+          <input type="email" id="email" required placeholder="admin@ejemplo.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Contrase&ntilde;a</label>
+          <input type="password" id="pass" required placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-submit" id="btn">Ingresar al sistema</button>
+      </form>
+
+      <div class="divider"><span>Seguridad</span></div>
+
+      <div class="form-footer">
+        <a href="https://phenlinea.online" target="_blank" rel="noopener noreferrer">
+          <span>Desarrollado por</span>
+          <img src="/phenlinea_logo.png" alt="PHenLinea">
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---- Auth redirect ---- */
+    if(localStorage.getItem('trd_token')){
+      var _admin={};try{_admin=JSON.parse(localStorage.getItem('trd_admin')||'{}')}catch(e){}
+      if(_admin.rol==='SUPERADMIN'||_admin.rol==='ADMIN')window.location.replace('/modulos');
+      else window.location.replace('/');
+    }
+
+    /* ---- Particles ---- */
+    (function(){
+      var c=document.getElementById('particles');
+      for(var i=0;i<30;i++){
+        var p=document.createElement('div');
+        p.className='particle';
+        p.style.left=Math.random()*100+'%';
+        p.style.animationDuration=(6+Math.random()*10)+'s';
+        p.style.animationDelay=Math.random()*8+'s';
+        p.style.width=p.style.height=(1+Math.random()*2)+'px';
+        c.appendChild(p);
+      }
+    })();
+
+    /* ---- Carousel ---- */
+    (function(){
+      var slides=document.querySelectorAll('.slide');
+      var dots=document.querySelectorAll('.dot');
+      var current=0;
+      var total=slides.length;
+      var interval;
+
+      function goTo(n){
+        slides[current].classList.remove('active');
+        slides[current].classList.add('exit');
+        dots[current].classList.remove('active');
+        setTimeout(function(){slides[current].classList.remove('exit');current=n;slides[current].classList.add('active');dots[current].classList.add('active');},100);
+      }
+
+      function next(){goTo((current+1)%total);}
+
+      function startAuto(){interval=setInterval(next,5000);}
+      function resetAuto(){clearInterval(interval);startAuto();}
+
+      dots.forEach(function(d){
+        d.addEventListener('click',function(){
+          var idx=parseInt(this.dataset.slide);
+          if(idx!==current){goTo(idx);resetAuto();}
+        });
+      });
+
+      startAuto();
+    })();
+
+    /* ---- Login form ---- */
+    document.getElementById('frm').addEventListener('submit',async function(e){
+      e.preventDefault();
+      var btn=document.getElementById('btn'),err=document.getElementById('err');
+      btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Verificando...';err.style.display='none';
+      try{
+        var res=await fetch('/api/auth/login',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email:document.getElementById('email').value,password:document.getElementById('pass').value})
+        });
+        var data=await res.json();
+        if(!res.ok||!data.token)throw new Error(data.mensaje||data.error?.message||'Credenciales invalidas');
+        localStorage.setItem('trd_token',data.token);
+        if(data.admin)localStorage.setItem('trd_admin',JSON.stringify(data.admin));
+        if(data.admin&&(data.admin.rol==='SUPERADMIN'||data.admin.rol==='ADMIN'))window.location.replace('/modulos');
+        else window.location.replace('/');
+      }catch(ex){
+        err.textContent=ex.message;err.style.display='block';
+      }finally{
+        btn.disabled=false;btn.textContent='Ingresar al sistema';
+      }
+    });
+  </script>
+</body>
+</html>
