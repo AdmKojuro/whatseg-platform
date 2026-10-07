@@ -40,6 +40,7 @@ import DespachosPage from '../pages/despacho/DespachosPage'
 import GuardiaPage from '../pages/guardia/GuardiaPage'
 import IncidentesPage from '../pages/incidentes/IncidentesPage'
 import IncidenteDetailPage from '../pages/incidentes/IncidenteDetailPage'
+import WhatsAppPage from '../pages/WhatsAppPage'
 
 export const router = createBrowserRouter([
   {
@@ -183,6 +184,14 @@ export const router = createBrowserRouter([
             children: [
               { path: '/incidentes',     element: <IncidentesPage /> },
               { path: '/incidentes/:id', element: <IncidenteDetailPage /> },
+            ],
+          },
+
+          // WhatsApp Bot
+          {
+            element: <RoleGuard roles={['SUPERADMIN', 'ADMIN']} />,
+            children: [
+              { path: '/whatsapp', element: <WhatsAppPage /> },
             ],
           },
 

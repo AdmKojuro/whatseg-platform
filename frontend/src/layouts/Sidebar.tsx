@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import {
   LayoutDashboard, Building2, Users, UserCheck, Cpu, Bell,
   Radio, Map, Shield, Grid3X3, User, AlertTriangle, LogOut, X,
-  Truck, HeartPulse, Clock,
+  Truck, HeartPulse, Clock, MessageCircle,
 } from 'lucide-react'
 import type { Rol } from '../types/enums'
 import { useEffect, useState } from 'react'
@@ -30,6 +30,7 @@ const navItems: NavItem[] = [
   { to: '/activaciones', label: 'Activaciones',  icon: <Bell size={16} />,            roles: ['SUPERADMIN', 'MONITOR'] },
   { to: '/mqtt-devices', label: 'MQTT',          icon: <Radio size={16} />,           roles: ['SUPERADMIN'] },
   { to: '/mapa',         label: 'Mapa',          icon: <Map size={16} />,             roles: ['SUPERADMIN'] },
+  { to: '/whatsapp',    label: 'WhatsApp',      icon: <MessageCircle size={16} />,   roles: ['SUPERADMIN', 'ADMIN'] },
 ]
 
 const adminItems: NavItem[] = [
