@@ -167,11 +167,16 @@ export default function ClienteDetailPage() {
 
   const handleDesasignar = async () => {
     if (!id) return
+    const comunidadId = cliente?.comunidades?.[0]?.comunidad_id
+    if (!comunidadId) {
+      setError('El cliente no tiene comunidad asignada')
+      return
+    }
     if (!window.confirm('¿Desasignar al cliente de su comunidad actual?')) return
     try {
       setActionLoading('desasignar')
       setError(null)
-      await clienteService.desasignar(id)
+      await clienteService.desasignar(id, comunidadId)
       showSuccessMsg('Cliente desasignado exitosamente')
       await fetchCliente()
     } catch (err: unknown) {
@@ -183,10 +188,16 @@ export default function ClienteDetailPage() {
 
   const handleTransferir = async () => {
     if (!id || !transferDestinoId) return
+    const origenId = cliente?.comunidades?.[0]?.comunidad_id
+    if (!origenId) {
+      setError('El cliente no tiene comunidad de origen')
+      return
+    }
     try {
       setTransferring(true)
       setError(null)
       await clienteService.transferir(id, {
+        origen_id: origenId,
         destino_id: transferDestinoId,
         motivo: transferMotivo || undefined,
       })
