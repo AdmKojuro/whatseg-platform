@@ -1,0 +1,3355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg · Reportes PTT</title>
+  <link rel="icon" type="image/webp" href="https://api.whatseg.com/whatseg_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0f1729;
+      --bg2:     #1a2744;
+      --bg3:     #243358;
+      --bg4:     #2d3e63;
+      --accent:  #3b82f6;
+      --green:   #10b981;
+      --red:     #ef4444;
+      --yellow:  #f59e0b;
+      --purple:  #8b5cf6;
+      --text:    #e2e8f0;
+      --text2:   #94a3b8;
+      --border:  rgba(255,255,255,0.08);
+      --radius:  10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── LOGIN OVERLAY ─────────────────────────────────── */
+    #login-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0f1a;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    }
+    .login-box {
+      background: rgba(15,20,35,.95);
+      border: 1px solid rgba(34,197,94,.15);
+      border-radius: 16px; padding: 40px 36px;
+      width: 380px; max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .login-logo {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; margin-bottom: 28px; text-align: center;
+    }
+    .login-logo-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(34,197,94,.1);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-logo-icon svg { width: 28px; height: 28px; }
+    .login-logo h1 { font-size: 20px; font-weight: 700; color: #22c55e; margin: 0; }
+    .login-logo p { font-size: 13px; color: #64748b; margin: 0; }
+    .login-box h2 { font-size: 14px; color: #94a3b8; margin-bottom: 22px; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 11px; color: #64748b;
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600;
+    }
+    .form-group input {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px; color: #e2e8f0; font-size: 14px;
+      font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: #22c55e; }
+    .form-group input::placeholder { color: #475569; }
+    .btn-primary {
+      width: 100%; padding: 12px; background: #22c55e;
+      border: none; border-radius: 8px; color: #fff;
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px;
+      font-family: inherit; transition: background .2s;
+    }
+    .btn-primary:hover { background: #16a34a; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .login-err { color: #ef4444; font-size: 12px; margin-top: 12px; min-height: 16px; text-align: center; }
+
+    /* ── HEADER ────────────────────────────────────────── */
+    header {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .hdr-left { display: flex; align-items: center; gap: 16px; }
+    .hdr-logo { display: flex; align-items: center; gap: 10px; }
+    .hdr-logo svg { width: 28px; height: 28px; }
+    .hdr-logo span { font-size: 16px; font-weight: 700; }
+    .hdr-logo small { font-size: 11px; color: var(--text2); margin-left: 4px; }
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--green); font-weight: 600;
+    }
+    .live-dot::before {
+      content: ''; width: 7px; height: 7px; background: var(--green);
+      border-radius: 50%; animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .hdr-right { display: flex; align-items: center; gap: 14px; }
+    .hdr-user { font-size: 13px; color: var(--text2); }
+    .btn-logout {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); font-size: 12px; padding: 6px 12px; cursor: pointer;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+    .btn-back {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); font-size: 12px; padding: 6px 12px; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      font-family: inherit; transition: all .2s;
+    }
+    .btn-back:hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,.07); }
+
+    /* ── LAYOUT ────────────────────────────────────────── */
+    .app { display: flex; height: calc(100vh - 60px); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px; min-width: 240px; background: var(--bg2);
+      border-right: 1px solid var(--border); overflow-y: auto;
+      padding: 16px 0;
+      display: flex; flex-direction: column;
+    }
+    .sb-section { margin-bottom: 24px; }
+    .sb-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+      color: var(--text2); padding: 0 16px; margin-bottom: 8px;
+    }
+    .sb-comm {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent;
+      font-size: 13px; transition: background .15s;
+    }
+    .sb-comm:hover { background: var(--bg3); }
+    .sb-comm.active { background: var(--bg3); border-left-color: var(--accent); color: var(--accent); }
+    .sb-comm .badge {
+      margin-left: auto; background: var(--accent); color: #fff;
+      font-size: 10px; padding: 1px 6px; border-radius: 10px; min-width: 20px; text-align: center;
+    }
+    .sb-comm .badge.green { background: var(--green); }
+    .sb-online-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 16px; font-size: 12px; color: var(--text2);
+    }
+    .online-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
+    .online-ptt { width: 7px; height: 7px; background: var(--red); border-radius: 50%; flex-shrink: 0; animation: pulse 0.8s infinite; }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .stat-card .stat-label { font-size: 11px; text-transform: uppercase; color: var(--text2); letter-spacing: .5px; }
+    .stat-card .stat-val { font-size: 28px; font-weight: 700; margin: 4px 0 2px; }
+    .stat-card .stat-val.blue { color: var(--accent); }
+    .stat-card .stat-val.yellow { color: var(--yellow); }
+    .stat-card .stat-val.green { color: var(--green); }
+    .stat-card .stat-val.purple { color: var(--purple); }
+    .stat-card .stat-sub { font-size: 11px; color: var(--text2); }
+
+    /* Filters */
+    .filters-bar {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .filters-bar select, .filters-bar input[type=date] {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 13px; padding: 7px 12px; cursor: pointer; outline: none;
+    }
+    .filters-bar select option { background: var(--bg2); color: var(--text); }
+    .filters-bar input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.5); }
+    .btn-filter {
+      background: var(--accent); border: none; border-radius: 8px;
+      color: #fff; font-size: 13px; padding: 7px 16px; cursor: pointer; font-weight: 600;
+    }
+    .filters-bar .spacer { flex: 1; }
+
+    /* Reports table */
+    .reports-container { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); }
+    .reports-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 600;
+    }
+    .reports-count { color: var(--text2); font-size: 12px; font-weight: 400; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text2); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(59,130,246,.05); }
+
+    /* Priority rows */
+    tr.row-EMERGENCIA { border-left: 3px solid var(--red); background: rgba(239,68,68,.04); }
+    tr.row-INCIDENTE  { border-left: 3px solid var(--yellow); background: rgba(245,158,11,.03); }
+
+    /* Badges */
+    .badge-tipo {
+      font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600;
+      display: inline-block;
+    }
+    .tipo-NOVEDAD    { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .tipo-INCIDENTE  { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .tipo-EMERGENCIA { background: rgba(239,68,68,.15);  color: #f87171; }
+    .tipo-PRUEBA     { background: rgba(148,163,184,.1); color: #94a3b8; }
+    .tipo-COMUNICADO { background: rgba(139,92,246,.15); color: #a78bfa; }
+    .badge-canal {
+      font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+      display: inline-block; letter-spacing: .3px;
+    }
+    .badge-canal.general { background: rgba(59,130,246,.12); color: #60a5fa; }
+    .badge-canal.dirigido { background: rgba(139,92,246,.12); color: #a78bfa; }
+
+    .badge-estado {
+      font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600;
+      display: inline-block;
+    }
+    .estado-PENDIENTE    { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .estado-EN_REVISION  { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .estado-APROBADO     { background: rgba(16,185,129,.15); color: #34d399; }
+    .estado-DESCARTADO   { background: rgba(148,163,184,.1); color: #94a3b8; }
+
+    /* Estado dropdown inline */
+    .estado-cell { position: relative; }
+    .badge-estado.clickable { cursor: pointer; user-select: none; transition: opacity .15s; }
+    .badge-estado.clickable:hover { opacity: .8; }
+    .estado-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; z-index: 50;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 0; min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      margin-top: 4px;
+    }
+    .estado-dropdown.open { display: block; }
+    .estado-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; font-size: 12px; cursor: pointer; transition: background .1s;
+      color: var(--text);
+    }
+    .estado-opt:hover { background: var(--bg3); }
+    .estado-opt .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .estado-opt.active { font-weight: 700; }
+
+    /* Action icon buttons */
+    .btn-icon {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text2); cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .btn-icon:hover { background: var(--bg4); color: var(--text); border-color: var(--accent); }
+    .btn-icon.danger:hover { border-color: var(--red); color: var(--red); }
+
+    /* Audio mini player */
+    .btn-play {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 12px; padding: 5px 10px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px; transition: background .15s;
+    }
+    .btn-play:hover { background: var(--bg4); }
+    .btn-play.loading { opacity: .6; pointer-events: none; }
+
+    /* Action buttons */
+    .btn-action {
+      background: none; border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text2); font-size: 11px; padding: 4px 9px; cursor: pointer; margin-left: 4px;
+      transition: all .15s;
+    }
+    .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-action.danger:hover { border-color: var(--red); color: var(--red); }
+
+    /* Audio player modal */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,.65); align-items: center; justify-content: center;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; width: 500px; max-width: 96vw;
+    }
+    .modal h3 { font-size: 17px; margin-bottom: 18px; }
+    .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .meta-item label { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+    .meta-item div { font-size: 14px; margin-top: 3px; }
+    audio { width: 100%; margin-bottom: 18px; border-radius: 8px; }
+    .modal-notes textarea {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; resize: vertical;
+      min-height: 60px; outline: none; margin-bottom: 14px;
+    }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    .btn-sm {
+      padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer; font-weight: 600;
+    }
+    .btn-sm.secondary { background: var(--bg3); color: var(--text); }
+    .btn-sm.approve  { background: var(--green); color: #fff; }
+    .btn-sm.review   { background: var(--accent); color: #fff; }
+    .btn-sm.discard  { background: var(--yellow); color: #fff; }
+    .btn-sm.delete   { background: var(--red); color: #fff; }
+
+    /* Live PTT banner */
+    #ptt-banner {
+      display: none; position: fixed; bottom: 24px; right: 24px; z-index: 400;
+      background: rgba(239,68,68,.95); border-radius: 14px; padding: 14px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4); color: #fff;
+      animation: slideUp .3s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    #ptt-banner .ptt-guard { font-weight: 700; font-size: 15px; }
+    #ptt-banner .ptt-sub   { font-size: 12px; opacity: .85; margin-top: 2px; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 20px; font-size: 13px; z-index: 600;
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+
+    /* Pagination */
+    .pagination { display: flex; gap: 6px; align-items: center; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--border); }
+    .btn-page {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-size: 12px; padding: 5px 11px; cursor: pointer;
+    }
+    .btn-page:disabled { opacity: .4; cursor: default; }
+    .page-info { font-size: 12px; color: var(--text2); }
+
+    /* Empty */
+    .empty-row td { text-align: center; color: var(--text2); padding: 40px; font-size: 14px; }
+
+    /* ── Admin PTT Panel (sidebar bottom) ─────────────────── */
+    #admin-ptt-panel {
+      display: none; flex-direction: column; align-items: center;
+      padding: 16px 16px 20px; margin-top: auto;
+      border-top: 1px solid var(--border);
+    }
+    #admin-ptt-panel.visible { display: flex; }
+    #admin-ptt-label {
+      font-size: 11px; color: var(--text2); margin-bottom: 12px;
+      text-align: center; letter-spacing: .3px;
+    }
+    #admin-ptt-btn {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--bg3), var(--bg4));
+      border: 2.5px solid var(--border);
+      color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s; user-select: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    #admin-ptt-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px rgba(59,130,246,.12); }
+    #admin-ptt-btn.recording {
+      background: linear-gradient(135deg, rgba(239,68,68,.15), rgba(239,68,68,.25));
+      border-color: var(--red); color: var(--red);
+      animation: pttPulse 1s infinite;
+    }
+    #admin-ptt-btn:disabled { opacity: .3; cursor: not-allowed; }
+    @keyframes pttPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 50%{box-shadow:0 0 0 14px rgba(239,68,68,0)} }
+    #admin-ptt-timer {
+      font-size: 12px; color: var(--red); text-align: center;
+      margin-top: 8px; font-weight: 700; font-variant-numeric: tabular-nums;
+      display: none;
+    }
+
+    /* ── RESPONSIVE MÓVIL ──────────────────────────────── */
+    @media (max-width: 768px) {
+      /* Header */
+      header { padding: 0 12px; }
+      .hdr-logo small, .hdr-user { display: none; }
+      .btn-back { font-size: 11px; padding: 5px 8px; }
+      .hdr-right { gap: 8px; }
+
+      /* Sidebar oculto en móvil */
+      .sidebar { display: none; }
+
+      /* Main layout */
+      .main { padding: 12px; }
+
+      /* Stats 2 columnas en móvil */
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+      .stat-card { padding: 12px 14px; }
+      .stat-card .stat-val { font-size: 22px; }
+
+      /* Filtros apilados */
+      .filters-bar { gap: 7px; }
+      .filters-bar select, .filters-bar input[type=date] {
+        font-size: 12px; padding: 6px 9px; width: 100%;
+      }
+      .filters-bar .spacer { display: none; }
+
+      /* Tabla desplazable horizontalmente */
+      .reports-container { overflow-x: auto; }
+      table { min-width: 600px; }
+      th, td { padding: 8px 10px; font-size: 12px; }
+
+      /* Ocultar columnas menos importantes en móvil */
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(5), td:nth-child(5) { display: none; }
+
+      /* Modal */
+      .modal-content { padding: 20px 16px; max-width: 98vw; max-height: 92vh; }
+      .meta-grid { grid-template-columns: 1fr !important; }
+
+      /* PTT Banner */
+      #ptt-banner { top: 60px; left: 8px; right: 8px; font-size: 13px; padding: 10px 14px; }
+
+      /* Admin PTT en movil: fixed bottom-center */
+      #admin-ptt-panel {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+        flex-direction: row; gap: 12px; justify-content: center;
+        padding: 12px 16px; background: var(--bg2);
+        border-top: 1px solid var(--border);
+      }
+      #admin-ptt-btn { width: 52px; height: 52px; }
+      #admin-ptt-label { margin: 0; font-size: 10px; }
+      #admin-ptt-timer { margin: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .hdr-left { gap: 8px; }
+    }
+
+    /* ══════════════ GUARD/SUPERVISOR APP VIEW ══════════════ */
+    #guard-app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      background: #0f1729;
+      color: #fff;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .g-appbar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      background: #1a2744;
+      border-bottom: 1px solid #243358;
+      flex-shrink: 0;
+    }
+    .g-appbar-logo { height: 28px; border-radius: 6px; }
+    .g-appbar-info { flex: 1; min-width: 0; }
+    .g-appbar-title { font-size: 14px; font-weight: 700; }
+    .g-appbar-sub { font-size: 11px; color: #94a3b8; }
+    .g-status-badge {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 12px;
+      font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    }
+    .g-status-badge.online { background: rgba(16,185,129,.15); color: #10b981; }
+    .g-status-badge.offline { background: rgba(239,68,68,.15); color: #ef4444; }
+    .g-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .g-btn-logout {
+      background: none; border: none; color: #94a3b8; cursor: pointer; padding: 6px;
+    }
+    /* Tabs content */
+    .g-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    /* Bottom tabs */
+    .g-tabs {
+      display: flex; background: #1a2744; border-top: 1px solid #243358; flex-shrink: 0;
+    }
+    .g-tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 8px 0; background: none; border: none; color: #94a3b8;
+      font-size: 10px; font-weight: 600; cursor: pointer; transition: color .15s;
+    }
+    .g-tab.active { color: #3b82f6; }
+    .g-tab svg { width: 22px; height: 22px; }
+    .g-tab-panel { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+    .g-tab-panel.active { display: flex; }
+    /* PTT tab */
+    .g-tipo-row {
+      display: flex; gap: 6px; padding: 14px 16px 8px;
+    }
+    .g-tipo-btn {
+      flex: 1; padding: 8px 4px; border-radius: 8px; border: 1.5px solid #243358;
+      background: #1a2744; color: #94a3b8; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all .15s; text-align: center;
+    }
+    .g-tipo-btn.active-NOVEDAD { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
+    .g-tipo-btn.active-INCIDENTE { background: rgba(245,158,11,.15); border-color: #f59e0b; color: #f59e0b; }
+    .g-tipo-btn.active-EMERGENCIA { background: rgba(239,68,68,.15); border-color: #ef4444; color: #ef4444; }
+    /* Broadcast banner */
+    .g-broadcast {
+      display: none; margin: 10px 16px; padding: 10px 14px; border-radius: 10px;
+      background: rgba(124,58,237,.15); border: 1px solid rgba(124,58,237,.6);
+      align-items: center; gap: 10px;
+    }
+    .g-broadcast.show { display: flex; }
+    .g-broadcast-icon { color: #a78bfa; flex-shrink: 0; }
+    .g-broadcast-text { font-size: 13px; font-weight: 600; }
+    .g-broadcast-text small { display: block; font-size: 10px; font-weight: 500; color: #a78bfa; opacity: .7; }
+    /* PTT button area */
+    .g-ptt-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; gap: 12px;
+    }
+    .g-ptt-btn {
+      width: 140px; height: 140px; border-radius: 50%; border: none;
+      background: #3b82f6; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 0 rgba(59,130,246,.4);
+      transition: all .2s;
+      -webkit-user-select: none; user-select: none;
+      touch-action: none;
+    }
+    .g-ptt-btn:active { transform: scale(.95); }
+    .g-ptt-btn.tipo-INCIDENTE { background: #f59e0b; box-shadow: 0 0 0 0 rgba(245,158,11,.4); }
+    .g-ptt-btn.tipo-EMERGENCIA { background: #ef4444; box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+    .g-ptt-btn.recording {
+      background: #ef4444 !important;
+      box-shadow: 0 0 0 18px rgba(239,68,68,.15) !important;
+      animation: gPttPulse 1.2s ease-in-out infinite;
+    }
+    .g-ptt-btn.saving { opacity: .5; pointer-events: none; }
+    @keyframes gPttPulse {
+      0%, 100% { box-shadow: 0 0 0 8px rgba(239,68,68,.2); }
+      50% { box-shadow: 0 0 0 22px rgba(239,68,68,.08); }
+    }
+    .g-ptt-btn svg { width: 48px; height: 48px; }
+    .g-ptt-label {
+      font-size: 13px; font-weight: 700; color: #94a3b8; letter-spacing: .5px;
+      text-align: center;
+    }
+    .g-ptt-label.recording { color: #ef4444; }
+    .g-ptt-label.saving { color: #94a3b8; }
+    /* Event log */
+    .g-events {
+      margin: 0 16px 12px; padding: 10px 12px; background: #1a2744;
+      border: 1px solid #243358; border-radius: 10px;
+      max-height: 110px; overflow-y: auto; flex-shrink: 0;
+    }
+    .g-event { font-size: 11px; color: #94a3b8; padding: 2px 0; }
+    /* Equipo tab */
+    .g-equipo-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px; background: #1a2744; border-bottom: 1px solid #243358;
+    }
+    .g-equipo-title { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    .g-equipo-count {
+      margin-left: auto; padding: 4px 10px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px;
+    }
+    .g-user-card {
+      display: flex; align-items: center; gap: 12px;
+      margin: 4px 12px; padding: 14px 16px;
+      background: #1a2744; border: 1px solid #243358; border-radius: 10px;
+      cursor: pointer; transition: all .2s;
+    }
+    .g-user-card:first-child { margin-top: 12px; }
+    .g-user-card.selected {
+      background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.5);
+    }
+    .g-user-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+    }
+    .g-user-name { font-size: 15px; font-weight: 600; }
+    .g-user-sub { font-size: 11px; color: #94a3b8; }
+    .g-user-status { margin-left: auto; }
+    .g-dot-online { width: 10px; height: 10px; border-radius: 50%; background: #10b981; }
+    /* Directed PTT panel */
+    .g-directed-panel {
+      display: none; padding: 14px 20px 24px;
+      background: #1a2744; border-top: 1px solid #243358;
+      box-shadow: 0 -4px 10px rgba(0,0,0,.3);
+      flex-direction: column; align-items: center; gap: 10px;
+    }
+    .g-directed-panel.show { display: flex; }
+    .g-directed-name { font-size: 14px; font-weight: 600; color: #93c5fd; display: flex; align-items: center; gap: 6px; }
+    .g-directed-btn {
+      width: 100%; height: 52px; border-radius: 14px; border: none;
+      color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .5px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .15s;
+    }
+    .g-directed-btn.idle { background: #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,.3); }
+    .g-directed-btn.recording { background: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,.4); }
+    .g-directed-btn.saving { background: #475569; }
+    /* Reportes tab cards */
+    .g-reports-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .g-report-card {
+      background: #1a2744; border: 1px solid #243358; border-radius: 10px;
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .g-report-top { display: flex; align-items: center; gap: 8px; }
+    .g-report-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .g-report-date { font-size: 11px; color: #94a3b8; }
+    .g-report-bottom { display: flex; align-items: center; gap: 8px; }
+    .g-report-play {
+      background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+      color: #3b82f6; border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .g-report-dur { font-size: 11px; color: #94a3b8; }
+    .g-load-more {
+      margin: 8px auto 20px; padding: 8px 24px; border-radius: 8px;
+      background: #1a2744; border: 1px solid #243358; color: #94a3b8;
+      font-size: 12px; cursor: pointer;
+    }
+    .g-empty {
+      text-align: center; padding: 60px 20px; color: #64748b;
+    }
+    .g-empty svg { margin-bottom: 12px; }
+    .g-empty-title { font-size: 14px; margin-bottom: 4px; }
+    .g-empty-sub { font-size: 12px; color: #475569; }
+    /* Rondas cards */
+    .g-ruta-card {
+      background: #1a2744; border: 1px solid #243358; border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    }
+    .g-ruta-card:hover { border-color: #3b82f6; }
+    .g-ruta-card h4 { color: #e2e8f0; font-size: 14px; margin: 0 0 4px 0; font-weight: 600; }
+    .g-ruta-card .g-ruta-meta { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+    .g-ruta-card .g-ruta-iniciar {
+      width: 100%; padding: 10px; border: none; border-radius: 8px; background: #3b82f6; color: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .g-ruta-card .g-ruta-iniciar:hover { background: #2563eb; }
+    .g-cp-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #243358;
+    }
+    .g-cp-item:last-child { border-bottom: none; }
+    .g-cp-num {
+      width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .g-cp-num.pendiente { background: #243358; color: #64748b; border: 2px solid #475569; }
+    .g-cp-num.visitado { background: #16a34a; color: #fff; border: 2px solid #4ade80; }
+    .g-cp-name { font-size: 13px; color: #e2e8f0; flex: 1; }
+    .g-cp-check { color: #4ade80; font-size: 16px; }
+    /* Monitor cards */
+    .g-monitor-card {
+      background: #1a2744; border: 1px solid #243358; border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    }
+    .g-monitor-card .g-mon-guard { font-size: 14px; color: #e2e8f0; font-weight: 600; }
+    .g-monitor-card .g-mon-ruta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .g-monitor-card .g-mon-bar { height: 5px; background: #243358; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .g-monitor-card .g-mon-fill { height: 100%; background: #4ade80; border-radius: 3px; }
+
+    /* ── Responsive guard panel ── */
+    @media (max-width: 380px) {
+      .g-appbar { padding: 8px 10px; gap: 6px; }
+      .g-appbar-logo { height: 22px; }
+      .g-appbar-title { font-size: 12px; }
+      .g-appbar-sub { font-size: 9px; }
+      .g-status-badge { padding: 3px 6px; font-size: 9px; }
+      .g-tipo-row { padding: 8px 10px 4px; gap: 4px; }
+      .g-tipo-btn { font-size: 10px; padding: 6px 2px; }
+      .g-ptt-btn { width: 110px; height: 110px; }
+      .g-ptt-btn svg { width: 36px; height: 36px; }
+      .g-ptt-label { font-size: 11px; }
+      .g-events { margin: 0 10px 8px; padding: 8px; max-height: 80px; }
+      .g-tab { font-size: 9px; padding: 6px 0; }
+      .g-tab svg { width: 18px; height: 18px; }
+      .g-user-card { margin: 3px 8px; padding: 10px 12px; gap: 8px; }
+      .g-user-avatar { width: 34px; height: 34px; }
+      .g-user-name { font-size: 13px; }
+      .g-report-card { padding: 10px; }
+      .g-ruta-card { padding: 10px; }
+    }
+    @media (max-width: 320px) {
+      .g-ptt-btn { width: 90px; height: 90px; }
+      .g-ptt-btn svg { width: 30px; height: 30px; }
+      .g-appbar-title { font-size: 11px; }
+    }
+    @media (min-width: 481px) and (max-width: 768px) {
+      .g-ptt-btn { width: 160px; height: 160px; }
+      .g-ptt-btn svg { width: 56px; height: 56px; }
+      .g-ptt-label { font-size: 14px; }
+    }
+    /* Safe area for notched phones */
+    #guard-app {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .g-tabs { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+    /* ── Confirmation modal ── */
+    .g-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 500; align-items: center; justify-content: center; padding: 20px;
+    }
+    .g-modal-overlay.show { display: flex; }
+    .g-modal {
+      background: #1a2744; border: 1px solid #243358; border-radius: 14px;
+      padding: 24px; width: 100%; max-width: 340px; text-align: center;
+    }
+    .g-modal-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+    .g-modal-msg { font-size: 13px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; }
+    .g-modal-actions { display: flex; gap: 10px; }
+    .g-modal-actions button {
+      flex: 1; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none;
+    }
+    .g-modal-cancel { background: #243358; color: #94a3b8; }
+    .g-modal-confirm { background: #3b82f6; color: #fff; }
+    .g-modal-confirm.danger { background: #ef4444; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ──────────────────────────────────────────────────── -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="/edison.webp" alt="WhatsEg" style="height:56px;filter:drop-shadow(0 0 20px rgba(34,197,94,.3))">
+      <h1>Reportes PTT</h1>
+      <p>WhatsEg · Central de Monitoreo</p>
+    </div>
+    <h2>Ingresa tus credenciales</h2>
+    <div class="form-group">
+      <label>Cédula / Usuario</label>
+      <input id="login-cedula" type="text" placeholder="Número de cédula" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+<header id="main-header" style="display:none">
+  <div class="hdr-left">
+    <div class="hdr-logo">
+      <img src="https://api.whatseg.com/edison.webp" alt="WhatsEg" style="height:32px">
+    </div>
+    <div class="live-dot" id="ws-status">Conectando...</div>
+  </div>
+  <div class="hdr-right">
+    <a href="https://api.whatseg.com/modulos" class="btn-back">&larr; M&oacute;dulos</a>
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);padding:6px 14px;border-radius:20px">
+      <div id="hdr-avatar" style="width:28px;height:28px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0"></div>
+      <span class="hdr-user" id="hdr-user"></span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<!-- ── APP LAYOUT ──────────────────────────────────────────────────────── -->
+<div class="app" id="main-app" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Comunidades</div>
+      <div id="sb-communities"></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Puestos</div>
+      <div id="sb-puestos"><div class="sb-online-item" style="color:var(--text2)">—</div></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Personal</div>
+      <div id="sb-personal"><div class="sb-online-item" style="color:var(--text2)">—</div></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">En línea ahora</div>
+      <div id="sb-online"></div>
+    </div>
+    <!-- Admin PTT -->
+    <div id="admin-ptt-panel">
+      <div id="admin-ptt-label">Mantener para hablar</div>
+      <button id="admin-ptt-btn" disabled title="Mantener presionado para hablar">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <div id="admin-ptt-timer">00:00</div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Reportes</div>
+        <div class="stat-val blue" id="stat-total">—</div>
+        <div class="stat-sub">todas las comunidades</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-val yellow" id="stat-pendientes">—</div>
+        <div class="stat-sub">por revisar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Hoy</div>
+        <div class="stat-val green" id="stat-hoy">—</div>
+        <div class="stat-sub">reportes de hoy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">En Línea</div>
+        <div class="stat-val purple" id="stat-online">0</div>
+        <div class="stat-sub">guardias conectados</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <select id="f-comunidad" onchange="onComunidadChange()">
+        <option value="">Todas las comunidades</option>
+      </select>
+      <select id="f-puesto" onchange="loadReportes(0)">
+        <option value="">Todos los puestos</option>
+      </select>
+      <select id="f-estado" onchange="loadReportes(0)">
+        <option value="">Todos los estados</option>
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="EN_REVISION">En revisión</option>
+        <option value="APROBADO">Aprobado</option>
+        <option value="DESCARTADO">Descartado</option>
+      </select>
+      <select id="f-tipo" onchange="loadReportes(0)">
+        <option value="">Todos los tipos</option>
+        <option value="NOVEDAD">Novedad</option>
+        <option value="INCIDENTE">Incidente</option>
+        <option value="EMERGENCIA">Emergencia</option>
+        <option value="PRUEBA">Prueba</option>
+      </select>
+      <input type="date" id="f-desde" onchange="loadReportes(0)" title="Desde">
+      <input type="date" id="f-hasta" onchange="loadReportes(0)" title="Hasta">
+      <button class="btn-filter" onclick="loadReportes(0)">Filtrar</button>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- Reports table -->
+    <div class="reports-container">
+      <div class="reports-header">
+        <span>Reportes de audio</span>
+        <span class="reports-count" id="reports-count">Cargando...</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Guardia</th>
+            <th>Tipo</th>
+            <th>Canal</th>
+            <th>Puesto</th>
+            <th>Fecha</th>
+            <th>Duración</th>
+            <th>Estado</th>
+            <th>Audio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="reports-body">
+          <tr class="empty-row"><td colspan="9">Cargando reportes...</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button class="btn-page" id="btn-prev" onclick="prevPage()" disabled>← Anterior</button>
+        <span class="page-info" id="page-info">—</span>
+        <button class="btn-page" id="btn-next" onclick="nextPage()" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── PUESTO DETAIL MODAL ─────────────────────────────────────────────── -->
+<div class="modal-bg" id="puesto-modal-bg" onclick="if(event.target===this)closePuestoModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);align-items:center;justify-content:center">
+  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="puesto-modal-title" style="font-size:17px;margin:0"></h3>
+      <button onclick="closePuestoModal()" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 4px">&times;</button>
+    </div>
+    <div id="puesto-modal-info" style="color:var(--text2);font-size:13px;margin-bottom:16px"></div>
+
+    <!-- Personal -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:8px">Personal asignado</div>
+      <div id="puesto-modal-personal" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+
+    <!-- Últimos reportes -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:8px">Últimos reportes PTT</div>
+      <div id="puesto-modal-reportes"></div>
+    </div>
+
+    <!-- Enviar alerta -->
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:8px">Enviar alerta al puesto</div>
+      <textarea id="puesto-alert-msg" placeholder="Escribe el mensaje de alerta para los guardias de este puesto..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;min-height:70px;outline:none;font-family:inherit;margin-bottom:10px"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-sm secondary" onclick="closePuestoModal()">Cerrar</button>
+        <button class="btn-sm" id="puesto-alert-btn" onclick="enviarAlertaPuesto()" style="background:#ef4444;color:#fff;padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer">
+          ⚠ Enviar Alerta
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AUDIO / DETAIL MODAL ────────────────────────────────────────────── -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Reporte PTT</h3>
+    <div class="modal-meta" id="modal-meta"></div>
+    <audio id="modal-audio" controls></audio>
+    <div class="modal-notes">
+      <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Notas de revisión</label>
+      <textarea id="modal-notas" placeholder="Agregar notas..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeModal()">Cerrar</button>
+      <button class="btn-sm discard"  onclick="updateEstado('DESCARTADO')">Descartar</button>
+      <button class="btn-sm review"   onclick="updateEstado('EN_REVISION')">En revisión</button>
+      <button class="btn-sm approve"  onclick="updateEstado('APROBADO')">✓ Aprobar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ──────────────────────────────────────────────────── -->
+<div class="modal-bg" id="confirm-modal-bg" onclick="if(event.target===this)closeConfirmModal(false)" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);align-items:center;justify-content:center">
+  <div class="modal" style="width:400px;text-align:center">
+    <div style="margin-bottom:16px">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <h3 id="confirm-title" style="margin-bottom:10px;font-size:16px">Confirmar</h3>
+    <p id="confirm-message" style="color:var(--text2);font-size:13px;margin-bottom:22px"></p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn-sm secondary" onclick="closeConfirmModal(false)">Cancelar</button>
+      <button class="btn-sm" id="confirm-btn" style="background:#ef4444;color:#fff" onclick="closeConfirmModal(true)">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIVE PTT BANNER ─────────────────────────────────────────────────── -->
+<div id="ptt-banner">
+  <div class="ptt-guard" id="ptt-guard-name">Guardia</div>
+  <div class="ptt-sub">▶ Transmitiendo PTT en vivo...</div>
+</div>
+
+<!-- admin PTT moved inside sidebar -->
+
+<!-- ══════════ GUARD / SUPERVISOR APP VIEW ══════════ -->
+<div id="guard-app">
+  <!-- App bar -->
+  <div class="g-appbar">
+    <img src="https://api.whatseg.com/edison.webp" class="g-appbar-logo" alt="">
+    <div class="g-appbar-info">
+      <div class="g-appbar-title">REPORTES PTT</div>
+      <div class="g-appbar-sub" id="g-user-name"></div>
+    </div>
+    <div class="g-status-badge offline" id="g-status">
+      <div class="g-status-dot"></div>
+      <span>DESCONECTADO</span>
+    </div>
+    <button class="g-btn-logout" onclick="logout()" title="Salir">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+
+  <!-- Tab panels -->
+  <div class="g-content">
+    <!-- ── PTT TAB ── -->
+    <div class="g-tab-panel active" id="g-panel-ptt">
+      <!-- Tipo selector -->
+      <div class="g-tipo-row">
+        <button class="g-tipo-btn active-NOVEDAD" data-tipo="NOVEDAD" onclick="gSelectTipo(this)">NOVEDAD</button>
+        <button class="g-tipo-btn" data-tipo="INCIDENTE" onclick="gSelectTipo(this)">INCIDENTE</button>
+        <button class="g-tipo-btn" data-tipo="EMERGENCIA" onclick="gSelectTipo(this)">EMERGENCIA</button>
+      </div>
+      <!-- Broadcast banner -->
+      <div class="g-broadcast" id="g-broadcast">
+        <div class="g-broadcast-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/><path d="M19 12c0 2.97-1.67 5.54-4 6.71V20.9C18.45 19.62 21 16.11 21 12s-2.55-7.62-6-8.9v2.19c2.33 1.17 4 3.74 4 6.71z"/></svg>
+        </div>
+        <div>
+          <div class="g-broadcast-text" id="g-broadcast-name">Transmitiendo...</div>
+        </div>
+      </div>
+      <!-- PTT button -->
+      <div class="g-ptt-area">
+        <button class="g-ptt-btn" id="g-ptt-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <div class="g-ptt-label" id="g-ptt-label">MANTENER PARA HABLAR</div>
+      </div>
+      <!-- Event log -->
+      <div class="g-events" id="g-events"></div>
+    </div>
+
+    <!-- ── EQUIPO TAB ── -->
+    <div class="g-tab-panel" id="g-panel-equipo">
+      <div class="g-equipo-header" id="g-equipo-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+        <span class="g-equipo-title" id="g-equipo-title">EN LINEA</span>
+        <div class="g-equipo-count" id="g-equipo-count" style="background:rgba(16,185,129,.15);color:#10b981">
+          <div style="width:8px;height:8px;border-radius:50%;background:#10b981"></div>
+          <span>0</span>
+        </div>
+      </div>
+      <div id="g-equipo-list" style="flex:1;overflow-y:auto"></div>
+      <!-- Directed PTT panel -->
+      <div class="g-directed-panel" id="g-directed-panel">
+        <div class="g-directed-name" id="g-directed-name">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72"/></svg>
+          <span></span>
+        </div>
+        <button class="g-directed-btn idle" id="g-directed-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          MANTENER PARA HABLAR
+        </button>
+      </div>
+    </div>
+
+    <!-- ── RONDAS TAB ── -->
+    <div class="g-tab-panel" id="g-panel-rondas">
+      <!-- Vista sin ronda activa: lista de rutas -->
+      <div id="g-rondas-rutas" style="display:none;flex-direction:column;flex:1">
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #243358;background:#1a2744">
+          <span style="font-size:12px;font-weight:700;letter-spacing:1px;color:#3b82f6">RUTAS DISPONIBLES</span>
+          <button onclick="gLoadRondas()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:11px">Actualizar</button>
+        </div>
+        <div id="g-rutas-list" style="padding:12px;overflow-y:auto;flex:1"></div>
+      </div>
+      <!-- Vista ronda activa: progreso -->
+      <div id="g-ronda-activa" style="display:none;flex-direction:column;flex:1">
+        <div style="padding:12px 16px;border-bottom:1px solid #243358;background:#1a2744">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;font-weight:700;color:#e2e8f0" id="g-ronda-nombre">Ronda</span>
+            <span style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:600">EN CURSO</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <span style="font-size:22px;font-weight:700;color:#4ade80" id="g-ronda-progreso">0/0</span>
+            <span style="font-size:12px;color:#94a3b8" id="g-ronda-pct">0%</span>
+          </div>
+          <div style="height:6px;background:#243358;border-radius:3px;overflow:hidden">
+            <div id="g-ronda-bar" style="height:100%;background:#4ade80;border-radius:3px;transition:width .3s;width:0%"></div>
+          </div>
+        </div>
+        <!-- Checkpoints list -->
+        <div id="g-ronda-checkpoints" style="padding:12px;overflow-y:auto;flex:1"></div>
+        <!-- Acciones -->
+        <div style="padding:12px;border-top:1px solid #243358;display:flex;gap:8px">
+          <button onclick="gAbrirScanner()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            ESCANEAR QR
+          </button>
+          <button onclick="gFinalizarRonda()" style="padding:12px 16px;border:1px solid rgba(239,68,68,.3);border-radius:10px;background:rgba(239,68,68,.1);color:#f87171;font-size:12px;font-weight:600;cursor:pointer">
+            Finalizar
+          </button>
+        </div>
+      </div>
+      <!-- Vista supervisor: monitoreo -->
+      <div id="g-rondas-monitor" style="display:none;flex-direction:column;flex:1">
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #243358;background:#1a2744">
+          <span style="font-size:12px;font-weight:700;letter-spacing:1px;color:#7c3aed">MONITOREO DE RONDAS</span>
+          <span style="font-size:11px;color:#94a3b8" id="g-monitor-count">0 activas</span>
+        </div>
+        <div id="g-monitor-list" style="padding:12px;overflow-y:auto;flex:1"></div>
+      </div>
+      <!-- Scanner QR overlay -->
+      <div id="g-qr-scanner" style="display:none;position:absolute;inset:0;z-index:100;background:#0f1729;flex-direction:column">
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #243358;background:#1a2744">
+          <span style="font-size:13px;font-weight:600;color:#e2e8f0">Escanear QR de Checkpoint</span>
+          <button onclick="gCerrarScanner()" style="background:none;border:none;color:#ef4444;font-size:20px;cursor:pointer;line-height:1">&times;</button>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px">
+          <video id="g-qr-video" style="width:100%;max-width:340px;border-radius:12px;border:2px solid #3b82f6;background:#000" autoplay playsinline></video>
+          <div style="margin-top:12px;font-size:12px;color:#94a3b8">Apunta la camara al codigo QR del checkpoint</div>
+          <div id="g-qr-result" style="margin-top:8px;font-size:13px;color:#4ade80;font-weight:600;display:none"></div>
+        </div>
+        <div style="padding:12px;border-top:1px solid #243358">
+          <div style="font-size:11px;color:#64748b;margin-bottom:6px">O ingresa el codigo manualmente:</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="g-qr-manual" placeholder="Codigo QR" style="flex:1;padding:10px;border:1px solid #243358;border-radius:8px;background:#1a2744;color:#e2e8f0;font-size:13px">
+            <button onclick="gMarcarManual()" style="padding:10px 16px;border:none;border-radius:8px;background:#4ade80;color:#0f1729;font-size:12px;font-weight:600;cursor:pointer">Marcar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REPORTES TAB ── -->
+    <div class="g-tab-panel" id="g-panel-reportes">
+      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #243358;background:#1a2744">
+        <span style="font-size:12px;font-weight:700;letter-spacing:1px;color:#3b82f6">MIS REPORTES</span>
+        <span style="font-size:12px;color:#94a3b8" id="g-reports-count">0 reportes</span>
+      </div>
+      <div class="g-reports-list" id="g-reports-list"></div>
+      <button class="g-load-more" id="g-load-more" onclick="gLoadMoreReports()" style="display:none">Cargar mas</button>
+    </div>
+  </div>
+
+  <!-- Bottom tabs -->
+  <div class="g-tabs">
+    <button class="g-tab active" data-panel="ptt" onclick="gSwitchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      PTT
+    </button>
+    <button class="g-tab" data-panel="equipo" onclick="gSwitchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span id="g-tab-equipo-label">Equipo</span>
+    </button>
+    <button class="g-tab" data-panel="reportes" onclick="gSwitchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Reportes
+    </button>
+    <button class="g-tab" data-panel="rondas" onclick="gSwitchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Rondas
+    </button>
+  </div>
+</div>
+
+<!-- Confirmation modal -->
+<div class="g-modal-overlay" id="g-confirm-modal">
+  <div class="g-modal">
+    <div class="g-modal-title" id="g-confirm-title">Confirmar</div>
+    <div class="g-modal-msg" id="g-confirm-msg"></div>
+    <div class="g-modal-actions">
+      <button class="g-modal-cancel" onclick="gConfirmResolve(false)">Cancelar</button>
+      <button class="g-modal-confirm" id="g-confirm-btn" onclick="gConfirmResolve(true)">Aceptar</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────
+const API     = 'https://api.whatseg.com/api/ext/reportes-ptt';
+const WS_URL  = 'wss://reportes.whatseg.com/ws/ptt';
+
+// ─── State ───────────────────────────────────────────────────────────────
+let token     = null;
+let userInfo  = null;
+let ws        = null;
+let wsReady   = false;
+let onlineUsers = {}; // guardia_nombre → { rol, community_id, ptt }
+
+let currentOffset = 0;
+const PAGE_SIZE   = 25;
+let totalReportes = 0;
+let selectedCommunities = []; // from mis-comunidades
+let openReporteId = null;
+let currentAudioBlob = null;
+
+// ─── Role-based access ──────────────────────────────────────────────────
+let userRole        = null;   // 'ADMIN' | 'SUPERVISOR' | 'GUARDIA'
+let userComunidadId = null;   // from JWT for non-admin roles
+let userGuardiaId   = null;   // sub from JWT for guard role
+let userName        = null;   // display name
+
+// ─── Auth helpers ─────────────────────────────────────────────────────────
+function getStoredToken() {
+  // Try guard token first (stored by Flutter or guard login)
+  const gt = localStorage.getItem('ptt_guard_token');
+  if (gt) return gt;
+  // Try admin token
+  try {
+    const admin = JSON.parse(localStorage.getItem('trd_admin') || '{}');
+    return admin.token || null;
+  } catch { return null; }
+}
+
+function decodePayload(tkn) {
+  try { return JSON.parse(atob(tkn.split('.')[1])); } catch { return {}; }
+}
+
+function detectRole() {
+  // Admin: came from modulos.html with trd_admin data
+  try {
+    const adminData = JSON.parse(localStorage.getItem('trd_admin') || 'null');
+    if (adminData && (adminData.token || adminData.nombre)) {
+      userRole = 'ADMIN';
+      userName = adminData.nombre || 'Administrador';
+      userComunidadId = null;
+      userGuardiaId   = null;
+      return;
+    }
+  } catch {}
+
+  // Guard or Supervisor from JWT
+  const payload = decodePayload(token);
+  userName        = payload.nombre || 'Usuario';
+  userComunidadId = payload.comunidad_id || null;
+  userGuardiaId   = payload.sub || null;
+
+  const rol = (payload.rol || '').toUpperCase();
+  if (rol === 'SUPERVISOR' || rol === 'COMANDANTE') {
+    userRole = 'SUPERVISOR';
+  } else {
+    userRole = 'GUARDIA';
+  }
+}
+
+function authFetch(url, opts = {}) {
+  return fetch(url, {
+    ...opts,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+    },
+  });
+}
+
+// ─── Login ────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const cedula   = document.getElementById('login-cedula').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl    = document.getElementById('login-err');
+  errEl.textContent = '';
+  if (!cedula || !password) { errEl.textContent = 'Completa los campos'; return; }
+
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cedula, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) { errEl.textContent = data.error || 'Error de autenticación'; return; }
+    // Guard/supervisor login: clear any leftover admin data
+    localStorage.removeItem('trd_admin');
+    localStorage.setItem('ptt_guard_token', data.token);
+    token = data.token;
+    userInfo = decodePayload(token);
+    detectRole();
+    startApp();
+  } catch (e) {
+    errEl.textContent = 'Error de conexión';
+  }
+}
+
+document.getElementById('login-cedula').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pass').focus(); });
+document.getElementById('login-pass').addEventListener('keydown',   e => { if(e.key==='Enter') doLogin(); });
+
+function logout() {
+  localStorage.removeItem('ptt_guard_token');
+  localStorage.removeItem('trd_admin');
+  location.reload();
+}
+
+// ─── Role-based UI ───────────────────────────────────────────────────────
+function applyRoleUI() {
+  const isAdmin      = userRole === 'ADMIN';
+  const isSupervisor = userRole === 'SUPERVISOR';
+  const isGuardia    = userRole === 'GUARDIA';
+
+  // "Modulos" back button - only for admins
+  const btnBack = document.querySelector('.btn-back');
+  if (btnBack) btnBack.style.display = isAdmin ? '' : 'none';
+
+  // Sidebar: communities section - only admins
+  const sbCommSection = document.getElementById('sb-communities')?.closest('.sb-section');
+  if (sbCommSection) sbCommSection.style.display = isAdmin ? '' : 'none';
+
+  // Sidebar: puestos section - admins and supervisors
+  const sbPuestosSection = document.getElementById('sb-puestos')?.closest('.sb-section');
+  if (sbPuestosSection) sbPuestosSection.style.display = isGuardia ? 'none' : '';
+
+  // Sidebar: personal section - simplify for guards
+  if (isGuardia) {
+    const sbPersonalSection = document.getElementById('sb-personal')?.closest('.sb-section');
+    if (sbPersonalSection) {
+      const titleEl = sbPersonalSection.querySelector('.sb-title');
+      if (titleEl) titleEl.textContent = 'Mi perfil';
+      document.getElementById('sb-personal').innerHTML =
+        '<div class="sb-online-item" style="gap:8px">' +
+          '<div style="width:30px;height:30px;border-radius:50%;background:rgba(34,197,94,.2);color:#22c55e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">' + (userName||'U').charAt(0).toUpperCase() + '</div>' +
+          '<div><div style="font-size:13px;color:var(--text);font-weight:600">' + esc(userName||'') + '</div>' +
+          '<div style="font-size:11px;color:var(--text2)">Guardia</div></div></div>';
+    }
+  }
+
+  // Sidebar: admin PTT panel - only for admins
+  const pttPanel = document.getElementById('admin-ptt-panel');
+  if (pttPanel && !isAdmin) {
+    pttPanel.style.display = 'none';
+    pttPanel.classList.remove('visible');
+  }
+
+  // Filters: lock community dropdown for non-admins
+  const fComunidad = document.getElementById('f-comunidad');
+  if (!isAdmin && fComunidad) {
+    fComunidad.disabled = true;
+    fComunidad.style.opacity = '0.6';
+    fComunidad.style.pointerEvents = 'none';
+  }
+
+  // Header: add community name for non-admins
+  if (!isAdmin && selectedCommunities.length > 0) {
+    const comName = selectedCommunities[0].nombre;
+    const hdrLogo = document.querySelector('.hdr-logo');
+    if (hdrLogo) {
+      let comLabel = document.getElementById('hdr-community-label');
+      if (!comLabel) {
+        comLabel = document.createElement('small');
+        comLabel.id = 'hdr-community-label';
+        comLabel.style.cssText = 'font-size:11px;color:var(--text2);margin-left:8px;';
+        hdrLogo.parentElement.insertBefore(comLabel, hdrLogo.nextSibling);
+      }
+      comLabel.textContent = comName;
+    }
+  }
+}
+
+// ─── App init ─────────────────────────────────────────────────────────────
+async function startApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+
+  if (userRole !== 'ADMIN') {
+    // ── Guard / Supervisor: show APK-like view ──
+    document.getElementById('main-header').style.display = 'none';
+    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('guard-app').style.display = 'flex';
+    initGuardApp();
+    return;
+  }
+
+  // ── Admin: show full admin panel ──
+  document.getElementById('main-header').style.display = '';
+  document.getElementById('main-app').style.display = '';
+
+  const displayName = userName || 'Usuario';
+  document.getElementById('hdr-user').textContent = displayName;
+  document.getElementById('hdr-avatar').textContent = displayName.charAt(0).toUpperCase();
+
+  await loadComunidades();
+  loadAllPuestosPersonal();
+  applyRoleUI();
+  await loadStats();
+  await loadReportes(0);
+  connectWS();
+}
+
+async function loadSingleCommunity(comunidadId) {
+  if (!comunidadId) return;
+  try {
+    const r = await authFetch(`${API}/mis-comunidades`);
+    if (r.ok) {
+      const all = await r.json();
+      const mine = all.find(c => c.id === comunidadId);
+      selectedCommunities = mine ? [mine] : [{ id: comunidadId, nombre: 'Mi comunidad' }];
+    } else {
+      selectedCommunities = [{ id: comunidadId, nombre: 'Mi comunidad' }];
+    }
+  } catch {
+    selectedCommunities = [{ id: comunidadId, nombre: 'Mi comunidad' }];
+  }
+
+  // Set filter dropdown to single community (locked)
+  const sel = document.getElementById('f-comunidad');
+  sel.innerHTML = '';
+  const opt = document.createElement('option');
+  opt.value = selectedCommunities[0].id;
+  opt.textContent = selectedCommunities[0].nombre;
+  sel.appendChild(opt);
+  sel.value = selectedCommunities[0].id;
+
+  await loadPuestosFilter(comunidadId);
+  loadPuestosPersonal(comunidadId);
+}
+
+// ─── Communities ──────────────────────────────────────────────────────────
+async function loadComunidades() {
+  try {
+    const r = await authFetch(`${API}/mis-comunidades`);
+    if (!r.ok) return;
+    selectedCommunities = await r.json();
+    renderSidebarCommunities();
+    renderFilterCommunities();
+  } catch {}
+}
+
+function renderSidebarCommunities() {
+  const el = document.getElementById('sb-communities');
+  if (!selectedCommunities.length) { el.innerHTML = '<div class="sb-online-item">Sin comunidades</div>'; return; }
+  el.innerHTML = selectedCommunities.map(c => `
+    <div class="sb-comm" onclick="filterByCommunity('${c.id}')" id="sb-c-${c.id}">
+      <span>${esc(c.nombre)}</span>
+      <span class="badge" id="online-badge-${c.id}" title="Guardias en línea" style="display:none">0</span>
+    </div>
+  `).join('');
+  loadOnlineCounts();
+}
+
+const CENTRAL_URL = 'https://reportes.whatseg.com';
+
+async function loadOnlineCounts() {
+  try {
+    const r = await authFetch(`${CENTRAL_URL}/ptt/status`);
+    if (!r.ok) return;
+    const data = await r.json();
+    const channels = data.channels || {};
+    selectedCommunities.forEach(c => {
+      const badge = document.getElementById(`online-badge-${c.id}`);
+      if (!badge) return;
+      const count = channels[c.id] ?? 0;
+      badge.textContent = count;
+      badge.style.display = count > 0 ? '' : 'none';
+    });
+  } catch {}
+}
+
+// Refrescar cada 30 segundos
+setInterval(() => { if (selectedCommunities.length) loadOnlineCounts(); }, 30000);
+
+function renderFilterCommunities() {
+  const sel = document.getElementById('f-comunidad');
+  selectedCommunities.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.nombre;
+    sel.appendChild(opt);
+  });
+  // Auto-seleccionar la primera comunidad y cargar sus puestos
+  if (selectedCommunities.length > 0) {
+    sel.value = selectedCommunities[0].id;
+    loadPuestosFilter(selectedCommunities[0].id);
+  }
+}
+
+async function onComunidadChange() {
+  const comunidadId = document.getElementById('f-comunidad').value;
+  await loadPuestosFilter(comunidadId);
+  loadReportes(0);
+  updateAdminPttEnabled();
+}
+
+async function loadPuestosFilter(comunidad_id) {
+  const sel = document.getElementById('f-puesto');
+  sel.innerHTML = '<option value="">Todos los puestos</option>';
+  if (!comunidad_id) return;
+  try {
+    const r = await authFetch(`${RONDAS_API}/puestos?comunidad_id=${comunidad_id}`);
+    if (!r.ok) return;
+    const puestos = await r.json();
+    puestos.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.nombre;
+      sel.appendChild(opt);
+    });
+  } catch {}
+}
+
+function filterByCommunity(id) {
+  document.getElementById('f-comunidad').value = id;
+  document.querySelectorAll('.sb-comm').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`sb-c-${id}`);
+  if (el) el.classList.add('active');
+  // Limpiar filtro de puesto al cambiar comunidad
+  document.getElementById('f-puesto').value = '';
+  document.querySelectorAll('[id^="sb-p-"]').forEach(el => {
+    el.style.borderLeftColor = 'transparent';
+    el.style.color = '';
+  });
+  loadPuestosFilter(id);
+  loadReportes(0);
+  loadPuestosPersonal(id);
+}
+
+function filterByPuesto(id, nombre, comunidadId) {
+  // Marcar puesto activo en sidebar
+  document.querySelectorAll('[id^="sb-p-"]').forEach(el => {
+    el.style.borderLeftColor = 'transparent';
+    el.querySelector('span').style.color = '';
+  });
+  const el = document.getElementById(`sb-p-${id}`);
+  if (el) {
+    el.style.borderLeftColor = 'var(--accent)';
+    el.querySelector('span').style.color = 'var(--accent)';
+  }
+  // Filtrar tabla por puesto
+  const sel = document.getElementById('f-puesto');
+  if (sel.querySelector(`option[value="${id}"]`)) {
+    sel.value = id;
+  }
+  loadReportes(0);
+  // Abrir modal de detalle del puesto
+  verDetallePuesto(id, nombre, comunidadId);
+}
+
+const RONDAS_API = 'https://api.whatseg.com/api/ext/rondas';
+
+async function loadPuestosPersonal(comunidad_id) {
+  const [rP, rG] = await Promise.all([
+    authFetch(`${RONDAS_API}/puestos?comunidad_id=${comunidad_id}`).catch(() => null),
+    authFetch(`${RONDAS_API}/personal?comunidad_id=${comunidad_id}`).catch(() => null),
+  ]);
+
+  const elP = document.getElementById('sb-puestos');
+  if (rP && rP.ok) {
+    const puestos = await rP.json();
+    elP.innerHTML = puestos.length
+      ? puestos.map(p => `
+          <div class="sb-online-item" id="sb-p-${p.id}" style="gap:6px;cursor:pointer;border-left:3px solid transparent;padding-left:13px;transition:all .15s" onclick="filterByPuesto('${p.id}','${esc(p.nombre)}','${comunidad_id}')" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
+            <span style="font-size:12px;color:var(--text)">${esc(p.nombre)}</span>
+          </div>`).join('')
+      : '<div class="sb-online-item" style="color:var(--text2)">Sin puestos</div>';
+  }
+
+  const elG = document.getElementById('sb-personal');
+  if (rG && rG.ok) {
+    const personal = await rG.json();
+    elG.innerHTML = personal.length
+      ? personal.map(g => `
+          <div class="sb-online-item" style="gap:6px">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(99,102,241,.2);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${esc(g.nombre).charAt(0).toUpperCase()}</div>
+            <div style="min-width:0">
+              <div style="font-size:12px;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.nombre)}</div>
+              <div style="font-size:10px;color:var(--text2)">${esc(g.rol || '')}</div>
+            </div>
+          </div>`).join('')
+      : '<div class="sb-online-item" style="color:var(--text2)">Sin personal</div>';
+  }
+}
+
+async function loadAllPuestosPersonal() {
+  if (!selectedCommunities.length) return;
+  // Load for first community by default, or all if only one
+  loadPuestosPersonal(selectedCommunities[0].id);
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await authFetch(`${API}/stats`);
+    if (!r.ok) return;
+    const s = await r.json();
+    document.getElementById('stat-total').textContent     = s.total ?? '—';
+    document.getElementById('stat-pendientes').textContent = s.pendientes ?? '—';
+    document.getElementById('stat-hoy').textContent        = s.hoy ?? '—';
+  } catch {}
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────
+async function loadReportes(offset) {
+  currentOffset = offset;
+  const params = new URLSearchParams({
+    limit: PAGE_SIZE,
+    offset,
+  });
+  const comunidad = document.getElementById('f-comunidad').value;
+  const puesto    = document.getElementById('f-puesto').value;
+  const estado    = document.getElementById('f-estado').value;
+  const tipo      = document.getElementById('f-tipo').value;
+  const desde     = document.getElementById('f-desde').value;
+  const hasta     = document.getElementById('f-hasta').value;
+  if (comunidad) params.set('comunidad_id', comunidad);
+  if (puesto)    params.set('puesto_id', puesto);
+  if (estado)    params.set('estado', estado);
+  if (tipo)      params.set('tipo', tipo);
+  if (desde)     params.set('desde', desde);
+  if (hasta)     params.set('hasta', hasta);
+  // Guard: only their own reports
+  if (userRole === 'GUARDIA' && userGuardiaId) params.set('guardia_id', userGuardiaId);
+
+  const tbody = document.getElementById('reports-body');
+  tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Cargando...</td></tr>';
+
+  try {
+    const r = await authFetch(`${API}/reportes?${params}`);
+    if (!r.ok) { tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Error al cargar</td></tr>'; return; }
+    const { total, items } = await r.json();
+    totalReportes = total;
+    renderReportes(items, total);
+  } catch {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Error de conexión</td></tr>';
+  }
+}
+
+function renderReportes(items, total) {
+  const tbody = document.getElementById('reports-body');
+  document.getElementById('reports-count').textContent = `${total} reportes`;
+
+  if (!items.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Sin reportes para los filtros seleccionados</td></tr>';
+  } else {
+    tbody.innerHTML = items.map(r => {
+      const canal = r.destinatario
+        ? `<span class="badge-canal dirigido" title="Dirigido a ${esc(r.destinatario)}">Dirigido</span><span style="display:block;font-size:10px;color:var(--text2);margin-top:2px">${esc(r.destinatario)}</span>`
+        : `<span class="badge-canal general">General</span>`;
+      return `
+      <tr class="${r.tipo === 'EMERGENCIA' || r.tipo === 'INCIDENTE' ? 'row-' + r.tipo : ''}">
+        <td><strong>${esc(r.guardia_nombre)}</strong></td>
+        <td><span class="badge-tipo tipo-${r.tipo}">${r.tipo}</span></td>
+        <td>${canal}</td>
+        <td style="color:var(--text2);font-size:12px">${esc(r.puesto_nombre || '—')}</td>
+        <td style="color:var(--text2);font-size:12px">${fmtDate(r.created_at)}</td>
+        <td style="color:var(--text2);font-size:12px">${fmtDur(r.duracion_seg)}</td>
+        <td class="estado-cell">
+          ${userRole !== 'GUARDIA'
+            ? `<span class="badge-estado estado-${r.estado} clickable" onclick="toggleEstadoDropdown(event,'${r.id}','${r.estado}')">${r.estado.replace('_',' ')}</span>`
+            : `<span class="badge-estado estado-${r.estado}">${r.estado.replace('_',' ')}</span>`
+          }
+        </td>
+        <td>
+          <button class="btn-play" onclick="playReporte('${r.id}',this)">
+            ▶ Escuchar
+          </button>
+        </td>
+        <td style="white-space:nowrap">
+          <button class="btn-icon" onclick="openModal('${r.id}')" title="${userRole === 'GUARDIA' ? 'Ver detalle' : 'Revisar'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          ${userRole === 'ADMIN'
+            ? `<button class="btn-icon danger" onclick="deleteReporte('${r.id}')" title="Eliminar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>`
+            : ''
+          }
+        </td>
+      </tr>
+    `}).join('');
+  }
+
+  // Pagination
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const currentPage = Math.floor(currentOffset / PAGE_SIZE) + 1;
+  document.getElementById('page-info').textContent = `Página ${currentPage} de ${Math.max(1, totalPages)}`;
+  document.getElementById('btn-prev').disabled = currentOffset === 0;
+  document.getElementById('btn-next').disabled = currentOffset + PAGE_SIZE >= total;
+}
+
+function prevPage() { if (currentOffset > 0) loadReportes(currentOffset - PAGE_SIZE); }
+function nextPage() { if (currentOffset + PAGE_SIZE < totalReportes) loadReportes(currentOffset + PAGE_SIZE); }
+
+// ─── Audio ────────────────────────────────────────────────────────────────
+async function playReporte(id, btn) {
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Cargando...';
+  try {
+    const r = await authFetch(`${API}/reportes/${id}/audio`);
+    if (!r.ok) throw new Error('No disponible');
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = document.getElementById('modal-audio');
+    // Inline quick play without opening modal
+    const oldUrl = audio.src;
+    if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+    audio.src = url;
+    audio.play();
+    btn.textContent = '⏹ Reproduciendo';
+    audio.onended = () => { btn.textContent = '▶ Escuchar'; btn.classList.remove('loading'); };
+    btn.onclick = () => { audio.pause(); audio.currentTime = 0; btn.textContent = '▶ Escuchar'; btn.classList.remove('loading'); btn.onclick = () => playReporte(id, btn); };
+  } catch {
+    btn.textContent = '✕ Error';
+    btn.classList.remove('loading');
+    setTimeout(() => { btn.textContent = '▶ Escuchar'; }, 2000);
+  }
+}
+
+// ─── Auto-play (Central de Radio) ─────────────────────────────────────────
+let _autoPlayQueue = [];
+let _autoPlaying = false;
+let _autoPlayEnabled = true; // siempre activo para modo central de radio
+const _autoPlayAudio = new Audio();
+_autoPlayAudio.volume = 1.0;
+
+async function autoPlayReporte(reporteId, guardiaNombre, tipo) {
+  _autoPlayQueue.push({ id: reporteId, guardia: guardiaNombre, tipo });
+  if (!_autoPlaying) _processAutoPlayQueue();
+}
+
+async function _processAutoPlayQueue() {
+  if (_autoPlayQueue.length === 0) { _autoPlaying = false; return; }
+  _autoPlaying = true;
+  const item = _autoPlayQueue.shift();
+  try {
+    // Mostrar banner de reproducción
+    _showAutoPlayBanner(item.guardia, item.tipo);
+    const r = await authFetch(`${API}/reportes/${item.id}/audio`);
+    if (!r.ok) throw new Error('Audio no disponible');
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const oldUrl = _autoPlayAudio.src;
+    if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+    _autoPlayAudio.src = url;
+    await _autoPlayAudio.play();
+    // Esperar a que termine
+    await new Promise(resolve => {
+      _autoPlayAudio.onended = resolve;
+      _autoPlayAudio.onerror = resolve;
+    });
+  } catch (e) {
+    console.warn('[AutoPlay] Error:', e);
+  }
+  _hideAutoPlayBanner();
+  // Pausa breve entre reportes
+  await new Promise(r => setTimeout(r, 500));
+  _processAutoPlayQueue();
+}
+
+function _showAutoPlayBanner(guardia, tipo) {
+  let banner = document.getElementById('autoplay-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'autoplay-banner';
+    banner.style.cssText = 'position:fixed;top:70px;right:20px;z-index:9999;background:#1e3a5f;color:white;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;font-size:14px;animation:fadeIn .3s;max-width:350px;';
+    document.body.appendChild(banner);
+  }
+  const colorTipo = tipo === 'EMERGENCIA' ? '#ef4444' : tipo === 'INCIDENTE' ? '#f59e0b' : '#3b82f6';
+  banner.innerHTML = `
+    <span style="display:inline-block;width:12px;height:12px;background:${colorTipo};border-radius:50%;animation:pulse 1s infinite"></span>
+    <span><b>${guardia || 'Guardia'}</b> · ${tipo || 'NOVEDAD'}</span>
+    <span style="font-size:12px;opacity:0.7">reproduciendo...</span>
+  `;
+  banner.style.display = 'flex';
+}
+
+function _hideAutoPlayBanner() {
+  const banner = document.getElementById('autoplay-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+// ─── Modal de revisión ────────────────────────────────────────────────────
+async function openModal(id) {
+  openReporteId = id;
+  try {
+    const r = await authFetch(`${API}/reportes/${id}`);
+    if (!r.ok) return;
+    const rep = await r.json();
+
+    document.getElementById('modal-title').textContent = `Reporte · ${rep.tipo} · ${fmtDate(rep.created_at)}`;
+    document.getElementById('modal-meta').innerHTML = `
+      <div class="meta-item"><label>Guardia</label><div>${esc(rep.guardia_nombre)}</div></div>
+      <div class="meta-item"><label>Puesto</label><div>${esc(rep.puesto_nombre || '—')}</div></div>
+      <div class="meta-item"><label>Tipo</label><div><span class="badge-tipo tipo-${rep.tipo}">${rep.tipo}</span></div></div>
+      <div class="meta-item"><label>Estado</label><div><span class="badge-estado estado-${rep.estado}">${rep.estado.replace('_',' ')}</span></div></div>
+      <div class="meta-item"><label>Canal</label><div>${rep.destinatario ? `<span class="badge-canal dirigido">Dirigido</span> <span style="font-size:12px;color:var(--text2)">${esc(rep.destinatario)}</span>` : '<span class="badge-canal general">General</span>'}</div></div>
+      <div class="meta-item"><label>Duración</label><div>${fmtDur(rep.duracion_seg)}</div></div>
+      <div class="meta-item"><label>Tamaño</label><div>${fmtSize(rep.tamanio_bytes)}</div></div>
+      ${rep.descripcion ? `<div class="meta-item" style="grid-column:span 2"><label>Descripción</label><div>${esc(rep.descripcion)}</div></div>` : ''}
+    `;
+    document.getElementById('modal-notas').value = rep.notas_revision || '';
+
+    // Load audio
+    const audioEl = document.getElementById('modal-audio');
+    audioEl.src = '';
+    const ar = await authFetch(`${API}/reportes/${id}/audio`);
+    if (ar.ok) {
+      const blob = await ar.blob();
+      const url  = URL.createObjectURL(blob);
+      if (currentAudioBlob) URL.revokeObjectURL(currentAudioBlob);
+      currentAudioBlob = url;
+      audioEl.src = url;
+    }
+
+    // Role-based modal controls
+    const modalActions = document.querySelector('.modal-actions');
+    const modalNotas   = document.getElementById('modal-notas');
+    const notesSection = document.querySelector('.modal-notes');
+    if (userRole === 'GUARDIA') {
+      modalActions.innerHTML = '<button class="btn-sm secondary" onclick="closeModal()">Cerrar</button>';
+      modalNotas.disabled = true;
+      modalNotas.placeholder = '';
+      notesSection.style.display = rep.notas_revision ? '' : 'none';
+    } else {
+      modalNotas.disabled = false;
+      modalNotas.placeholder = 'Agregar notas...';
+      notesSection.style.display = '';
+      modalActions.innerHTML =
+        '<button class="btn-sm secondary" onclick="closeModal()">Cerrar</button>' +
+        '<button class="btn-sm discard"  onclick="updateEstado(\'DESCARTADO\')">Descartar</button>' +
+        '<button class="btn-sm review"   onclick="updateEstado(\'EN_REVISION\')">En revisi\u00f3n</button>' +
+        '<button class="btn-sm approve"  onclick="updateEstado(\'APROBADO\')">Aprobar</button>';
+    }
+
+    document.getElementById('modal-bg').classList.add('show');
+  } catch {}
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+  const audioEl = document.getElementById('modal-audio');
+  audioEl.pause();
+  openReporteId = null;
+}
+
+async function updateEstado(estado) {
+  if (!openReporteId) return;
+  const notas = document.getElementById('modal-notas').value.trim();
+  try {
+    const r = await authFetch(`${API}/reportes/${openReporteId}/estado`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado, notas_revision: notas }),
+    });
+    if (!r.ok) { showToast('Error al actualizar'); return; }
+    showToast(`Estado → ${estado}`);
+    closeModal();
+    loadReportes(currentOffset);
+    loadStats();
+  } catch { showToast('Error de conexión'); }
+}
+
+// ─── Inline estado dropdown ──────────────────────────────────────────────
+const ESTADOS = [
+  { value: 'PENDIENTE',    label: 'Pendiente',    color: '#fbbf24' },
+  { value: 'EN_REVISION',  label: 'En revision',  color: '#60a5fa' },
+  { value: 'APROBADO',     label: 'Aprobado',     color: '#34d399' },
+  { value: 'DESCARTADO',   label: 'Descartado',   color: '#94a3b8' },
+];
+
+function toggleEstadoDropdown(e, reporteId, currentEstado) {
+  if (userRole === 'GUARDIA') return;
+  e.stopPropagation();
+  // Cerrar cualquier dropdown abierto
+  document.querySelectorAll('.estado-dropdown.open').forEach(d => d.remove());
+
+  const cell = e.target.closest('.estado-cell');
+  const dd = document.createElement('div');
+  dd.className = 'estado-dropdown open';
+  dd.innerHTML = ESTADOS.map(s =>
+    `<div class="estado-opt${s.value === currentEstado ? ' active' : ''}" data-estado="${s.value}">
+      <span class="dot" style="background:${s.color}"></span>${s.label}
+    </div>`
+  ).join('');
+
+  dd.querySelectorAll('.estado-opt').forEach(opt => {
+    opt.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const nuevoEstado = opt.dataset.estado;
+      dd.remove();
+      if (nuevoEstado === currentEstado) return;
+      try {
+        const r = await authFetch(`${API}/reportes/${reporteId}/estado`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado: nuevoEstado }),
+        });
+        if (!r.ok) { showToast('Error al actualizar'); return; }
+        showToast(`Estado → ${nuevoEstado.replace('_',' ')}`);
+        loadReportes(currentOffset);
+        loadStats();
+      } catch { showToast('Error de conexion'); }
+    });
+  });
+
+  cell.appendChild(dd);
+
+  // Cerrar al click fuera
+  const closeHandler = () => { dd.remove(); document.removeEventListener('click', closeHandler); };
+  setTimeout(() => document.addEventListener('click', closeHandler), 0);
+}
+
+// ─── Confirm Modal ───────────────────────────────────────────────────────
+let _confirmResolve = null;
+function showConfirmModal(title, message, btnText = 'Eliminar') {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-btn').textContent = btnText;
+  const bg = document.getElementById('confirm-modal-bg');
+  bg.style.display = 'flex';
+  return new Promise(resolve => { _confirmResolve = resolve; });
+}
+function closeConfirmModal(result) {
+  document.getElementById('confirm-modal-bg').style.display = 'none';
+  if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
+}
+
+async function deleteReporte(id) {
+  if (userRole !== 'ADMIN') return;
+  const ok = await showConfirmModal(
+    'Eliminar reporte',
+    'Se eliminara este reporte y su archivo de audio de forma permanente. Esta accion no se puede deshacer.',
+  );
+  if (!ok) return;
+  try {
+    const r = await authFetch(`${API}/reportes/${id}`, { method: 'DELETE' });
+    if (r.ok) {
+      showToast('Reporte eliminado');
+      closeModal();
+      loadReportes(currentOffset);
+      loadStats();
+    }
+  } catch {}
+}
+
+// ─── WebSocket PTT ────────────────────────────────────────────────────────
+let _wsPingInterval = null;
+
+function connectWS() {
+  const statusEl = document.getElementById('ws-status');
+  statusEl.textContent = 'Conectando...';
+  statusEl.style.color = 'var(--yellow)';
+
+  // Limpiar ping anterior si existe
+  if (_wsPingInterval) { clearInterval(_wsPingInterval); _wsPingInterval = null; }
+
+  try { ws = new WebSocket(WS_URL); } catch(e) {
+    statusEl.textContent = '○ Desconectado';
+    statusEl.style.color = 'var(--red)';
+    setTimeout(connectWS, 8000);
+    return;
+  }
+
+  ws.onopen = () => {
+    wsReady = true;
+    statusEl.textContent = '● En línea';
+    statusEl.style.color = 'var(--green)';
+    // Join as MONITOR (listen only)
+    ws.send(JSON.stringify({
+      type: 'join',
+      token,
+      community_id: '', // empty = monitor all
+      role: 'MONITOR',
+    }));
+    // Keepalive ping cada 25s para evitar timeout de nginx
+    _wsPingInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping' }));
+    }, 25000);
+    updateAdminPttEnabled();
+  };
+
+  ws.onmessage = (evt) => {
+    if (!(typeof evt.data === 'string')) return; // ignorar binario en modo monitor
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+    handleWsMsg(msg);
+  };
+
+  ws.onclose = (evt) => {
+    wsReady = false;
+    if (_wsPingInterval) { clearInterval(_wsPingInterval); _wsPingInterval = null; }
+    statusEl.textContent = '○ Desconectado';
+    statusEl.style.color = 'var(--red)';
+    // No limpiar onlineMap en close para no perder contexto en reconexiones cortas
+    updateAdminPttEnabled();
+    setTimeout(connectWS, 5000);
+  };
+
+  ws.onerror = () => {
+    // ws.onclose se dispara después, no necesitamos repetir aquí
+    console.warn('[PTT WS] Error de conexión');
+  };
+}
+
+function handleWsMsg(msg) {
+  switch (msg.type) {
+    case 'joined':
+      console.log('[PTT WS] Joined as monitor, rol:', msg.rol);
+      break;
+
+    case 'online_list':
+      // Lista de usuarios ya conectados al reconectar
+      if (Array.isArray(msg.users)) {
+        onlineUsers = {};
+        msg.users.forEach(u => registerOnline(u.guardia_nombre, u.rol, u.community_id, false));
+      }
+      break;
+
+    case 'user_joined':
+      registerOnline(msg.guardia_nombre, msg.rol, msg.community_id, false);
+      showToast(`${msg.guardia_nombre} se conectó`);
+      break;
+
+    case 'user_left':
+      unregisterOnline(msg.guardia_nombre, msg.community_id);
+      break;
+
+    case 'ptt_start':
+      setPTTActive(msg.guardia_nombre, msg.guardia_id, true);
+      showPTTBanner(msg.guardia_nombre);
+      break;
+
+    case 'ptt_end':
+      setPTTActive(msg.guardia_nombre, msg.guardia_id, false);
+      hidePTTBanner();
+      break;
+
+    case 'ptt_saved': {
+      const tipo = msg.reporte?.tipo || '';
+      showToast(`Nuevo reporte: ${msg.reporte.guardia_nombre} · ${tipo}`);
+      if (tipo === 'EMERGENCIA') {
+        playNotificationSound();
+        playAlertSound('emergency');
+      } else if (tipo === 'INCIDENTE') {
+        playAlertSound('incident');
+      }
+      // Auto-play: reproducir automáticamente como central de radio
+      if (msg.reporte?.id) {
+        autoPlayReporte(msg.reporte.id, msg.reporte.guardia_nombre, tipo);
+      }
+      loadReportes(0);
+      loadStats();
+      break;
+    }
+
+    case 'admin_ptt_start':
+      showPTTBanner(msg.from || 'Central de Monitoreo');
+      break;
+
+    case 'admin_ptt_end':
+      hidePTTBanner();
+      break;
+
+    case 'admin_alert':
+      showToast(`⚠ Alerta enviada por ${msg.from || 'Admin'}`);
+      break;
+  }
+
+  updateOnlineCount();
+}
+
+function registerOnline(nombre, rol, community_id, ptt) {
+  onlineUsers[nombre] = { rol, community_id: community_id || '', ptt };
+  renderOnline();
+}
+
+function unregisterOnline(nombre) {
+  delete onlineUsers[nombre];
+  renderOnline();
+}
+
+function setPTTActive(nombre, id, active) {
+  if (onlineUsers[nombre]) onlineUsers[nombre].ptt = active;
+  renderOnline();
+}
+
+function renderOnline() {
+  const el = document.getElementById('sb-online');
+  const users = Object.entries(onlineUsers);
+  if (!users.length) {
+    el.innerHTML = '<div class="sb-online-item" style="color:var(--text2)">Nadie en línea</div>';
+    return;
+  }
+  el.innerHTML = users.map(([nombre, u]) => `
+    <div class="sb-online-item">
+      <div class="${u.ptt ? 'online-ptt' : 'online-dot'}"></div>
+      <div>
+        <div style="font-size:12px">${esc(nombre)}</div>
+        <div style="font-size:10px;color:var(--text2)">${u.rol}${u.ptt ? ' · PTT' : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateOnlineCount() {
+  const count = Object.keys(onlineUsers).length;
+  document.getElementById('stat-online').textContent = count;
+}
+
+function showPTTBanner(nombre) {
+  const banner = document.getElementById('ptt-banner');
+  document.getElementById('ptt-guard-name').textContent = nombre;
+  banner.style.display = 'block';
+}
+
+function hidePTTBanner() {
+  document.getElementById('ptt-banner').style.display = 'none';
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+         d.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+}
+
+function fmtDur(seg) {
+  if (!seg) return '—';
+  const s = Math.round(seg);
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s/60)}m ${s%60}s`;
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1048576) return `${(bytes/1024).toFixed(1)} KB`;
+  return `${(bytes/1048576).toFixed(1)} MB`;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ─── Puesto modal ─────────────────────────────────────────────────────────
+let currentPuestoId   = null;
+let currentPuestoComId = null;
+
+async function verDetallePuesto(puestoId, puestoNombre, comunidadId) {
+  currentPuestoId    = puestoId;
+  currentPuestoComId = comunidadId || document.getElementById('f-comunidad').value;
+
+  document.getElementById('puesto-modal-title').textContent = puestoNombre;
+  document.getElementById('puesto-modal-info').textContent  = '';
+  document.getElementById('puesto-modal-personal').innerHTML  = '<div style="color:var(--text2)">Cargando...</div>';
+  document.getElementById('puesto-modal-reportes').innerHTML  = '<div style="color:var(--text2)">Cargando...</div>';
+  document.getElementById('puesto-alert-msg').value = '';
+
+  const bg = document.getElementById('puesto-modal-bg');
+  bg.style.display = 'flex';
+
+  // Personal asignado al puesto
+  try {
+    const r = await authFetch(`${RONDAS_API}/personal?comunidad_id=${currentPuestoComId}`);
+    if (r.ok) {
+      const todos = await r.json();
+      const asignados = todos.filter(u => {
+        if (!u.puesto_id) return false;
+        if (u.puesto_id === puestoId) return true;
+        try { const ids = JSON.parse(u.puesto_id); return Array.isArray(ids) && ids.includes(puestoId); } catch { return false; }
+      });
+      const elP = document.getElementById('puesto-modal-personal');
+      if (!asignados.length) {
+        elP.innerHTML = '<div style="color:var(--text2);font-size:12px">Sin personal asignado</div>';
+      } else {
+        elP.innerHTML = asignados.map(u => `
+          <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+            <div style="width:30px;height:30px;border-radius:50%;background:rgba(99,102,241,.2);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${esc(u.nombre).charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600">${esc(u.nombre)}</div>
+              <div style="font-size:11px;color:var(--text2)">${esc(u.rol || '')}${u.turno ? ' · ' + esc(u.turno) : ''}</div>
+            </div>
+          </div>`).join('');
+      }
+    }
+  } catch {}
+
+  // Últimos reportes del puesto
+  try {
+    const params = new URLSearchParams({ limit: 5, offset: 0, comunidad_id: currentPuestoComId, puesto_id: puestoId });
+    const r = await authFetch(`${API}/reportes?${params}`);
+    if (r.ok) {
+      const { items } = await r.json();
+      const elR = document.getElementById('puesto-modal-reportes');
+      if (!items || !items.length) {
+        elR.innerHTML = '<div style="color:var(--text2);font-size:12px">Sin reportes recientes</div>';
+      } else {
+        elR.innerHTML = items.map(rep => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span class="badge-tipo tipo-${rep.tipo}" style="flex-shrink:0">${rep.tipo}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600">${esc(rep.guardia_nombre)}</div>
+              <div style="font-size:11px;color:var(--text2)">${fmtDate(rep.created_at)} · ${fmtDur(rep.duracion_seg)}</div>
+            </div>
+            <span class="badge-estado estado-${rep.estado}" style="flex-shrink:0">${rep.estado.replace('_',' ')}</span>
+            <button class="btn-action" style="flex-shrink:0" onclick="openModal('${rep.id}')">Ver</button>
+          </div>`).join('');
+      }
+    }
+  } catch {}
+}
+
+function closePuestoModal() {
+  document.getElementById('puesto-modal-bg').style.display = 'none';
+  currentPuestoId = null;
+}
+
+async function enviarAlertaPuesto() {
+  const mensaje = document.getElementById('puesto-alert-msg').value.trim();
+  if (!mensaje) { showToast('Escribe un mensaje antes de enviar'); return; }
+  if (!wsReady || !ws) { showToast('Sin conexión al servidor'); return; }
+
+  ws.send(JSON.stringify({
+    type: 'admin_alert',
+    community_id: currentPuestoComId || '',
+    mensaje,
+  }));
+
+  showToast('Alerta enviada');
+  document.getElementById('puesto-alert-msg').value = '';
+}
+
+// ─── Admin PTT ─────────────────────────────────────────────────────────────
+let adminRecorder  = null;
+let adminStream    = null;
+let adminPttActive = false;
+let adminPttTimer  = null;
+let adminPttStart  = null;
+
+async function adminPttDown() {
+  if (adminPttActive) return;
+  if (!wsReady || !ws || ws.readyState !== WebSocket.OPEN) { showToast('Sin conexión al servidor'); return; }
+
+  const comunidadId = document.getElementById('f-comunidad').value;
+  if (!comunidadId) { showToast('Selecciona una comunidad primero'); return; }
+
+  try {
+    adminStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    // Detectar mimeType soportado
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    adminRecorder = mime
+      ? new MediaRecorder(adminStream, { mimeType: mime })
+      : new MediaRecorder(adminStream);
+
+    const chunks = [];
+    adminRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+
+    adminRecorder.onstop = async () => {
+      // Enviar blob binario completo
+      if (chunks.length > 0) {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        ws.send(blob);
+      }
+      // Señal de fin
+      ws.send(JSON.stringify({ type: 'admin_ptt_end' }));
+
+      // Cleanup
+      if (adminStream) adminStream.getTracks().forEach(t => t.stop());
+      adminStream    = null;
+      adminRecorder  = null;
+      adminPttActive = false;
+      clearInterval(adminPttTimer);
+      updateAdminPttUI(false);
+    };
+
+    adminRecorder.start();
+    adminPttActive = true;
+    adminPttStart  = Date.now();
+
+    // Señal de inicio
+    ws.send(JSON.stringify({
+      type: 'admin_ptt_start',
+      community_id: comunidadId,
+      formato: 'webm',
+    }));
+
+    updateAdminPttUI(true);
+
+    // Timer visual
+    adminPttTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - adminPttStart) / 1000);
+      const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const s = String(elapsed % 60).padStart(2, '0');
+      document.getElementById('admin-ptt-timer').textContent = `${m}:${s}`;
+    }, 200);
+
+  } catch (e) {
+    showToast('No se pudo acceder al micrófono');
+    console.error('[PTT Admin]', e);
+  }
+}
+
+function adminPttUp() {
+  if (!adminPttActive || !adminRecorder) return;
+  try { adminRecorder.stop(); } catch {}
+}
+
+function updateAdminPttUI(recording) {
+  const btn   = document.getElementById('admin-ptt-btn');
+  const label = document.getElementById('admin-ptt-label');
+  const timer = document.getElementById('admin-ptt-timer');
+  if (recording) {
+    btn.classList.add('recording');
+    label.textContent  = 'AL AIRE';
+    label.style.color  = 'var(--red)';
+    label.style.fontWeight = '700';
+    timer.style.display = '';
+  } else {
+    btn.classList.remove('recording');
+    label.textContent  = 'Mantener para hablar';
+    label.style.color  = '';
+    label.style.fontWeight = '';
+    timer.style.display = 'none';
+    timer.textContent   = '00:00';
+  }
+}
+
+function updateAdminPttEnabled() {
+  const btn = document.getElementById('admin-ptt-btn');
+  const panel = document.getElementById('admin-ptt-panel');
+  if (userRole !== 'ADMIN') {
+    panel.style.display = 'none';
+    panel.classList.remove('visible');
+    return;
+  }
+  const comunidadId = document.getElementById('f-comunidad').value;
+  const enabled = wsReady && !!comunidadId;
+  btn.disabled = !enabled;
+  panel.classList.toggle('visible', true);
+}
+
+// ─── #7: Alert Sound for emergencies ───────────────────────────────────────
+let _alertAudioCtx = null;
+function playNotificationSound() {
+  try {
+    const audio = new Audio('/whatseg_sound.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch {}
+}
+
+function playAlertSound(level) {
+  try {
+    if (!_alertAudioCtx) _alertAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _alertAudioCtx;
+    const now = ctx.currentTime;
+
+    if (level === 'emergency') {
+      // 3 tonos urgentes: hi-lo-hi rápido
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, now + i * 0.3);
+        osc.frequency.setValueAtTime(440, now + i * 0.3 + 0.15);
+        gain.gain.setValueAtTime(0.15, now + i * 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.3 + 0.28);
+        osc.start(now + i * 0.3);
+        osc.stop(now + i * 0.3 + 0.3);
+      }
+    } else {
+      // 2 tonos suaves para incidente
+      for (let i = 0; i < 2; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, now + i * 0.35);
+        gain.gain.setValueAtTime(0.12, now + i * 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.35 + 0.3);
+        osc.start(now + i * 0.35);
+        osc.stop(now + i * 0.35 + 0.35);
+      }
+    }
+  } catch (e) { console.warn('[Alert] Sound error:', e); }
+}
+
+// Event listeners del botón PTT admin
+(function initAdminPtt() {
+  const btn = document.getElementById('admin-ptt-btn');
+  btn.addEventListener('mousedown',  (e) => { e.preventDefault(); adminPttDown(); });
+  btn.addEventListener('mouseup',    (e) => { e.preventDefault(); adminPttUp(); });
+  btn.addEventListener('mouseleave', ()  => { adminPttUp(); });
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); adminPttDown(); }, { passive: false });
+  btn.addEventListener('touchend',   (e) => { e.preventDefault(); adminPttUp(); }, { passive: false });
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── GUARD / SUPERVISOR APP LOGIC ─────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let gSelectedTipo   = 'NOVEDAD';
+let gSelectedUser   = null; // for directed PTT
+let gWs             = null;
+let gWsReady        = false;
+let gRecorder       = null;
+let gStream         = null;
+let gPttActive      = false;
+let gPttTimer       = null;
+let gPttStartTime   = null;
+let gPttSaving      = false;
+let gDirectedPtt    = false; // recording directed?
+let gBroadcastActive  = false;
+let gBroadcastFrom    = null;
+let gBroadcastRol     = null;
+let gBroadcastChunks  = [];
+let gEvents           = [];
+let gOnlineUsers      = {}; // nombre → { rol, puesto }
+let gReports          = [];
+let gReportsOffset    = 0;
+let gReportsTotal     = 0;
+const G_PAGE          = 20;
+let gAudioCtx         = null;
+
+async function initGuardApp() {
+  const rolLabel = userRole === 'SUPERVISOR' ? 'Supervisor' : 'Guardia';
+  document.getElementById('g-user-name').textContent = `${rolLabel} - ${userName || 'Usuario'}`;
+
+  // Equipo tab label
+  const isSup = userRole === 'SUPERVISOR';
+  document.getElementById('g-tab-equipo-label').textContent = isSup ? 'Guardias' : 'Supervisores';
+  document.getElementById('g-equipo-title').textContent = isSup ? 'GUARDIAS EN LINEA' : 'SUPERVISORES EN LINEA';
+
+  // Reportes header
+  const rTitle = document.querySelector('#g-panel-reportes .g-equipo-title, #g-panel-reportes span[style]');
+  if (userRole === 'SUPERVISOR') {
+    const el = document.querySelector('#g-panel-reportes span[style*="letter-spacing"]');
+    if (el) el.textContent = 'REPORTES DE LA COMUNIDAD';
+  }
+
+  // Load community name
+  try {
+    const r = await authFetch(`${API}/mis-comunidades`);
+    if (r.ok) {
+      const all = await r.json();
+      const mine = all.find(c => c.id === userComunidadId);
+      if (mine) {
+        selectedCommunities = [mine];
+        const sub = document.getElementById('g-user-name');
+        sub.textContent += ` | ${mine.nombre}`;
+      }
+    }
+  } catch {}
+
+  gAddEvent('Iniciando conexion...');
+  gConnectWS();
+  gLoadReports(true);
+  gRequestWakeLock();
+}
+
+// ── Tab switching ──
+function gSwitchTab(btn) {
+  document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.g-tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('g-panel-' + btn.dataset.panel).classList.add('active');
+  if (btn.dataset.panel === 'reportes') gLoadReports(true);
+  if (btn.dataset.panel === 'equipo') gRenderEquipo();
+  if (btn.dataset.panel === 'rondas') gLoadRondas();
+}
+
+// ── Tipo selector ──
+function gSelectTipo(btn) {
+  document.querySelectorAll('.g-tipo-btn').forEach(b => b.className = 'g-tipo-btn');
+  btn.classList.add('active-' + btn.dataset.tipo);
+  gSelectedTipo = btn.dataset.tipo;
+  // Update PTT button color
+  const pttBtn = document.getElementById('g-ptt-btn');
+  pttBtn.className = 'g-ptt-btn tipo-' + gSelectedTipo;
+}
+
+// ── Event log ──
+function gAddEvent(text) {
+  gEvents.push(text);
+  if (gEvents.length > 30) gEvents.shift();
+  const el = document.getElementById('g-events');
+  el.innerHTML = gEvents.map(e => `<div class="g-event">${e}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Confirmation modal ──
+let _gConfirmCb = null;
+function gConfirm(title, msg, danger = false) {
+  return new Promise(resolve => {
+    _gConfirmCb = resolve;
+    document.getElementById('g-confirm-title').textContent = title;
+    document.getElementById('g-confirm-msg').textContent = msg;
+    const btn = document.getElementById('g-confirm-btn');
+    btn.className = danger ? 'g-modal-confirm danger' : 'g-modal-confirm';
+    btn.textContent = danger ? 'Si, continuar' : 'Aceptar';
+    document.getElementById('g-confirm-modal').classList.add('show');
+  });
+}
+function gConfirmResolve(val) {
+  document.getElementById('g-confirm-modal').classList.remove('show');
+  if (_gConfirmCb) { _gConfirmCb(val); _gConfirmCb = null; }
+}
+
+// ── WebSocket ──
+let _gWsId = 0; // ID unico para cada conexion, evita que onclose de la vieja reconecte
+function gConnectWS() {
+  const myId = ++_gWsId;
+  // Desactivar handlers del WS anterior antes de cerrarlo
+  if (gWs) {
+    gWs.onopen = null;
+    gWs.onmessage = null;
+    gWs.onclose = null;
+    gWs.onerror = null;
+    if (gWs._pingInterval) clearInterval(gWs._pingInterval);
+    try { gWs.close(); } catch {}
+    gWs = null;
+  }
+  gWsReady = false;
+  gUpdateStatus(false);
+
+  try {
+    gWs = new WebSocket(WS_URL);
+    gWs.binaryType = 'arraybuffer';
+  } catch { setTimeout(gConnectWS, 4000); return; }
+
+  gWs.onopen = () => {
+    if (myId !== _gWsId) return; // conexion obsoleta
+    gWsReady = true;
+    gUpdateStatus(true);
+    gWs.send(JSON.stringify({
+      type: 'join',
+      token,
+      community_id: userComunidadId || '',
+    }));
+    // Keepalive cada 10s
+    gWs._pingInterval = setInterval(() => {
+      if (myId !== _gWsId) { clearInterval(gWs._pingInterval); return; }
+      if (gWs && gWs.readyState === WebSocket.OPEN) {
+        gWs.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 10000);
+  };
+
+  gWs.onmessage = (evt) => {
+    if (myId !== _gWsId) return;
+    if (typeof evt.data !== 'string') {
+      if (gBroadcastActive) {
+        gBroadcastChunks.push(new Uint8Array(evt.data));
+      }
+      return;
+    }
+    try {
+      const msg = JSON.parse(evt.data);
+      gHandleMsg(msg);
+    } catch {}
+  };
+
+  gWs.onclose = () => {
+    if (myId !== _gWsId) return; // otra conexion ya tomo el control
+    gWsReady = false;
+    gUpdateStatus(false);
+    setTimeout(gConnectWS, 4000);
+  };
+
+  gWs.onerror = () => {};
+}
+
+// Reconectar al volver a la pagina (segundo plano → primer plano)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && userRole && userRole !== 'ADMIN') {
+    setTimeout(() => {
+      if (!gWsReady || !gWs || gWs.readyState !== WebSocket.OPEN) {
+        gAddEvent('Reconectando...');
+        gConnectWS();
+      }
+    }, 1000);
+  }
+});
+
+// Intentar mantener activo con wake lock
+async function gRequestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      const lock = await navigator.wakeLock.request('screen');
+      lock.addEventListener('release', () => { setTimeout(gRequestWakeLock, 2000); });
+    }
+  } catch {}
+}
+
+// Reconectar al recuperar red
+window.addEventListener('online', () => {
+  if (userRole && userRole !== 'ADMIN') {
+    setTimeout(() => {
+      if (!gWsReady || !gWs || gWs.readyState !== WebSocket.OPEN) {
+        gAddEvent('Red recuperada, reconectando...');
+        gConnectWS();
+      }
+    }, 2000);
+  }
+});
+
+function gUpdateStatus(online) {
+  const el = document.getElementById('g-status');
+  if (online) {
+    el.className = 'g-status-badge online';
+    el.innerHTML = '<div class="g-status-dot"></div><span>EN LINEA</span>';
+  } else {
+    el.className = 'g-status-badge offline';
+    el.innerHTML = '<div class="g-status-dot"></div><span>DESCONECTADO</span>';
+  }
+}
+
+function gHandleMsg(msg) {
+  switch (msg.type) {
+    case 'joined':
+      gAddEvent('Conectado al canal');
+      break;
+    case 'online_list':
+      gOnlineUsers = {};
+      (msg.users || []).forEach(u => {
+        if (u.guardia_nombre !== userName) {
+          gOnlineUsers[u.guardia_nombre] = { rol: u.rol || 'GUARDIA', puesto: u.puesto_nombre || '' };
+        }
+      });
+      gRenderEquipo();
+      break;
+    case 'user_joined':
+      if (msg.guardia_nombre !== userName) {
+        gOnlineUsers[msg.guardia_nombre] = { rol: msg.rol || 'GUARDIA', puesto: msg.puesto_nombre || '' };
+        gAddEvent('&#9679; ' + esc(msg.guardia_nombre) + ' se conecto');
+        gRenderEquipo();
+      }
+      break;
+    case 'user_left':
+      if (msg.guardia_nombre !== userName) {
+        delete gOnlineUsers[msg.guardia_nombre];
+        gAddEvent('&#9675; ' + esc(msg.guardia_nombre) + ' se desconecto');
+        gRenderEquipo();
+        if (gSelectedUser === msg.guardia_nombre) { gSelectedUser = null; gHideDirectedPanel(); }
+      }
+      break;
+    case 'ptt_start':
+      gBroadcastActive = true;
+      gBroadcastFrom = msg.guardia_nombre || 'Desconocido';
+      gBroadcastRol = msg.rol || '';
+      gBroadcastChunks = [];
+      gShowBroadcast(gBroadcastFrom, gBroadcastRol);
+      gAddEvent('&#9654; ' + esc(gBroadcastFrom) + ' transmitiendo...');
+      gPlayTone('start');
+      break;
+    case 'admin_ptt_start':
+      gBroadcastActive = true;
+      gBroadcastFrom = msg.from || 'Central';
+      gBroadcastRol = 'CENTRAL';
+      gBroadcastChunks = [];
+      gShowBroadcast(gBroadcastFrom, 'CENTRAL');
+      gAddEvent('&#9654; ' + esc(gBroadcastFrom) + ' transmitiendo...');
+      gPlayTone('start');
+      break;
+    case 'ptt_end':
+    case 'admin_ptt_end':
+      if (gBroadcastActive) {
+        gBroadcastActive = false;
+        gHideBroadcast();
+        gAddEvent('&#9632; ' + esc(gBroadcastFrom || '') + ' termino');
+        gPlayBroadcastAudio();
+        gPlayTone('end');
+      }
+      break;
+    case 'ptt_saved': {
+      const savedTipo = msg.reporte?.tipo || '';
+      gAddEvent('&#128190; Reporte guardado');
+      if (savedTipo === 'EMERGENCIA') {
+        playNotificationSound();
+      }
+      break;
+    }
+    case 'admin_alert':
+      gAddEvent('&#9888; Alerta: ' + esc(msg.mensaje || ''));
+      break;
+    case 'pong':
+      break;
+  }
+}
+
+// ── Broadcast banner ──
+function gShowBroadcast(nombre, rol) {
+  const el = document.getElementById('g-broadcast');
+  const nameEl = document.getElementById('g-broadcast-name');
+  nameEl.innerHTML = '<strong>' + esc(nombre) + '</strong> transmitiendo...' +
+    (rol ? '<small>' + esc(rol) + '</small>' : '');
+  el.classList.add('show');
+}
+function gHideBroadcast() {
+  document.getElementById('g-broadcast').classList.remove('show');
+}
+
+// ── Play received broadcast audio ──
+function gPlayBroadcastAudio() {
+  if (!gBroadcastChunks.length) return;
+  try {
+    let totalLen = 0;
+    gBroadcastChunks.forEach(c => totalLen += c.length);
+    const merged = new Uint8Array(totalLen);
+    let offset = 0;
+    gBroadcastChunks.forEach(c => { merged.set(c, offset); offset += c.length; });
+    gBroadcastChunks = [];
+
+    const blob = new Blob([merged], { type: 'audio/webm' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => URL.revokeObjectURL(url);
+    audio.onerror = () => URL.revokeObjectURL(url);
+    audio.play().catch(() => {});
+  } catch {}
+}
+
+// ── Channel open/close tones ──
+function gPlayTone(kind) {
+  try {
+    if (!gAudioCtx) gAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = gAudioCtx.createOscillator();
+    const gain = gAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(gAudioCtx.destination);
+    gain.gain.value = 0.08;
+    if (kind === 'start') {
+      osc.frequency.value = 800;
+      osc.type = 'sine';
+      osc.start();
+      osc.frequency.linearRampToValueAtTime(1200, gAudioCtx.currentTime + 0.1);
+      osc.stop(gAudioCtx.currentTime + 0.12);
+    } else {
+      osc.frequency.value = 1200;
+      osc.type = 'sine';
+      osc.start();
+      osc.frequency.linearRampToValueAtTime(600, gAudioCtx.currentTime + 0.15);
+      osc.stop(gAudioCtx.currentTime + 0.18);
+    }
+  } catch {}
+}
+
+// ── PTT recording (general) ──
+function gPttDown() {
+  if (gPttActive || gPttSaving || gBroadcastActive) return;
+  if (!gWsReady) { showToast('Sin conexion'); return; }
+  gStartPtt(null);
+}
+function gPttUp() {
+  if (!gPttActive) return;
+  gStopPtt();
+}
+
+// ── PTT recording (directed) ──
+function gDirectedPttDown() {
+  if (gPttActive || gPttSaving || gBroadcastActive || !gSelectedUser) return;
+  if (!gWsReady) { showToast('Sin conexion'); return; }
+  gDirectedPtt = true;
+  gStartPtt(gSelectedUser);
+}
+function gDirectedPttUp() {
+  if (!gPttActive) return;
+  gStopPtt();
+}
+
+async function gStartPtt(target) {
+  try {
+    gStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    showToast('Se necesita permiso de microfono');
+    return;
+  }
+
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    ? 'audio/webm;codecs=opus' : 'audio/webm';
+
+  const chunks = [];
+  gRecorder = new MediaRecorder(gStream, { mimeType });
+  gRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  gRecorder.onstop = async () => {
+    gPttActive = false;
+    gPttSaving = true;
+    gUpdatePttUI();
+
+    try {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      if (gWs && gWs.readyState === WebSocket.OPEN) {
+        gWs.send(blob);
+        const dur = ((Date.now() - gPttStartTime) / 1000).toFixed(1);
+        gWs.send(JSON.stringify({ type: 'ptt_end', duracion_seg: parseFloat(dur) }));
+      }
+    } catch {}
+
+    if (gStream) { gStream.getTracks().forEach(t => t.stop()); gStream = null; }
+    gPttSaving = false;
+    // Reset directed AFTER updating UI so the correct button gets updated
+    const wasDirected = gDirectedPtt;
+    gUpdatePttUI();
+    if (wasDirected) {
+      gDirectedPtt = false;
+      // Also reset the directed button explicitly
+      const dBtn = document.getElementById('g-directed-btn');
+      if (dBtn) {
+        dBtn.className = 'g-directed-btn idle';
+        dBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg> MANTENER PARA HABLAR';
+      }
+    }
+    gAddEvent('&#128190; Audio enviado');
+  };
+
+  gPttActive = true;
+  gPttStartTime = Date.now();
+  gRecorder.start(200);
+
+  // Send ptt_start
+  const startMsg = { type: 'ptt_start', tipo: gSelectedTipo, formato: 'webm' };
+  if (target) startMsg.target = target;
+  gWs.send(JSON.stringify(startMsg));
+
+  gUpdatePttUI();
+
+  // Timer
+  if (gPttTimer) clearInterval(gPttTimer);
+  gPttTimer = setInterval(() => {
+    if (!gPttActive) { clearInterval(gPttTimer); return; }
+    const sec = ((Date.now() - gPttStartTime) / 1000).toFixed(0);
+    const label = document.getElementById(gDirectedPtt ? 'g-directed-btn' : 'g-ptt-label');
+    if (gDirectedPtt) {
+      label.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg> AL AIRE  ' + sec + 's';
+    } else {
+      label.textContent = 'AL AIRE  ' + sec + 's';
+    }
+  }, 200);
+
+  // Vibrate
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  // Timeout de seguridad - si despues de 15s sigue en saving, forzar reset
+  setTimeout(() => {
+    if (gPttSaving || gPttActive) {
+      gPttSaving = false;
+      gPttActive = false;
+      gDirectedPtt = false;
+      gUpdatePttUI();
+      const dBtn = document.getElementById('g-directed-btn');
+      if (dBtn) {
+        dBtn.className = 'g-directed-btn idle';
+        dBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg> MANTENER PARA HABLAR';
+      }
+    }
+  }, 15000);
+}
+
+function gStopPtt() {
+  if (gRecorder && gRecorder.state === 'recording') {
+    gRecorder.stop();
+  }
+  if (gPttTimer) { clearInterval(gPttTimer); gPttTimer = null; }
+}
+
+function gUpdatePttUI() {
+  const btn = document.getElementById('g-ptt-btn');
+  const label = document.getElementById('g-ptt-label');
+  const dBtn = document.getElementById('g-directed-btn');
+
+  if (gDirectedPtt) {
+    // Update directed button
+    if (gPttSaving) {
+      dBtn.className = 'g-directed-btn saving';
+      dBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Enviando...';
+    } else if (gPttActive) {
+      dBtn.className = 'g-directed-btn recording';
+    } else {
+      dBtn.className = 'g-directed-btn idle';
+      dBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg> MANTENER PARA HABLAR';
+    }
+  } else {
+    // Update general PTT button
+    btn.classList.toggle('recording', gPttActive);
+    btn.classList.toggle('saving', gPttSaving);
+    if (gPttSaving) {
+      label.textContent = 'Enviando...';
+      label.className = 'g-ptt-label saving';
+    } else if (gPttActive) {
+      label.className = 'g-ptt-label recording';
+    } else {
+      label.textContent = 'MANTENER PARA HABLAR';
+      label.className = 'g-ptt-label';
+      btn.className = 'g-ptt-btn tipo-' + gSelectedTipo;
+    }
+  }
+}
+
+// ── Equipo tab ──
+function gRenderEquipo() {
+  const isSup = userRole === 'SUPERVISOR';
+  const targetRol = isSup ? 'GUARDIA' : 'SUPERVISOR';
+  const list = Object.entries(gOnlineUsers).filter(([_, info]) => {
+    if (isSup) return info.rol === 'GUARDIA';
+    return info.rol === 'SUPERVISOR' || info.rol === 'COMANDANTE';
+  });
+
+  // Update count
+  const countEl = document.getElementById('g-equipo-count');
+  countEl.querySelector('span').textContent = list.length;
+
+  const container = document.getElementById('g-equipo-list');
+  if (!list.length) {
+    const label = isSup ? 'guardias' : 'supervisores';
+    container.innerHTML = '<div class="g-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><div class="g-empty-title">No hay ' + label + ' en linea</div><div class="g-empty-sub">Apareceran aqui cuando se conecten</div></div>';
+    gHideDirectedPanel();
+    return;
+  }
+
+  const accent = isSup ? '#3b82f6' : '#7c3aed';
+  container.innerHTML = list.map(([nombre, info]) => {
+    const selected = nombre === gSelectedUser;
+    const sub = info.puesto ? (isSup ? 'Guardia' : 'Supervisor') + ' - ' + esc(info.puesto) : (isSup ? 'Guardia' : 'Supervisor');
+    return `<div class="g-user-card ${selected ? 'selected' : ''}" onclick="gSelectUser('${esc(nombre).replace(/'/g, "\\'")}')">
+      <div class="g-user-avatar" style="background:${selected ? accent + '33' : '#1e3a5f'};color:${selected ? accent : '#94a3b8'}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div style="flex:1;min-width:0"><div class="g-user-name">${esc(nombre)}</div><div class="g-user-sub" style="color:${accent}99">${sub}</div></div>
+      <div class="g-user-status">${selected
+        ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + accent + '" stroke="' + accent + '" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01" fill="none" stroke="#fff"/></svg>'
+        : '<div class="g-dot-online"></div>'
+      }</div>
+    </div>`;
+  }).join('');
+
+  // Show/hide directed panel
+  if (gSelectedUser && list.find(([n]) => n === gSelectedUser)) {
+    gShowDirectedPanel();
+  } else if (gSelectedUser && !list.find(([n]) => n === gSelectedUser)) {
+    gSelectedUser = null;
+    gHideDirectedPanel();
+  }
+}
+
+function gSelectUser(nombre) {
+  if (gSelectedUser === nombre) {
+    gSelectedUser = null;
+    gHideDirectedPanel();
+  } else {
+    gSelectedUser = nombre;
+    gShowDirectedPanel();
+  }
+  gRenderEquipo();
+}
+
+function gShowDirectedPanel() {
+  const panel = document.getElementById('g-directed-panel');
+  document.querySelector('#g-directed-name span').textContent = gSelectedUser;
+  panel.classList.add('show');
+}
+function gHideDirectedPanel() {
+  document.getElementById('g-directed-panel').classList.remove('show');
+}
+
+// ── Reports tab ──
+async function gLoadReports(reset) {
+  if (reset) { gReportsOffset = 0; gReports = []; }
+  try {
+    const params = new URLSearchParams({ limit: G_PAGE, offset: gReportsOffset });
+    if (userComunidadId) params.set('comunidad_id', userComunidadId);
+    if (userRole === 'GUARDIA' && userGuardiaId) params.set('guardia_id', userGuardiaId);
+    const r = await authFetch(`${API}/reportes?${params}`);
+    if (!r.ok) return;
+    const { total, items } = await r.json();
+    gReportsTotal = total;
+    if (reset) gReports = items;
+    else gReports = gReports.concat(items);
+    gRenderReports();
+  } catch {}
+}
+
+function gLoadMoreReports() {
+  gReportsOffset += G_PAGE;
+  gLoadReports(false);
+}
+
+function gRenderReports() {
+  document.getElementById('g-reports-count').textContent = gReportsTotal + ' reportes';
+  const container = document.getElementById('g-reports-list');
+  if (!gReports.length) {
+    container.innerHTML = '<div class="g-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><div class="g-empty-title">Sin reportes</div><div class="g-empty-sub">Los reportes apareceran aqui</div></div>';
+    document.getElementById('g-load-more').style.display = 'none';
+    return;
+  }
+
+  const tipoColors = { NOVEDAD: '#3b82f6', INCIDENTE: '#f59e0b', EMERGENCIA: '#ef4444', PRUEBA: '#94a3b8', COMUNICADO: '#a78bfa' };
+  container.innerHTML = gReports.map(r => {
+    const color = tipoColors[r.tipo] || '#94a3b8';
+    const estadoColors = { PENDIENTE: '#f59e0b', EN_REVISION: '#3b82f6', APROBADO: '#10b981', DESCARTADO: '#ef4444' };
+    const eColor = estadoColors[r.estado] || '#94a3b8';
+    return `<div class="g-report-card">
+      <div class="g-report-top">
+        <span class="badge-tipo tipo-${r.tipo}" style="background:${color}22;color:${color};border:1px solid ${color}44;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600">${r.tipo}</span>
+        <span class="g-report-name">${esc(r.guardia_nombre)}</span>
+        <span class="g-report-date">${gFmtDate(r.created_at)}</span>
+      </div>
+      <div class="g-report-bottom">
+        <button class="g-report-play" onclick="gPlayReport('${r.id}',this)">&#9654; Escuchar</button>
+        <span class="g-report-dur">${gFmtDur(r.duracion_seg)}</span>
+        <span style="margin-left:auto;font-size:10px;font-weight:600;color:${eColor}">${(r.estado||'').replace('_',' ')}</span>
+        ${r.puesto_nombre ? '<span style="font-size:10px;color:#94a3b8;margin-left:4px">' + esc(r.puesto_nombre) + '</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('g-load-more').style.display = gReports.length < gReportsTotal ? '' : 'none';
+}
+
+function gFmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('es', { day: '2-digit', month: 'short' }) + ' ' + dt.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+}
+function gFmtDur(s) {
+  if (!s) return '—';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m > 0 ? m + 'm ' + sec + 's' : sec + 's';
+}
+
+async function gPlayReport(id, btn) {
+  const origText = btn.innerHTML;
+  btn.innerHTML = '&#9632; Cargando...';
+  btn.disabled = true;
+  try {
+    const r = await authFetch(`${API}/reportes/${id}/audio`);
+    if (!r.ok) { showToast('Error al cargar audio'); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    btn.innerHTML = '&#9632; Reproduciendo';
+    audio.onended = () => { btn.innerHTML = origText; btn.disabled = false; URL.revokeObjectURL(url); };
+    audio.onerror = () => { btn.innerHTML = origText; btn.disabled = false; URL.revokeObjectURL(url); };
+    audio.play().catch(() => { btn.innerHTML = origText; btn.disabled = false; });
+  } catch {
+    btn.innerHTML = origText; btn.disabled = false;
+  }
+}
+
+// ── RONDAS MODULE ──────────────────────────────────────────────────────────
+let gRondaActiva = null;
+let gRondaRutas = [];
+let gScannerStream = null;
+let gScannerInterval = null;
+
+async function rondaFetch(path, opts = {}) {
+  return fetch(RONDAS_API + path, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
+}
+
+async function gLoadRondas() {
+  if (userRole === 'SUPERVISOR') {
+    document.getElementById('g-rondas-rutas').style.display = 'none';
+    document.getElementById('g-ronda-activa').style.display = 'none';
+    document.getElementById('g-rondas-monitor').style.display = 'flex';
+    await gLoadMonitorRondas();
+    return;
+  }
+  // GUARDIA: check if there's an active patrol
+  document.getElementById('g-rondas-monitor').style.display = 'none';
+  try {
+    const r = await rondaFetch('/activa');
+    if (r.ok) {
+      const data = await r.json();
+      if (data.activa !== false && data.id) {
+        gRondaActiva = data;
+        gMostrarRondaActiva();
+        return;
+      }
+    }
+  } catch {}
+  gRondaActiva = null;
+  gMostrarRutas();
+}
+
+async function gMostrarRutas() {
+  document.getElementById('g-rondas-rutas').style.display = 'flex';
+  document.getElementById('g-ronda-activa').style.display = 'none';
+  const list = document.getElementById('g-rutas-list');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;font-size:12px">Cargando rutas...</div>';
+  try {
+    const r = await rondaFetch('/rutas');
+    if (!r.ok) throw new Error();
+    gRondaRutas = await r.json();
+    if (!Array.isArray(gRondaRutas)) gRondaRutas = [];
+    const activas = gRondaRutas.filter(rt => rt.activa);
+    if (activas.length === 0) {
+      list.innerHTML = '<div class="g-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="g-empty-title">Sin rutas disponibles</div><div class="g-empty-sub">No hay rutas activas configuradas</div></div>';
+      return;
+    }
+    list.innerHTML = activas.map(rt => {
+      const cpCount = rt.checkpoints ? rt.checkpoints.length : 0;
+      return `<div class="g-ruta-card">
+        <h4>${esc(rt.nombre)}</h4>
+        <div class="g-ruta-meta">${rt.descripcion ? esc(rt.descripcion) + ' · ' : ''}Cada ${rt.intervalo_min} min · ${cpCount} puntos</div>
+        <button class="g-ruta-iniciar" onclick="gIniciarRonda('${rt.id}')">Iniciar Ronda</button>
+      </div>`;
+    }).join('');
+  } catch {
+    list.innerHTML = '<div class="g-empty"><div class="g-empty-title">Error al cargar rutas</div><div class="g-empty-sub">Verifica tu conexion</div></div>';
+  }
+}
+
+async function gIniciarRonda(rutaId) {
+  const ok = await gConfirm('Iniciar Ronda', 'Deseas iniciar esta ronda de vigilancia?');
+  if (!ok) return;
+  try {
+    const r = await rondaFetch('/iniciar', { method: 'POST', body: JSON.stringify({ ruta_id: rutaId }) });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      showToast(err.error || 'Error al iniciar ronda');
+      return;
+    }
+    gRondaActiva = await r.json();
+    gMostrarRondaActiva();
+    showToast('Ronda iniciada');
+  } catch {
+    showToast('Error de conexion');
+  }
+}
+
+function gMostrarRondaActiva() {
+  document.getElementById('g-rondas-rutas').style.display = 'none';
+  document.getElementById('g-ronda-activa').style.display = 'flex';
+  document.getElementById('g-rondas-monitor').style.display = 'none';
+  if (!gRondaActiva) return;
+  const ra = gRondaActiva;
+  document.getElementById('g-ronda-nombre').textContent = ra.ruta?.nombre || ra.rutaNombre || 'Ronda';
+  const marcados = ra.checkpoints_marcados || 0;
+  const total = ra.checkpoints_total || 0;
+  const pct = total > 0 ? Math.round((marcados / total) * 100) : 0;
+  document.getElementById('g-ronda-progreso').textContent = `${marcados}/${total}`;
+  document.getElementById('g-ronda-pct').textContent = `${pct}%`;
+  document.getElementById('g-ronda-bar').style.width = `${pct}%`;
+  // Render checkpoints
+  const cps = ra.ruta?.checkpoints || ra.allCheckpoints || [];
+  const visitas = ra.visitas || [];
+  const visitadoIds = {};
+  visitas.forEach(v => { visitadoIds[v.checkpoint_id] = v; });
+  const cpList = document.getElementById('g-ronda-checkpoints');
+  if (cps.length === 0) {
+    cpList.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;font-size:12px">Sin checkpoints configurados</div>';
+    return;
+  }
+  cpList.innerHTML = cps.sort((a, b) => (a.orden || 0) - (b.orden || 0)).map((cp, i) => {
+    const visitado = !!visitadoIds[cp.id] || cp.visitado;
+    const visita = visitadoIds[cp.id];
+    let hora = '';
+    if (visita) {
+      const d = new Date(visita.marcado_at);
+      hora = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    }
+    return `<div class="g-cp-item">
+      <div class="g-cp-num ${visitado ? 'visitado' : 'pendiente'}">${visitado ? '&#10003;' : (i + 1)}</div>
+      <div style="flex:1">
+        <div class="g-cp-name">${esc(cp.nombre)}</div>
+        ${hora ? '<div style="font-size:10px;color:#4ade80">' + hora + '</div>' : ''}
+        ${cp.hora_programada ? '<div style="font-size:10px;color:#64748b">Prog: ' + cp.hora_programada + '</div>' : ''}
+      </div>
+      ${visitado ? '<span class="g-cp-check">&#10003;</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+async function gAbrirScanner() {
+  const overlay = document.getElementById('g-qr-scanner');
+  overlay.style.display = 'flex';
+  document.getElementById('g-qr-result').style.display = 'none';
+  document.getElementById('g-qr-manual').value = '';
+  // Try camera
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    gScannerStream = stream;
+    const video = document.getElementById('g-qr-video');
+    video.srcObject = stream;
+    // Use BarcodeDetector if available
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      gScannerInterval = setInterval(async () => {
+        if (video.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(video);
+          if (barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            if (code) {
+              clearInterval(gScannerInterval);
+              gScannerInterval = null;
+              await gMarcarCheckpoint(code);
+            }
+          }
+        } catch {}
+      }, 500);
+    }
+  } catch {
+    document.getElementById('g-qr-video').style.display = 'none';
+  }
+}
+
+function gCerrarScanner() {
+  document.getElementById('g-qr-scanner').style.display = 'none';
+  if (gScannerInterval) { clearInterval(gScannerInterval); gScannerInterval = null; }
+  if (gScannerStream) { gScannerStream.getTracks().forEach(t => t.stop()); gScannerStream = null; }
+  document.getElementById('g-qr-video').srcObject = null;
+  document.getElementById('g-qr-video').style.display = '';
+}
+
+async function gMarcarManual() {
+  const code = document.getElementById('g-qr-manual').value.trim();
+  if (!code) { showToast('Ingresa el codigo QR'); return; }
+  await gMarcarCheckpoint(code);
+}
+
+async function gMarcarCheckpoint(qrCode) {
+  const resultDiv = document.getElementById('g-qr-result');
+  resultDiv.style.display = 'block';
+  resultDiv.style.color = '#f59e0b';
+  resultDiv.textContent = 'Marcando checkpoint...';
+  // Get GPS
+  let lat = null, lng = null;
+  try {
+    const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 }));
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch {}
+  try {
+    const r = await rondaFetch('/marcar', {
+      method: 'POST',
+      body: JSON.stringify({ qr_code: qrCode, latitud: lat, longitud: lng }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      resultDiv.style.color = '#ef4444';
+      resultDiv.textContent = data.error || 'Error al marcar';
+      return;
+    }
+    resultDiv.style.color = '#4ade80';
+    resultDiv.textContent = `${data.checkpoint || 'Checkpoint'} marcado. ${data.progreso || ''}`;
+    // Refresh active patrol
+    if (data.completada) {
+      showToast('Ronda completada!');
+      setTimeout(() => { gCerrarScanner(); gLoadRondas(); }, 1500);
+    } else {
+      // Refresh activa data
+      try {
+        const ar = await rondaFetch('/activa');
+        if (ar.ok) {
+          const ad = await ar.json();
+          if (ad.activa !== false && ad.id) gRondaActiva = ad;
+        }
+      } catch {}
+      gMostrarRondaActiva();
+    }
+  } catch {
+    resultDiv.style.color = '#ef4444';
+    resultDiv.textContent = 'Error de conexion';
+  }
+}
+
+async function gFinalizarRonda() {
+  if (!gRondaActiva) return;
+  const marcados = gRondaActiva.checkpoints_marcados || 0;
+  const total = gRondaActiva.checkpoints_total || 0;
+  const msgText = marcados < total
+    ? `Solo has marcado ${marcados}/${total} checkpoints. La ronda quedara INCOMPLETA.`
+    : 'Has completado todos los checkpoints.';
+  const ok = await gConfirm('Finalizar Ronda', msgText + ' Deseas finalizar?', marcados < total);
+  if (!ok) return;
+  try {
+    const r = await rondaFetch(`/finalizar/${gRondaActiva.id}`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      showToast(err.error || 'Error al finalizar');
+      return;
+    }
+    showToast(marcados >= total ? 'Ronda completada!' : 'Ronda finalizada (incompleta)');
+    gRondaActiva = null;
+    gMostrarRutas();
+  } catch {
+    showToast('Error de conexion');
+  }
+}
+
+// Supervisor monitoring
+async function gLoadMonitorRondas() {
+  const list = document.getElementById('g-monitor-list');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;font-size:12px">Cargando...</div>';
+  try {
+    const r = await rondaFetch('/en-curso');
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      list.innerHTML = '<div class="g-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="g-empty-title">Sin rondas activas</div><div class="g-empty-sub">No hay guardias realizando rondas</div></div>';
+      document.getElementById('g-monitor-count').textContent = '0 activas';
+      return;
+    }
+    document.getElementById('g-monitor-count').textContent = data.length + ' activa' + (data.length !== 1 ? 's' : '');
+    list.innerHTML = data.map(ej => {
+      const pct = ej.checkpoints_total > 0 ? Math.round((ej.checkpoints_marcados / ej.checkpoints_total) * 100) : 0;
+      const nombre = ej.guardia_nombre || 'Guardia';
+      const ruta = ej.ruta?.nombre || 'Ruta';
+      const elapsed = ej.inicio_at ? _tiempoTranscurrido(ej.inicio_at) : '';
+      return `<div class="g-monitor-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(96,165,250,.15);color:#60a5fa;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${nombre.charAt(0).toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="g-mon-guard">${esc(nombre)}</div>
+            <div class="g-mon-ruta">${esc(ruta)} ${elapsed ? '· ' + elapsed : ''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:16px;font-weight:700;color:#4ade80">${ej.checkpoints_marcados}/${ej.checkpoints_total}</div>
+            <div style="font-size:10px;color:#94a3b8">${pct}%</div>
+          </div>
+        </div>
+        <div class="g-mon-bar"><div class="g-mon-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+  } catch {
+    list.innerHTML = '<div class="g-empty"><div class="g-empty-title">Error al cargar</div></div>';
+  }
+}
+
+function _tiempoTranscurrido(fecha) {
+  const ms = Date.now() - new Date(fecha).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `Hace ${h}h ${m}m`;
+}
+
+// ── Guard PTT button event listeners (attached in boot) ──
+function gInitPttButtons() {
+  const btn = document.getElementById('g-ptt-btn');
+  if (!btn) return;
+  btn.addEventListener('mousedown',  gPttDown);
+  btn.addEventListener('mouseup',    gPttUp);
+  btn.addEventListener('mouseleave', gPttUp);
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); gPttDown(); }, { passive: false });
+  btn.addEventListener('touchend',   (e) => { e.preventDefault(); gPttUp(); }, { passive: false });
+
+  const dBtn = document.getElementById('g-directed-btn');
+  if (!dBtn) return;
+  dBtn.addEventListener('mousedown',  gDirectedPttDown);
+  dBtn.addEventListener('mouseup',    gDirectedPttUp);
+  dBtn.addEventListener('mouseleave', gDirectedPttUp);
+  dBtn.addEventListener('touchstart', (e) => { e.preventDefault(); gDirectedPttDown(); }, { passive: false });
+  dBtn.addEventListener('touchend',   (e) => { e.preventDefault(); gDirectedPttUp(); }, { passive: false });
+}
+
+// Initialize PTT button listeners immediately
+gInitPttButtons();
+
+// ─── Boot ─────────────────────────────────────────────────────────────────
+(function boot() {
+  // Accept ?tk= and ?admin= from modulos.html redirect (cross-domain)
+  const urlParams = new URLSearchParams(window.location.search);
+  const tkParam    = urlParams.get('tk');
+  const adminParam = urlParams.get('admin');
+  if (tkParam)    localStorage.setItem('ptt_guard_token', tkParam);
+  if (adminParam) localStorage.setItem('trd_admin', adminParam);
+  if (tkParam || adminParam) history.replaceState(null, '', window.location.pathname);
+
+  token = getStoredToken();
+  if (token) {
+    userInfo = decodePayload(token);
+    detectRole();
+    startApp();
+  }
+  // else: login overlay stays visible
+})();
+</script>
+</body>
+</html>

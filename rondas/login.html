@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg — Login Guardia</title>
+  <link rel="icon" type="image/webp" href="https://api.whatseg.com/whatseg_favicon.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;background:#0a0f1a;display:flex;align-items:center;justify-content:center;color:#e2e8f0}
+    .login-card{background:rgba(15,20,35,.95);border:1px solid rgba(34,197,94,.15);border-radius:16px;padding:40px 36px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:28px}
+    .logo img{height:40px}
+    .logo h1{font-size:18px;font-weight:700;color:#22c55e}
+    .subtitle{text-align:center;color:#64748b;font-size:13px;margin-bottom:28px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+    .form-group input{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit;transition:border-color .2s}
+    .form-group input:focus{outline:none;border-color:#22c55e}
+    .btn-login{width:100%;padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s;margin-top:8px}
+    .btn-login:hover{background:#16a34a}
+    .btn-login:disabled{opacity:.5;cursor:not-allowed}
+    .error-msg{color:#ef4444;font-size:12px;text-align:center;margin-top:12px;min-height:18px}
+    .admin-link{text-align:center;margin-top:20px}
+    .admin-link a{color:#475569;font-size:12px;text-decoration:none;transition:color .2s}
+    .admin-link a:hover{color:#22c55e}
+    .shield-icon{width:48px;height:48px;background:rgba(34,197,94,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .shield-icon svg{width:24px;height:24px;color:#22c55e}
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo">
+      <img src="https://api.whatseg.com/edison.webp" alt="WhatsEg">
+      <h1>Monitoreo de Rondas</h1>
+    </div>
+    <div class="shield-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <p class="subtitle">Ingresa con tu c&eacute;dula y contrase&ntilde;a</p>
+    <div class="form-group">
+      <label>C&eacute;dula</label>
+      <input type="text" id="cedula" placeholder="N&uacute;mero de c&eacute;dula" autocomplete="username" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Contrase&ntilde;a</label>
+      <input type="password" id="password" placeholder="Contrase&ntilde;a" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btnLogin">Iniciar Sesi&oacute;n</button>
+    <div class="error-msg" id="error"></div>
+    <div class="admin-link">
+      <a href="https://api.whatseg.com/login">Acceso administrador &rarr;</a>
+    </div>
+  </div>
+
+  <script>
+  var API = '/api/ext/rondas'
+
+  /* Si ya tiene token, ir directo */
+  if (localStorage.getItem('trd_token')) {
+    var admin = {}
+    try { admin = JSON.parse(localStorage.getItem('trd_admin') || '{}') } catch(e){}
+    if (admin.rol === 'GUARDIA' || admin.rol === 'SUPERVISOR') {
+      window.location.replace('/guardia.html')
+    } else {
+      window.location.replace('/')
+    }
+  }
+
+  var btnLogin = document.getElementById('btnLogin')
+  var errorEl = document.getElementById('error')
+
+  async function doLogin() {
+    var cedula = document.getElementById('cedula').value.trim()
+    var password = document.getElementById('password').value
+    if (!cedula || !password) { errorEl.textContent = 'Ingresa c\u00e9dula y contrase\u00f1a'; return }
+
+    btnLogin.disabled = true
+    btnLogin.textContent = 'Ingresando...'
+    errorEl.textContent = ''
+
+    try {
+      var res = await fetch(API + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cedula: cedula, password: password })
+      })
+      var data = await res.json()
+      if (!res.ok) {
+        errorEl.textContent = data.error || 'Error al iniciar sesi\u00f3n'
+        return
+      }
+      localStorage.setItem('trd_token', data.token)
+      localStorage.setItem('trd_admin', JSON.stringify(data.usuario))
+      window.location.replace('/guardia.html')
+    } catch(e) {
+      errorEl.textContent = 'Error de conexi\u00f3n. Intenta de nuevo.'
+    } finally {
+      btnLogin.disabled = false
+      btnLogin.textContent = 'Iniciar Sesi\u00f3n'
+    }
+  }
+
+  btnLogin.onclick = doLogin
+  document.getElementById('password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin()
+  })
+  document.getElementById('cedula').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('password').focus()
+  })
+  </script>
+</body>
+</html>

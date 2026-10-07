@@ -1,0 +1,404 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  SUPERADMIN
+  ADMIN
+  MONITOR
+  CUADRANTE
+}
+
+enum ModoActivacion {
+  GRUPAL
+  INDIVIDUAL
+  NONE
+}
+
+enum ResultadoActivacion {
+  EXITOSO
+  FALLIDO
+  DISPOSITIVO_OFFLINE
+}
+
+enum VeredictoTipo {
+  FALSA_ALARMA
+  NOVEDAD
+}
+
+enum TipoEmergencia {
+  POLICIA
+  ASISTENCIA_MEDICA
+  BOMBEROS
+}
+
+model Admin {
+  id            String   @id @default(uuid())
+  nombre        String
+  email         String   @unique
+  password_hash String
+  rol           Rol      @default(ADMIN)
+  activo        Boolean  @default(true)
+  tipos_emergencia TipoEmergencia[] @default([])
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  comunidades   AdminComunidad[]
+  veredictos    Activacion[]
+  device_tokens AdminDeviceToken[]
+
+  @@map("admins")
+}
+
+model AdminDeviceToken {
+  id         String   @id @default(uuid())
+  admin_id   String
+  fcm_token  String   @unique
+  platform   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  admin Admin @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+
+  @@index([admin_id])
+  @@map("admin_device_tokens")
+}
+
+model Comunidad {
+  id         String   @id @default(uuid())
+  nombre     String
+  codigo     String   @unique
+  activa           Boolean  @default(true)
+  visible_monitor  Boolean  @default(false)
+  direccion        String?
+  latitud          Float?
+  longitud         Float?
+  place_id         String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  admins          AdminComunidad[]
+  jefes           JefeComunidad[]
+  clientes        ClienteComunidad[]
+  dispositivos    Dispositivo[]
+  activaciones    Activacion[]
+  notificaciones  NotificacionJefe[]
+  camaras         Camara[]
+  cambiosOrigen   CambioComunidad[] @relation("cambios_origen")
+  cambiosDestino  CambioComunidad[] @relation("cambios_destino")
+
+  @@map("comunidades")
+}
+
+model AdminComunidad {
+  id           String   @id @default(uuid())
+  admin_id     String
+  comunidad_id String
+  created_at   DateTime @default(now())
+
+  admin     Admin     @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  comunidad Comunidad @relation(fields: [comunidad_id], references: [id], onDelete: Cascade)
+
+  @@unique([admin_id, comunidad_id])
+  @@map("admins_comunidades")
+}
+
+model Jefe {
+  id               String   @id @default(uuid())
+  nombre           String
+  celular          String   @unique
+  activo           Boolean  @default(true)
+  puede_registrar  Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  comunidades    JefeComunidad[]
+  notificaciones NotificacionJefe[]
+  activaciones   Activacion[]
+
+  @@map("jefes")
+}
+
+model JefeComunidad {
+  id           String   @id @default(uuid())
+  jefe_id      String
+  comunidad_id String
+  created_at   DateTime @default(now())
+
+  jefe      Jefe      @relation(fields: [jefe_id], references: [id], onDelete: Cascade)
+  comunidad Comunidad @relation(fields: [comunidad_id], references: [id], onDelete: Cascade)
+
+  @@unique([jefe_id, comunidad_id])
+  @@map("jefes_comunidades")
+}
+
+model Cliente {
+  id            String   @id @default(uuid())
+  nombre        String
+  celular       String   @unique
+  identificador String
+  activo        Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  comunidades       ClienteComunidad[]
+  activaciones      Activacion[]
+  cambiosComunidad  CambioComunidad[]
+  bloqueos          BloqueoCliente[]
+
+  @@map("clientes")
+}
+
+model BloqueoCliente {
+  id         String   @id @default(uuid())
+  cliente_id String
+  motivo     String?
+  duracion   Int
+  created_at DateTime @default(now())
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+
+  @@index([cliente_id, created_at])
+  @@map("bloqueos_clientes")
+}
+
+model ConfigSistema {
+  clave String @id
+  valor String
+
+  @@map("config_sistema")
+}
+
+model ClienteComunidad {
+  id           String   @id @default(uuid())
+  cliente_id   String
+  comunidad_id String
+  created_at   DateTime @default(now())
+
+  cliente   Cliente   @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+  comunidad Comunidad @relation(fields: [comunidad_id], references: [id], onDelete: Cascade)
+
+  @@unique([cliente_id, comunidad_id])
+  @@map("clientes_comunidades")
+}
+
+model CambioComunidad {
+  id               String   @id @default(uuid())
+  cliente_id       String
+  origen_id        String
+  destino_id       String
+  motivo           String?
+  created_at       DateTime @default(now())
+
+  cliente  Cliente   @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+  origen   Comunidad @relation("cambios_origen", fields: [origen_id], references: [id])
+  destino  Comunidad @relation("cambios_destino", fields: [destino_id], references: [id])
+
+  @@map("cambios_comunidad")
+}
+
+model TipoDispositivo {
+  id              String          @id @default(uuid())
+  nombre          String          @unique
+  modo_activacion ModoActivacion  @default(GRUPAL)
+  created_at      DateTime        @default(now())
+
+  @@map("tipos_dispositivo")
+}
+
+model CuentaTuya {
+  id          String   @id @default(uuid())
+  nombre      String   @unique
+  client_id   String
+  secret      String
+  base_url    String   @default("https://openapi.tuyaus.com")
+  activa      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  dispositivos Dispositivo[]
+
+  @@map("cuentas_tuya")
+}
+
+model Dispositivo {
+  id            String          @id @default(uuid())
+  tuya_id       String?         @unique
+  thinmoo_dev_sn       String?  @unique
+  thinmoo_community_id String?
+  id_interno           String?
+  nombre               String?
+  tipo                 String?
+  categoria            String?
+  parametros_activar   Json?
+  parametros_desactivar Json?
+  comunidad_id    String?
+  cuenta_tuya_id  String?
+  cuenta_thinmoo_id String?
+  camara_id       String?
+  // Camera fields (when tipo = CAMARA)
+  dolynk_device_id      String?
+  dolynk_channel_id     String?   @default("0")
+  cuenta_dolynk_id      String?
+  url_rtsp              String?
+  url_http              String?
+  // Imou camera fields
+  imou_device_id        String?
+  imou_channel_id       String?   @default("0")
+  cuenta_imou_id        String?
+  // Link to another Dispositivo of tipo CAMARA for snapshot capture
+  camara_dispositivo_id String?
+  // Generic MQTT relay module fields (air780e, esp8266, etc.)
+  mqtt_kind       String?
+  mqtt_device_id  String?
+  mqtt_channel    Int?
+  mqtt_last_seen  DateTime?
+  configurado   Boolean         @default(false)
+  online        Boolean         @default(false)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  comunidad      Comunidad?     @relation(fields: [comunidad_id], references: [id])
+  cuenta_tuya    CuentaTuya?    @relation(fields: [cuenta_tuya_id], references: [id])
+  cuenta_thinmoo CuentaThinmoo? @relation(fields: [cuenta_thinmoo_id], references: [id])
+  cuenta_dolynk  CuentaDolynk?  @relation(fields: [cuenta_dolynk_id], references: [id])
+  cuenta_imou    CuentaImou?    @relation(fields: [cuenta_imou_id], references: [id])
+  camara         Camara?        @relation(fields: [camara_id], references: [id])
+  camara_dispositivo      Dispositivo?  @relation("DispositivoCamara", fields: [camara_dispositivo_id], references: [id])
+  dispositivos_vinculados Dispositivo[] @relation("DispositivoCamara")
+  activaciones   Activacion[]
+
+  @@unique([comunidad_id, nombre])
+  @@unique([cuenta_dolynk_id, dolynk_device_id])
+  @@unique([mqtt_kind, mqtt_device_id, mqtt_channel])
+  @@index([mqtt_kind, mqtt_device_id])
+  @@map("dispositivos")
+}
+
+model Activacion {
+  id              String              @id @default(uuid())
+  cliente_id      String?
+  jefe_id         String?
+  dispositivo_id  String
+  comunidad_id    String
+  resultado       ResultadoActivacion
+  detalle         String?
+  created_at      DateTime            @default(now())
+
+  snapshot_url           String?
+  snapshot_urls          String[]  @default([])
+
+  tipo_emergencia        TipoEmergencia?
+
+  veredicto              VeredictoTipo?
+  veredicto_observacion  String?
+  veredicto_admin_id     String?
+  veredicto_at           DateTime?
+
+  cliente         Cliente?     @relation(fields: [cliente_id], references: [id])
+  jefe            Jefe?        @relation(fields: [jefe_id], references: [id])
+  dispositivo     Dispositivo  @relation(fields: [dispositivo_id], references: [id])
+  comunidad       Comunidad    @relation(fields: [comunidad_id], references: [id])
+  veredicto_admin Admin?       @relation(fields: [veredicto_admin_id], references: [id])
+  notificaciones  NotificacionJefe[]
+
+  @@map("activaciones")
+}
+
+model CuentaThinmoo {
+  id                  String   @id @default(uuid())
+  nombre              String   @unique
+  app_id              String
+  app_secret          String
+  base_url            String   @default("https://cloud-api.thinmoo.com")
+  webhook_secret      String?
+  mqtt_broker_url     String?
+  mqtt_username       String?
+  mqtt_password       String?
+  mqtt_enabled        Boolean  @default(false)
+  file_upload_secret  String?
+  activa              Boolean  @default(true)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  dispositivos Dispositivo[]
+
+  @@map("cuentas_thinmoo")
+}
+
+model CuentaDolynk {
+  id                String   @id @default(uuid())
+  nombre            String   @unique
+  serial            String?
+  access_key        String
+  secret_access_key String
+  product_id        String
+  base_url          String   @default("https://open-api-sg.dolynkcloud.com")
+  activa            Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  camaras      Camara[]
+  dispositivos Dispositivo[]
+
+  @@map("cuentas_dolynk")
+}
+
+model CuentaImou {
+  id          String   @id @default(uuid())
+  nombre      String   @unique
+  app_id      String
+  app_secret  String
+  base_url    String   @default("https://openapi-sg.easy4ip.com:443")
+  activa      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  dispositivos Dispositivo[]
+
+  @@map("cuentas_imou")
+}
+
+model Camara {
+  id                 String    @id @default(uuid())
+  nombre             String
+  tipo               String    @default("RTSP")
+  url_rtsp           String?
+  url_http           String?
+  dolynk_device_id   String?
+  dolynk_channel_id  String?   @default("0")
+  cuenta_dolynk_id   String?
+  comunidad_id       String?
+  activa             Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  comunidad     Comunidad?    @relation(fields: [comunidad_id], references: [id])
+  cuenta_dolynk CuentaDolynk? @relation(fields: [cuenta_dolynk_id], references: [id])
+  dispositivos  Dispositivo[]
+
+  @@map("camaras")
+}
+
+model NotificacionJefe {
+  id            String   @id @default(uuid())
+  jefe_id       String?
+  jefe_nombre   String?
+  activacion_id String
+  comunidad_id  String
+  mensaje       String
+  leida         Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  jefe       Jefe?      @relation(fields: [jefe_id], references: [id])
+  activacion Activacion @relation(fields: [activacion_id], references: [id])
+  comunidad  Comunidad  @relation(fields: [comunidad_id], references: [id])
+
+  @@index([jefe_id, leida])
+  @@map("notificaciones_jefes")
+}

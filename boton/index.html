@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsEg · Botón de Pánico</title>
+<link rel="icon" type="image/webp" href="https://api.whatseg.com/whatseg_favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:      #0f1729;
+  --bg2:     #1a2744;
+  --bg3:     #243358;
+  --bg4:     #2d3e63;
+  --accent:  #ef4444;
+  --accent2: #3b82f6;
+  --green:   #10b981;
+  --red:     #ef4444;
+  --yellow:  #f59e0b;
+  --orange:  #f97316;
+  --text:    #e2e8f0;
+  --text2:   #94a3b8;
+  --border:  rgba(255,255,255,.08);
+  --radius:  10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── LOGIN ──────────────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;z-index:9999;background:#0a0f1a;display:flex;align-items:center;justify-content:center}
+.login-box{background:rgba(15,20,35,.95);border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:40px 36px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:28px;text-align:center}
+.login-logo-icon{width:52px;height:52px;border-radius:14px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--red);margin:0}
+.login-logo p{font-size:13px;color:#64748b;margin:0}
+.login-box h2{font-size:14px;color:var(--text2);margin-bottom:22px;text-align:center}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.form-group input{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--red)}
+.form-group input::placeholder{color:#475569}
+.btn-primary{width:100%;padding:12px;background:var(--red);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;transition:background .2s}
+.btn-primary:hover{background:#dc2626}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.login-err{color:var(--red);font-size:12px;margin-top:12px;min-height:16px;text-align:center}
+
+/* ── HEADER ──────────────────────────────────────────────── */
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.hdr-logo{display:flex;align-items:center;gap:10px}
+.live-dot{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-weight:600}
+.live-dot::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.hdr-stats{display:flex;gap:8px}
+.stat-badge{display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid}
+.stat-red{color:var(--red);border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)}
+.stat-blue{color:var(--accent2);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.stat-gray{color:var(--text2);border-color:var(--border);background:rgba(255,255,255,.04)}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-user{font-size:13px;color:var(--text2)}
+.btn-logout{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;padding:6px 12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+.btn-back{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;padding:6px 12px;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center}
+.btn-back:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-usuarios{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#60a5fa;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-usuarios:hover{background:rgba(59,130,246,.2);border-color:#3b82f6}
+
+/* ── FILTROS ──────────────────────────────────────────────── */
+.filter-bar{display:flex;gap:6px;padding:8px 24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;align-items:center}
+.fil-btn{padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;transition:.15s}
+.fil-btn:hover,.fil-btn.active{color:#fff;border-color:var(--red);background:rgba(239,68,68,.1)}
+.fil-btn.active-blue{color:#60a5fa;border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.1)}
+.fil-select{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;outline:none;font-family:inherit}
+.ws-badge{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.ws-dot{width:8px;height:8px;border-radius:50%;background:#64748b;transition:.3s}
+.ws-dot.on{background:var(--green)}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.main-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+#map{flex:1;z-index:1}
+.sidebar{width:330px;min-width:330px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column}
+.sidebar-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.sidebar-hdr-count{margin-left:auto;background:rgba(239,68,68,.12);color:var(--red);border-radius:20px;padding:2px 8px;font-size:10px}
+.ev-list{flex:1;overflow-y:auto;padding:8px}
+.ev-empty{color:var(--text2);font-size:13px;text-align:center;padding:40px 16px}
+
+/* ── TARJETAS ──────────────────────────────────────────────── */
+.ev-card{border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);margin-bottom:8px;overflow:hidden;cursor:pointer;transition:.15s}
+.ev-card:hover{border-color:rgba(239,68,68,.4);background:var(--bg4)}
+.ev-card.ATENDIDO{opacity:.65}
+.ev-card.CERRADO{opacity:.4}
+.ev-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.ev-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.4px;border:1px solid}
+.tipo-PANICO{color:#ef4444;border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.12)}
+.tipo-ALARMA{color:#f97316;border-color:rgba(249,115,22,.5);background:rgba(249,115,22,.12)}
+.tipo-SOS{color:#3b82f6;border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.12)}
+.tipo-PRUEBA{color:#6b7280;border-color:rgba(107,114,128,.4);background:rgba(107,114,128,.1)}
+.ev-nombre{font-size:13px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-uptag{font-size:10px;color:var(--text2);white-space:nowrap}
+.ev-body{padding:8px 12px}
+.ev-meta{font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.ev-desc{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4}
+.ev-footer{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--border)}
+.btn-sm{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;font-family:inherit;transition:.15s;background:transparent}
+.btn-atender{color:var(--green);border-color:rgba(16,185,129,.4)}
+.btn-atender:hover{background:rgba(16,185,129,.12)}
+.btn-cerrar{color:var(--text2);border-color:var(--border)}
+.btn-cerrar:hover{background:rgba(255,255,255,.06)}
+.ev-estado{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.3px}
+.est-ACTIVO{color:var(--red)}.est-ATENDIDO{color:var(--green)}.est-CERRADO{color:#64748b}
+
+/* ── MODAL CIERRE ──────────────────────────────────────────── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:400px;max-width:95vw}
+.modal-box h3{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.modal-box textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;resize:vertical;min-height:80px;outline:none;font-family:inherit}
+.modal-box textarea:focus{border-color:var(--red)}
+.modal-btns{display:flex;gap:10px;margin-top:14px;justify-content:flex-end}
+.btn-cancel{padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;font-family:inherit}
+.btn-confirm{padding:8px 18px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit}
+.btn-confirm:hover{background:#dc2626}
+.btn-confirm:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── TOAST ─────────────────────────────────────────────────── */
+#toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:99999}
+.toast{padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;animation:fadeIn .25s;max-width:300px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast-ok{background:var(--green);color:#000}
+.toast-err{background:var(--red);color:#fff}
+.toast-info{background:var(--bg4);color:var(--text);border:1px solid var(--border)}
+
+/* ── PARTICULARES overlay ──────────────────────────────────── */
+#partis-overlay{position:fixed;inset:0;background:var(--bg);z-index:8000;display:flex;flex-direction:column;overflow:hidden}
+.partis-hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.partis-hdr h2{font-size:16px;font-weight:700;flex:1}
+.partis-body{flex:1;overflow-y:auto;padding:24px}
+.partis-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.partis-toolbar p{font-size:13px;color:var(--text2);flex:1}
+.btn-add{background:var(--red);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background .2s}
+.btn-add:hover{background:#dc2626}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);padding:8px 12px;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.badge-on{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600}
+.badge-off{background:rgba(100,116,139,.08);color:#64748b;border:1px solid rgba(100,116,139,.2);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600}
+.btn-tbl{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-tbl:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-tbl.del:hover{border-color:var(--red);color:var(--red)}
+
+/* ── FORM MODAL add/edit particular ──────────────────────── */
+.form-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center}
+.form-modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:460px;max-width:95vw}
+.form-modal h3{font-size:15px;font-weight:700;margin-bottom:20px}
+.fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fm-full{grid-column:1/-1}
+.fm-label{display:block;font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.fm-input{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.fm-input:focus{border-color:var(--red)}
+.fm-input::placeholder{color:#475569}
+.fm-toggle{display:flex;align-items:center;gap:10px}
+.fm-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);cursor:pointer}
+.fm-toggle label{font-size:13px;color:var(--text2);cursor:pointer}
+
+/* ── RESPONSIVE MÓVIL ──────────────────────────────────────── */
+@media (max-width:768px){
+  /* Header compacto */
+  header{padding:0 12px;height:52px}
+  .hdr-logo img{height:26px}
+  .live-dot{display:none}
+  .hdr-stats{gap:4px}
+  .stat-badge{padding:3px 7px;font-size:11px}
+  .hdr-right{gap:6px}
+  .btn-back{display:none}
+  .hdr-user{display:none}
+  .hdr-avatar-wrap{display:none}
+  .btn-usuarios{padding:6px 8px}
+  .btn-usuarios .btn-txt{display:none}
+  .btn-logout{padding:5px 8px;font-size:11px}
+
+  /* Filter bar: scroll horizontal */
+  .filter-bar{padding:6px 12px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:5px}
+  .filter-bar::-webkit-scrollbar{display:none}
+  .fil-btn{white-space:nowrap;flex-shrink:0}
+  .fil-select{flex-shrink:0}
+  .ws-badge{flex-shrink:0}
+
+  /* Layout apilado */
+  .main-layout{flex-direction:column}
+  #map{flex:none;height:52svh}
+  .sidebar{width:100%;min-width:0;border-left:none;border-top:1px solid var(--border);height:calc(100svh - 52px - 36px - 52svh);min-height:180px}
+
+  /* Sidebar header con toggle */
+  .sidebar-hdr{cursor:pointer;user-select:none}
+  .sidebar-hdr::after{content:'▲';margin-left:auto;font-size:10px;color:var(--text2);transition:transform .25s}
+  .sidebar.collapsed .sidebar-hdr::after{transform:rotate(180deg)}
+  .sidebar.collapsed .ev-list{display:none}
+  .sidebar.expanded{height:auto;max-height:60svh}
+  .sidebar.expanded #map{height:35svh}
+
+  /* Toast */
+  #toast-wrap{bottom:12px;right:12px;left:12px}
+  .toast{max-width:100%}
+
+  /* Modales a pantalla completa */
+  .modal-box{width:calc(100vw - 24px);max-width:none;padding:20px 16px}
+  .form-modal{width:calc(100vw - 24px);max-width:none;padding:20px 16px}
+  .fm-grid{grid-template-columns:1fr}
+
+  /* Particulares */
+  .partis-hdr{padding:0 12px;height:52px}
+  .partis-hdr h2{font-size:14px}
+  .partis-body{padding:14px 12px}
+  .partis-toolbar{flex-wrap:wrap;gap:8px}
+  /* Ocultar columnas no esenciales en tabla */
+  .tbl th:nth-child(3),.tbl td:nth-child(3),
+  .tbl th:nth-child(5),.tbl td:nth-child(5){display:none}
+  .tbl th,.tbl td{padding:8px 8px;font-size:12px}
+}
+
+@media (max-width:480px){
+  .hdr-stats .stat-gray{display:none}
+  .stat-badge{padding:2px 6px;font-size:10px}
+  #map{height:45svh}
+  .sidebar{height:calc(100svh - 52px - 36px - 45svh);min-height:160px}
+}
+
+/* ── ALARMA PUESTO ─────────────────────────────────────────── */
+@keyframes alarmPulse {
+  0%,100%{transform:scale(1);filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+  50%{transform:scale(1.3);filter:drop-shadow(0 0 18px rgba(239,68,68,.9))}
+}
+.pin-alarm-el{animation:alarmPulse .65s ease-in-out infinite}
+
+/* ── BOTÓN ELIMINAR EVENTO ─────────────────────────────────── */
+.btn-del{padding:5px 7px;color:#64748b;border-color:rgba(100,116,139,.25);line-height:0}
+.btn-del:hover{border-color:var(--red);color:var(--red)}
+.ev-actions{display:flex;gap:6px;padding:6px 12px}
+.btn-ir{flex:1;padding:7px 0;border-radius:8px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s}
+.btn-ir:hover{background:#1d4ed8}
+.btn-compartir{flex:1;padding:7px 0;border-radius:8px;font-size:11px;font-weight:600;border:1px solid var(--border);cursor:pointer;font-family:inherit;background:rgba(255,255,255,.05);color:var(--text2);display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s}
+.btn-compartir:hover{background:rgba(255,255,255,.1);color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" width="28" height="28"><path d="M12 22C17.5 22 22 17.5 22 12S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      </div>
+      <h1>Botón de Pánico</h1>
+      <p>Panel de monitoreo de emergencias</p>
+    </div>
+    <h2>Ingresa con tu cuenta de acceso</h2>
+    <div class="form-group">
+      <label>Cédula / Usuario</label>
+      <input type="text" id="li-user" placeholder="Cédula o usuario" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="li-pass" placeholder="Contraseña" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="li-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="li-err"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="app-header" style="display:none">
+  <div class="hdr-left">
+    <div class="hdr-logo">
+      <img src="https://api.whatseg.com/edison.webp" alt="WhatsEg" style="height:32px">
+    </div>
+    <div class="live-dot" id="live-dot" style="display:none">EN VIVO</div>
+    <div class="hdr-stats">
+      <div class="stat-badge stat-red"><span id="cnt-activo">0</span> activos</div>
+      <div class="stat-badge stat-blue"><span id="cnt-hoy">0</span> hoy</div>
+      <div class="stat-badge stat-gray"><span id="cnt-24h">0</span> últimas 24h</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <a href="https://api.whatseg.com/modulos" class="btn-back">&larr; Módulos</a>
+    <button class="btn-usuarios" onclick="abrirParticulares()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="btn-txt">Usuarios App</span>
+    </button>
+    <div class="hdr-avatar-wrap" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);padding:6px 14px;border-radius:20px">
+      <div id="hdr-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0"></div>
+      <span class="hdr-user" id="hdr-nombre"></span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<!-- FILTROS -->
+<div class="filter-bar" id="filter-bar" style="display:none">
+  <button class="fil-btn active" data-estado="">Todos</button>
+  <button class="fil-btn" data-estado="ACTIVO">Activos</button>
+  <button class="fil-btn" data-estado="ATENDIDO">Atendidos</button>
+  <button class="fil-btn" data-estado="CERRADO">Cerrados</button>
+  <select class="fil-select" id="sel-tipo">
+    <option value="">Todos los tipos</option>
+    <option value="PANICO">PÁNICO</option>
+    <option value="ALARMA">ALARMA</option>
+    <option value="SOS">SOS</option>
+    <option value="PRUEBA">PRUEBA</option>
+  </select>
+  <div class="ws-badge">
+    <div class="ws-dot" id="ws-dot"></div>
+    <span id="ws-txt">Conectando...</span>
+  </div>
+</div>
+
+<!-- MAPA + SIDEBAR -->
+<div class="main-layout" id="main-layout" style="display:none">
+  <div id="map"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-hdr" onclick="toggleSidebar()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      EVENTOS RECIENTES
+      <span class="sidebar-hdr-count" id="ev-count">0</span>
+    </div>
+    <div class="ev-list" id="ev-list">
+      <div class="ev-empty">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ELIMINAR EVENTO -->
+<div class="modal-ov" id="modal-eliminar" style="display:none">
+  <div class="modal-box" style="max-width:360px">
+    <h3 style="color:var(--red)">Eliminar evento</h3>
+    <p style="font-size:13px;color:var(--text2);margin:10px 0 20px">¿Eliminar este evento permanentemente? Esta acción no se puede deshacer.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+      <button class="btn-confirm" id="btn-confirmar-eliminar" style="background:var(--red)">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CIERRE -->
+<div class="modal-ov" id="modal-cerrar" style="display:none">
+  <div class="modal-box">
+    <h3>Cerrar evento</h3>
+    <textarea id="notas-txt" placeholder="Notas de resolución (opcional)"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-confirm" id="btn-confirmar">Cerrar evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- GESTIÓN USUARIOS APP (particulares) -->
+<div id="partis-overlay" style="display:none">
+  <div class="partis-hdr">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <h2>Usuarios App — Botón de Pánico</h2>
+    <button class="btn-logout" onclick="cerrarParticulares()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Cerrar
+    </button>
+  </div>
+  <div class="partis-body">
+    <div class="partis-toolbar">
+      <p id="partis-count" style="color:var(--text2);font-size:13px"></p>
+      <button class="btn-add" onclick="abrirFormParticular(null)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Agregar usuario
+      </button>
+    </div>
+    <div id="partis-empty" style="display:none" class="ev-empty">
+      No hay usuarios registrados. Usa "Agregar usuario" para crear el primero.
+    </div>
+    <table class="tbl" id="partis-tbl" style="display:none">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono (usuario)</th>
+          <th>Dirección</th>
+          <th>Estado</th>
+          <th>Registrado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="partis-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FORM add/edit particular -->
+<div class="form-modal-ov" id="form-particular" style="display:none">
+  <div class="form-modal">
+    <h3 id="fp-titulo">Agregar usuario</h3>
+    <div class="fm-grid">
+      <div>
+        <label class="fm-label">Nombre completo *</label>
+        <input class="fm-input" id="fp-nombre" type="text" placeholder="Juan García">
+      </div>
+      <div>
+        <label class="fm-label">Teléfono (se usa para ingresar) *</label>
+        <input class="fm-input" id="fp-telefono" type="tel" placeholder="3001234567">
+      </div>
+      <div>
+        <label class="fm-label" id="fp-pass-label">Contraseña *</label>
+        <input class="fm-input" id="fp-password" type="password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div>
+        <label class="fm-label">Dirección (opcional)</label>
+        <input class="fm-input" id="fp-direccion" type="text" placeholder="Cra 15 #23-45">
+      </div>
+      <div class="fm-full" id="fp-activo-wrap" style="display:none">
+        <div class="fm-toggle">
+          <input type="checkbox" id="fp-activo" checked>
+          <label for="fp-activo">Cuenta activa (puede ingresar a la app)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-cancel" onclick="cerrarFormParticular()">Cancelar</button>
+      <button class="btn-confirm" id="fp-guardar" onclick="guardarParticular()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+const API      = 'https://api.whatseg.com/api/ext/boton'
+const WS_URL   = 'wss://api.whatseg.com/ws/boton'
+const PTT_API  = 'https://api.whatseg.com/api/ext/reportes-ptt'
+
+// ── Leer ?tk= y ?admin= del redirect de modulos.html ──────
+;(function(){
+  const urlParams  = new URLSearchParams(window.location.search)
+  const tkParam    = urlParams.get('tk')
+  const adminParam = urlParams.get('admin')
+  if (tkParam)    sessionStorage.setItem('boton_token',  tkParam)
+  if (adminParam) {
+    try {
+      const adm = JSON.parse(decodeURIComponent(adminParam))
+      sessionStorage.setItem('boton_nombre', adm.nombre || '')
+    } catch {}
+  }
+  if (tkParam || adminParam) history.replaceState(null, '', window.location.pathname)
+})()
+
+let _token  = sessionStorage.getItem('boton_token') || ''
+let _nombre = sessionStorage.getItem('boton_nombre') || ''
+
+// ── Auth ──────────────────────────────────────────────────
+async function doLogin() {
+  const user = document.getElementById('li-user').value.trim()
+  const pass = document.getElementById('li-pass').value
+  if (!user || !pass) { setErr('Completa todos los campos'); return }
+  const btn = document.getElementById('li-btn')
+  btn.textContent = 'Verificando...'; btn.disabled = true; setErr('')
+  try {
+    const r = await fetch(PTT_API + '/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cedula:user, password:pass}),
+    })
+    const d = await r.json()
+    if (!r.ok) throw new Error(d.error || 'Credenciales inválidas')
+    const rol = d.guardia?.rol || d.rol || ''
+    if (!['ADMIN','SUPERVISOR','SUPERADMIN','COMANDANTE'].includes(rol))
+      throw new Error('Sin permisos de acceso al panel')
+    _token  = d.token
+    _nombre = d.guardia?.nombre || d.nombre || user
+    sessionStorage.setItem('boton_token', _token)
+    sessionStorage.setItem('boton_nombre', _nombre)
+    mostrarApp()
+  } catch(e) {
+    setErr(e.message || 'Error de autenticación')
+    btn.textContent = 'Ingresar'; btn.disabled = false
+  }
+}
+function setErr(m){ document.getElementById('li-err').textContent = m }
+document.getElementById('li-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin() })
+
+function toggleSidebar() {
+  if (window.innerWidth > 768) return
+  const sb = document.getElementById('sidebar')
+  sb.classList.toggle('collapsed')
+}
+
+function logout() {
+  sessionStorage.removeItem('boton_token'); sessionStorage.removeItem('boton_nombre'); location.reload()
+}
+
+function mostrarApp() {
+  document.getElementById('login-overlay').style.display = 'none'
+  document.getElementById('app-header').style.display    = ''
+  document.getElementById('filter-bar').style.display   = ''
+  document.getElementById('main-layout').style.display  = ''
+  document.getElementById('hdr-nombre').textContent = _nombre
+  const av = document.getElementById('hdr-avatar')
+  if (av) av.textContent = (_nombre || '?')[0].toUpperCase()
+  if (map) {
+    setTimeout(function(){ map.invalidateSize() }, 200)
+    cargarEventos(); connectWs(); cargarCapaRondas()
+  }
+}
+
+// ── Mapa ──────────────────────────────────────────────────
+var map = null
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 6.25, lng: -75.57 },
+    zoom: 13,
+    mapId: 'DEMO_MAP_ID',
+    zoomControl: true,
+    streetViewControl: false,
+    fullscreenControl: true,
+    mapTypeControl: false,
+  })
+  if (_token) mostrarApp()
+}
+
+// ── Estado eventos ─────────────────────────────────────────
+let _eventos = [], _markers = {}, _filtroEstado = '', _filtroTipo = '', _cierreId = null
+const COLORES = {PANICO:'#ef4444',ALARMA:'#f97316',SOS:'#3b82f6',PRUEBA:'#6b7280'}
+
+// SVG icons para pins de eventos (sin emojis)
+const PIN_SVG = {
+  PANICO: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="white"/></svg>',
+  ALARMA: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="1" fill="white"/></svg>',
+  SOS:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="1" fill="white"/></svg>',
+  PRUEBA: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+}
+
+function showToast(msg, tipo='info') {
+  const el = document.createElement('div')
+  el.className = 'toast toast-' + tipo
+  el.textContent = msg
+  document.getElementById('toast-wrap').appendChild(el)
+  setTimeout(() => el.remove(), 3200)
+}
+
+function actualizarStats() {
+  const hoy = new Date(); hoy.setHours(0,0,0,0)
+  const h24 = new Date(Date.now() - 86400000)
+  const act = _eventos.filter(e=>e.estado==='ACTIVO').length
+  document.getElementById('cnt-activo').textContent = act
+  document.getElementById('cnt-hoy').textContent    = _eventos.filter(e=>new Date(e.created_at)>=hoy).length
+  document.getElementById('cnt-24h').textContent    = _eventos.filter(e=>new Date(e.created_at)>=h24).length
+  document.getElementById('live-dot').style.display = act > 0 ? '' : 'none'
+}
+
+function fmtHora(ts) {
+  const d = new Date(ts), hoy = new Date()
+  if (d.toDateString()===hoy.toDateString())
+    return 'Hoy ' + d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})
+  return d.toLocaleDateString('es',{month:'short',day:'numeric'}) + ' ' +
+         d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})
+}
+
+// ── Marcadores de eventos (GPS fallback) ──────────────────────
+let _openIw = null
+function syncMarcador(ev) {
+  // Evento con puesto asignado → animar el pin del puesto
+  if (ev.puesto_id) {
+    if (!_puestoMarkersMap.has(ev.puesto_id)) return // capa no cargada aún
+    const hayActivos = _eventos.some(e => e.puesto_id === ev.puesto_id && e.estado === 'ACTIVO')
+    if (hayActivos) activarPuesto(ev.puesto_id, ev.tipo)
+    else desactivarPuesto(ev.puesto_id)
+    return
+  }
+  // Evento sin puesto → pin GPS clásico
+  if (!ev.lat || !ev.lng || !map) return
+  const la = parseFloat(ev.lat), lo = parseFloat(ev.lng)
+  if (isNaN(la)||isNaN(lo)) return
+  if (_markers[ev.id]) {
+    _markers[ev.id].content.style.opacity = ev.estado==='CERRADO'?'0.35':ev.estado==='ATENDIDO'?'0.65':'1'
+    return
+  }
+  const color = COLORES[ev.tipo]||'#6b7280'
+  const pinEl = makePinEl(color, ev.tipo)
+  const marker = new google.maps.marker.AdvancedMarkerElement({
+    position: { lat: la, lng: lo },
+    map: map,
+    content: pinEl,
+    title: `${ev.tipo} — ${ev.usuario_nombre}`,
+  })
+  const iw = new google.maps.InfoWindow({
+    content: `<div style="min-width:185px;font-family:'IBM Plex Sans',sans-serif;padding:4px">
+      <b style="font-size:13px">${ev.tipo} — ${ev.usuario_nombre}</b><br>
+      <span style="font-size:11px;color:#666">${fmtHora(ev.created_at)}</span><br>
+      ${ev.descripcion?`<span style="font-size:12px">${ev.descripcion}</span><br>`:''}
+      <span style="font-size:11px;color:#999">
+        ${ev.usuario_tipo} &middot; ${la.toFixed(5)}, ${lo.toFixed(5)}<br>
+        Estado: <b>${ev.estado}</b>
+      </span></div>`
+  })
+  marker.addListener('gmp-click', () => {
+    if (_openIw) _openIw.close()
+    iw.open({ anchor: marker, map }); _openIw = iw
+    const card = document.getElementById('ev-'+ev.id)
+    if (card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.outline='2px solid #ef4444'; setTimeout(()=>card.style.outline='',1500) }
+  })
+  _markers[ev.id] = marker
+}
+
+// ── Render lista ──────────────────────────────────────────
+function renderLista() {
+  const fil = _eventos.filter(ev =>
+    (!_filtroEstado || ev.estado===_filtroEstado) &&
+    (!_filtroTipo   || ev.tipo===_filtroTipo)
+  )
+  document.getElementById('ev-count').textContent = fil.length
+  const el = document.getElementById('ev-list')
+  if (!fil.length) { el.innerHTML='<div class="ev-empty">Sin eventos que mostrar</div>'; actualizarStats(); return }
+  el.innerHTML = fil.map(ev => {
+    const act = ev.estado==='ACTIVO'
+    const ub  = ev.lat ? `&nbsp;&middot;&nbsp;<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${parseFloat(ev.lat).toFixed(4)}, ${parseFloat(ev.lng).toFixed(4)}` : ''
+    return `<div class="ev-card ${ev.estado}" id="ev-${ev.id}" onclick="focusEv('${ev.id}')">
+      <div class="ev-head">
+        <span class="ev-badge tipo-${ev.tipo}">${ev.tipo}</span>
+        <span class="ev-nombre">${ev.usuario_nombre}</span>
+        <span class="ev-uptag">${ev.usuario_tipo}</span>
+      </div>
+      <div class="ev-body">
+        <div class="ev-meta">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${fmtHora(ev.created_at)}${ub}
+        </div>
+        ${ev.descripcion?`<div class="ev-desc">${ev.descripcion}</div>`:''}
+        ${ev.atendido_por?`<div class="ev-meta" style="margin-top:4px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>&nbsp;${ev.atendido_por}</div>`:''}
+        ${ev.notas?`<div class="ev-desc" style="color:#64748b;margin-top:4px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ${ev.notas}</div>`:''}
+      </div>
+      <div class="ev-actions">
+        <button class="btn-ir" onclick="irEvento('${ev.id}',event)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+          Ir
+        </button>
+        <button class="btn-compartir" onclick="compartirEvento('${ev.id}',event)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Compartir
+        </button>
+      </div>
+      <div class="ev-footer">
+        ${act?`<button class="btn-sm btn-atender" onclick="atender('${ev.id}',event)">Atender</button>
+               <button class="btn-sm btn-cerrar"  onclick="abrirCierre('${ev.id}',event)">Cerrar</button>`:''}
+        <span class="ev-estado est-${ev.estado}">${ev.estado}</span>
+        <button class="btn-sm btn-del" onclick="eliminarEvento('${ev.id}',event)" title="Eliminar evento">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>`
+  }).join('')
+  actualizarStats()
+}
+
+function irEvento(id, e) {
+  e.stopPropagation()
+  const ev = _eventos.find(x=>x.id===id)
+  if (!ev) return
+  if (ev.lat && ev.lng) {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${ev.lat},${ev.lng}`, '_blank')
+  } else {
+    // Si no tiene coords propias, buscar la comunidad en mapa
+    const puestoInfo = ev.puesto_id && _puestoMarkersMap.get(ev.puesto_id)
+    if (puestoInfo?.marker?.position) {
+      const {lat, lng} = puestoInfo.marker.position
+      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')
+    }
+  }
+}
+
+function compartirEvento(id, e) {
+  e.stopPropagation()
+  const ev = _eventos.find(x=>x.id===id)
+  if (!ev) return
+  const tipo = ev.tipo || ''
+  const ubi  = ev.lat && ev.lng
+    ? `📍 ${parseFloat(ev.lat).toFixed(6)}, ${parseFloat(ev.lng).toFixed(6)}\nhttps://www.google.com/maps/search/?api=1&query=${ev.lat},${ev.lng}`
+    : ''
+  const partes = [
+    `🚨 ${tipo}: ${ev.usuario_nombre}`,
+    `Tipo usuario: ${ev.usuario_tipo}`,
+    `Hora: ${fmtHora(ev.created_at)}`,
+    ev.descripcion ? `Detalle: ${ev.descripcion}` : '',
+    ubi,
+  ].filter(Boolean).join('\n')
+  if (navigator.share) navigator.share({ title: 'Evento WhatsEg', text: partes })
+  else { navigator.clipboard.writeText(partes) }
+}
+
+function focusEv(id) {
+  const ev = _eventos.find(e=>e.id===id)
+  if (!ev) return
+  // Si tiene puesto asignado, ir al pin del puesto
+  if (ev.puesto_id && _puestoMarkersMap.has(ev.puesto_id)) {
+    const { marker } = _puestoMarkersMap.get(ev.puesto_id)
+    if (marker.position && map) {
+      map.panTo(marker.position); map.setZoom(17)
+      google.maps.event.trigger(marker, 'gmp-click')
+    }
+    return
+  }
+  // GPS fallback
+  if (ev.lat && ev.lng && map) {
+    map.panTo({lat:parseFloat(ev.lat),lng:parseFloat(ev.lng)}); map.setZoom(17)
+    if (_markers[id]) google.maps.event.trigger(_markers[id],'gmp-click')
+  }
+}
+
+// ── Cargar eventos ────────────────────────────────────────
+async function cargarEventos() {
+  try {
+    const r = await fetch(API+'/eventos?limit=200', {headers:{Authorization:'Bearer '+_token}})
+    if (r.status===401||r.status===403) { logout(); return }
+    if (!r.ok) throw new Error()
+    const d = await r.json()
+    _eventos = d.items||[]
+    _eventos.forEach(syncMarcador)
+    renderLista()
+    const conUb = _eventos.filter(e=>e.lat&&e.lng)
+    if (conUb.length&&map) { map.setCenter({lat:parseFloat(conUb[0].lat),lng:parseFloat(conUb[0].lng)}); map.setZoom(13) }
+  } catch { document.getElementById('ev-list').innerHTML='<div class="ev-empty" style="color:#ef4444">Error cargando eventos</div>' }
+}
+
+// ── Acciones eventos ──────────────────────────────────────
+async function atender(id, e) {
+  e.stopPropagation()
+  try {
+    const r = await fetch(API+'/eventos/'+id+'/atender',{method:'PUT',headers:{Authorization:'Bearer '+_token,'Content-Type':'application/json'}})
+    if (!r.ok) throw new Error()
+    const idx = _eventos.findIndex(x=>x.id===id)
+    if (idx>=0) { _eventos[idx].estado='ATENDIDO'; _eventos[idx].atendido_por=_nombre }
+    syncMarcador(_eventos[idx>=0?idx:0]); renderLista()
+    showToast('Evento marcado como ATENDIDO','ok')
+  } catch { showToast('Error al atender','err') }
+}
+
+function abrirCierre(id, e) {
+  e.stopPropagation(); _cierreId=id
+  document.getElementById('notas-txt').value=''
+  document.getElementById('modal-cerrar').style.display='flex'
+  document.getElementById('notas-txt').focus()
+}
+document.getElementById('btn-confirmar').onclick = async () => {
+  if (!_cierreId) return
+  const notas = document.getElementById('notas-txt').value.trim()
+  try {
+    const r = await fetch(API+'/eventos/'+_cierreId+'/cerrar',{method:'PUT',headers:{Authorization:'Bearer '+_token,'Content-Type':'application/json'},body:JSON.stringify({notas})})
+    if (!r.ok) throw new Error()
+    const idx = _eventos.findIndex(e=>e.id===_cierreId)
+    if (idx>=0) { _eventos[idx].estado='CERRADO'; _eventos[idx].notas=notas }
+    syncMarcador(_eventos[idx>=0?idx:0]); renderLista(); cerrarModal()
+    showToast('Evento cerrado','ok')
+  } catch { showToast('Error al cerrar','err') }
+}
+function cerrarModal(){ document.getElementById('modal-cerrar').style.display='none'; _cierreId=null }
+document.getElementById('modal-cerrar').onclick=e=>{ if(e.target===document.getElementById('modal-cerrar')) cerrarModal() }
+
+// ── Filtros ───────────────────────────────────────────────
+document.querySelectorAll('[data-estado]').forEach(btn=>{
+  btn.onclick=()=>{ document.querySelectorAll('[data-estado]').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); _filtroEstado=btn.dataset.estado; renderLista() }
+})
+document.getElementById('sel-tipo').onchange=e=>{ _filtroTipo=e.target.value; renderLista() }
+
+// ── Eliminar evento ────────────────────────────────────────
+let _eliminarId = null
+
+function eliminarEvento(id, e) {
+  e.stopPropagation()
+  _eliminarId = id
+  document.getElementById('modal-eliminar').style.display = 'flex'
+}
+
+function cerrarModalEliminar() {
+  document.getElementById('modal-eliminar').style.display = 'none'
+  _eliminarId = null
+}
+
+document.getElementById('btn-confirmar-eliminar').onclick = async () => {
+  if (!_eliminarId) return
+  const id = _eliminarId
+  cerrarModalEliminar()
+  try {
+    const r = await fetch(API+'/eventos/'+id, {method:'DELETE', headers:{Authorization:'Bearer '+_token}})
+    if (!r.ok) throw new Error()
+    const ev = _eventos.find(x=>x.id===id)
+    _eventos = _eventos.filter(x=>x.id!==id)
+    if (ev?.puesto_id) {
+      if (!_eventos.some(x=>x.puesto_id===ev.puesto_id&&x.estado==='ACTIVO'))
+        desactivarPuesto(ev.puesto_id)
+    } else if (_markers[id]) {
+      _markers[id].map = null; delete _markers[id]
+    }
+    renderLista()
+    showToast('Evento eliminado','ok')
+  } catch { showToast('Error al eliminar evento','err') }
+}
+
+document.getElementById('modal-eliminar').onclick = e => {
+  if (e.target === document.getElementById('modal-eliminar')) cerrarModalEliminar()
+}
+
+// ── Capa Mapa: Comunidades y Puestos ──────────────────────
+let _capaMarkers = []
+let _capaCargada = false
+// Map de puesto_id → { marker, pIdx, origContent, nombre }
+let _puestoMarkersMap = new Map()
+
+// Pin de alarma: teardrop rojo pulsante con "!"
+function makePinElAlarm(tipo) {
+  const color = COLORES[tipo] || '#ef4444'
+  const el = document.createElement('div')
+  el.className = 'pin-alarm-el'
+  el.style.cssText = 'position:relative;width:40px;height:50px;cursor:pointer'
+  el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50" style="display:block">'
+    + '<path d="M20 0C8.95 0 0 8.95 0 20c0 16 20 30 20 30S40 36 40 20C40 8.95 31.05 0 20 0z" fill="' + color + '" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>'
+    + '</svg>'
+    + '<span style="position:absolute;top:7px;left:50%;transform:translateX(-50%);color:#fff;font-weight:900;font-size:20px;line-height:1;pointer-events:none">!</span>'
+  return el
+}
+
+function activarPuesto(puesto_id, tipo) {
+  if (!_puestoMarkersMap.has(puesto_id)) return
+  const entry = _puestoMarkersMap.get(puesto_id)
+  if (entry.marker._alarmaActiva) return
+  entry.marker.content = makePinElAlarm(tipo)
+  entry.marker._alarmaActiva = true
+}
+
+function desactivarPuesto(puesto_id) {
+  if (!_puestoMarkersMap.has(puesto_id)) return
+  const entry = _puestoMarkersMap.get(puesto_id)
+  if (!entry.marker._alarmaActiva) return
+  entry.marker.content = entry.origContent
+  entry.marker._alarmaActiva = false
+}
+
+// Gota SVG igual que rondas
+function makePinEl(color, label) {
+  const el = document.createElement('div')
+  el.style.cssText = 'position:relative;width:40px;height:50px;cursor:pointer'
+  el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50" style="display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))">'
+    + '<path d="M20 0C8.95 0 0 8.95 0 20c0 16 20 30 20 30S40 36 40 20C40 8.95 31.05 0 20 0z" fill="' + color + '" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>'
+    + '</svg>'
+    + (label
+      ? '<span style="position:absolute;top:9px;left:50%;transform:translateX(-50%);color:#fff;font-weight:700;font-size:14px;font-family:\'IBM Plex Sans\',sans-serif;line-height:1;pointer-events:none">' + label + '</span>'
+      : '<img src="/whatseg_favicon.webp" style="position:absolute;top:5px;left:50%;transform:translateX(-50%);width:24px;height:24px;object-fit:contain;border-radius:3px;pointer-events:none">')
+  return el
+}
+
+function makeInfoCard(titulo, badge, badgeColor, sub, coordsText) {
+  let h = '<div style="font-family:\'IBM Plex Sans\',sans-serif;min-width:220px;max-width:280px">'
+  h += '<div style="background:' + badgeColor + ';padding:12px 24px 10px 14px">'
+  h += '<div style="font-size:14px;font-weight:700;color:#fff;line-height:1.2">' + titulo + '</div>'
+  if (badge) h += '<div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:3px">' + badge + '</div>'
+  h += '</div>'
+  if (sub || coordsText) {
+    h += '<div style="background:#fff;padding:10px 14px">'
+    if (sub) h += '<div style="font-size:12px;color:#374151;line-height:1.4">' + sub + '</div>'
+    if (coordsText) h += '<div style="font-size:10px;color:#9ca3af;margin-top:2px">' + coordsText + '</div>'
+    h += '</div>'
+  }
+  h += '</div>'
+  return h
+}
+
+async function cargarCapaRondas() {
+  if (_capaCargada || !map || !_token) return
+  _capaCargada = true
+  try {
+    const r = await fetch(API + '/mapa-data', {headers:{Authorization:'Bearer '+_token}})
+    if (!r.ok) return
+    const { comunidades, puestos } = await r.json()
+    const misComs    = comunidades || []
+    const misPuestos = puestos    || []
+
+    const bounds = new google.maps.LatLngBounds()
+
+    for (const com of misComs) {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        position: {lat: Number(com.latitud), lng: Number(com.longitud)},
+        map: map,
+        content: makePinEl('#16a34a'),
+        title: com.nombre,
+      })
+      const iwCom = new google.maps.InfoWindow({
+        content: makeInfoCard(com.nombre, 'Comunidad', '#16a34a', com.direccion || null, null)
+      })
+      marker.addListener('gmp-click', () => { if(_openIw)_openIw.close(); iwCom.open({anchor:marker,map}); _openIw=iwCom })
+      _capaMarkers.push(marker)
+      bounds.extend(marker.position)
+    }
+
+    for (const p of misPuestos) {
+      const pIdx = misPuestos.indexOf(p) + 1
+      const origContent = makePinEl('#3b82f6', String(pIdx))
+      const pm = new google.maps.marker.AdvancedMarkerElement({
+        position: {lat: Number(p.latitud), lng: Number(p.longitud)},
+        map: map,
+        content: origContent,
+        title: p.nombre,
+      })
+      pm._alarmaActiva = false
+      // Guardar en el mapa para animación de alarma
+      _puestoMarkersMap.set(p.id, { marker: pm, pIdx, origContent, nombre: p.nombre })
+      const iwP = new google.maps.InfoWindow({
+        content: makeInfoCard(p.nombre, 'Puesto de vigilancia', '#1d4ed8',
+          p.direccion || p.comunidad_nombre || null,
+          p.descripcion || null)
+      })
+      pm.addListener('gmp-click', () => { if(_openIw)_openIw.close(); iwP.open({anchor:pm,map}); _openIw=iwP })
+      _capaMarkers.push(pm)
+      bounds.extend(pm.position)
+    }
+
+    if (!bounds.isEmpty()) map.fitBounds(bounds, 80)
+
+    // Activar puestos que ya tienen eventos ACTIVOS cargados
+    for (const ev of _eventos) {
+      if (ev.puesto_id && ev.estado === 'ACTIVO') activarPuesto(ev.puesto_id, ev.tipo)
+    }
+  } catch(e) { console.error('[mapa-data]', e) }
+}
+
+// ── PARTICULARES ──────────────────────────────────────────
+let _particulares = [], _editId = null
+
+function abrirParticulares() {
+  document.getElementById('partis-overlay').style.display = 'flex'
+  cargarParticulares()
+}
+function cerrarParticulares() {
+  document.getElementById('partis-overlay').style.display = 'none'
+}
+
+async function cargarParticulares() {
+  try {
+    const r = await fetch(API+'/particulares', {headers:{Authorization:'Bearer '+_token}})
+    if (r.status===403) { showToast('Sin permisos para gestionar usuarios', 'err'); return }
+    if (!r.ok) throw new Error()
+    _particulares = await r.json()
+    renderParticulares()
+  } catch { showToast('Error cargando usuarios', 'err') }
+}
+
+function renderParticulares() {
+  const tbody  = document.getElementById('partis-tbody')
+  const empty  = document.getElementById('partis-empty')
+  const tbl    = document.getElementById('partis-tbl')
+  const count  = document.getElementById('partis-count')
+  const n = _particulares.length
+  count.textContent = n + ' usuario' + (n!==1?'s':'') + ' registrado' + (n!==1?'s':'')
+
+  if (!n) { tbl.style.display='none'; empty.style.display=''; return }
+  empty.style.display='none'; tbl.style.display=''
+
+  tbody.innerHTML = _particulares.map(p => `
+    <tr>
+      <td style="font-weight:600">${p.nombre}</td>
+      <td style="color:var(--text2);font-family:monospace">${p.telefono}</td>
+      <td style="color:#64748b;font-size:12px">${p.direccion||'—'}</td>
+      <td><span class="${p.activo?'badge-on':'badge-off'}">${p.activo?'Activo':'Inactivo'}</span></td>
+      <td style="color:#64748b;font-size:11px">${new Date(p.created_at).toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:nowrap">
+          <button class="btn-tbl" onclick="abrirFormParticular('${p.id}')">Editar</button>
+          <button class="btn-tbl" onclick="toggleActivo('${p.id}',${!p.activo})">${p.activo?'Desactivar':'Activar'}</button>
+          <button class="btn-tbl del" onclick="eliminarParticular('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function abrirFormParticular(id) {
+  _editId = id || null
+  const p = id ? _particulares.find(x=>x.id===id) : null
+  document.getElementById('fp-titulo').textContent     = p ? 'Editar usuario' : 'Agregar usuario'
+  document.getElementById('fp-nombre').value           = p?.nombre   || ''
+  document.getElementById('fp-telefono').value         = p?.telefono || ''
+  document.getElementById('fp-password').value         = ''
+  document.getElementById('fp-direccion').value        = p?.direccion || ''
+  document.getElementById('fp-pass-label').textContent = p ? 'Contraseña (vacío = sin cambios)' : 'Contraseña *'
+  document.getElementById('fp-activo-wrap').style.display = p ? '' : 'none'
+  if (p) document.getElementById('fp-activo').checked = p.activo !== false
+  document.getElementById('fp-guardar').textContent = 'Guardar'
+  document.getElementById('fp-guardar').disabled = false
+  document.getElementById('form-particular').style.display = 'flex'
+  setTimeout(()=>document.getElementById('fp-nombre').focus(), 50)
+}
+function cerrarFormParticular() {
+  document.getElementById('form-particular').style.display = 'none'
+  _editId = null
+}
+
+async function guardarParticular() {
+  const nombre    = document.getElementById('fp-nombre').value.trim()
+  const telefono  = document.getElementById('fp-telefono').value.trim()
+  const password  = document.getElementById('fp-password').value
+  const direccion = document.getElementById('fp-direccion').value.trim()
+  const activo    = document.getElementById('fp-activo').checked
+
+  if (!nombre || !telefono) { showToast('Nombre y teléfono son obligatorios', 'err'); return }
+  if (!_editId && !password) { showToast('La contraseña es obligatoria', 'err'); return }
+  if (password && password.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres', 'err'); return }
+
+  const btn = document.getElementById('fp-guardar')
+  btn.textContent = 'Guardando...'; btn.disabled = true
+
+  try {
+    const body = {nombre, telefono}
+    if (password) body.password = password
+    if (direccion) body.direccion = direccion
+    if (_editId) body.activo = activo
+
+    const url    = _editId ? API+'/particulares/'+_editId : API+'/particulares'
+    const method = _editId ? 'PUT' : 'POST'
+    const r = await fetch(url, {
+      method,
+      headers: {Authorization:'Bearer '+_token, 'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    })
+    const d = await r.json()
+    if (!r.ok) throw new Error(d.error || 'Error al guardar')
+
+    cerrarFormParticular()
+    await cargarParticulares()
+    showToast(_editId ? 'Usuario actualizado' : 'Usuario creado. Ya puede ingresar a la app Whatseg Botón.', 'ok')
+  } catch(e) {
+    showToast(e.message, 'err')
+    btn.textContent = 'Guardar'; btn.disabled = false
+  }
+}
+
+async function toggleActivo(id, nuevoActivo) {
+  try {
+    const r = await fetch(API+'/particulares/'+id, {
+      method:'PUT',
+      headers:{Authorization:'Bearer '+_token,'Content-Type':'application/json'},
+      body: JSON.stringify({activo: nuevoActivo}),
+    })
+    if (!r.ok) throw new Error()
+    await cargarParticulares()
+    showToast(nuevoActivo ? 'Usuario activado' : 'Usuario desactivado', 'ok')
+  } catch { showToast('Error al actualizar', 'err') }
+}
+
+async function eliminarParticular(id, nombre) {
+  if (!confirm('¿Eliminar al usuario "'+nombre+'"?\n\nEsta acción no se puede deshacer.')) return
+  try {
+    const r = await fetch(API+'/particulares/'+id, {method:'DELETE', headers:{Authorization:'Bearer '+_token}})
+    if (!r.ok) throw new Error()
+    await cargarParticulares()
+    showToast('Usuario eliminado', 'ok')
+  } catch { showToast('Error al eliminar', 'err') }
+}
+
+// ── Audio de alerta ────────────────────────────────────────
+let _audioUnlocked = false
+function _unlockAudio() {
+  if (_audioUnlocked) return
+  const a = new Audio('/whatseg_sound.mp3'); a.volume = 0
+  a.play().then(()=>{ a.pause(); a.currentTime=0; _audioUnlocked=true }).catch(()=>{})
+}
+function _playAlarm() {
+  try { const a = new Audio('/whatseg_sound.mp3'); a.volume = 1; a.play().catch(()=>{}) } catch {}
+}
+document.addEventListener('click', _unlockAudio, { once: true })
+
+// ── WebSocket ──────────────────────────────────────────────
+let _ws=null, _wsTimer=null
+function connectWs() {
+  if (_ws&&(_ws.readyState===WebSocket.OPEN||_ws.readyState===WebSocket.CONNECTING)) return
+  _ws = new WebSocket(WS_URL+'?token='+encodeURIComponent(_token))
+  _ws.onopen=()=>{ document.getElementById('ws-dot').classList.add('on'); document.getElementById('ws-txt').textContent='En línea'; clearTimeout(_wsTimer) }
+  _ws.onmessage=e=>{ try {
+    const msg = JSON.parse(e.data)
+    if (msg.type==='nuevo_evento') {
+      _eventos.unshift(msg.evento); syncMarcador(msg.evento); renderLista()
+      if (msg.evento.tipo==='PANICO'||msg.evento.tipo==='SOS'||msg.evento.tipo==='ALARMA') {
+        _playAlarm()
+        document.title='[!] '+msg.evento.tipo+' — WhatsEg Botón'
+        setTimeout(()=>{ document.title='WhatsEg · Botón de Pánico' },6000)
+        if (Notification.permission==='granted') new Notification('[!] '+msg.evento.tipo+' ACTIVADO',{body:msg.evento.usuario_nombre+' activó '+msg.evento.tipo})
+      }
+    } else if (msg.type==='evento_actualizado') {
+      const idx=_eventos.findIndex(e=>e.id===msg.eventoId)
+      if(idx>=0){ Object.assign(_eventos[idx],msg.cambios); syncMarcador(_eventos[idx]); renderLista() }
+    }
+  } catch {} }
+  _ws.onclose=()=>{ document.getElementById('ws-dot').classList.remove('on'); document.getElementById('ws-txt').textContent='Reconectando...'; _wsTimer=setTimeout(connectWs,4000) }
+  _ws.onerror=()=>_ws.close()
+}
+
+if ('Notification' in window && Notification.permission==='default') Notification.requestPermission()
+setInterval(cargarEventos, 120_000)
+</script>
+<!-- Leaflet (OpenStreetMap - gratis, sin API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>.leaflet-div-icon{background:transparent!important;border:none!important;}</style>
+<script>
+(function(){
+  class GMap {
+    constructor(el,o){
+      var c=o.center||{lat:4.6,lng:-74.08};
+      this._lmap=L.map(el,{attributionControl:true}).setView([c.lat,c.lng],o.zoom||14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>',maxZoom:19
+      }).addTo(this._lmap);
+      var self=this; setTimeout(function(){self._lmap.invalidateSize()},300);
+    }
+    panTo(p){this._lmap.panTo([p.lat,p.lng])}
+    fitBounds(b,pad){if(b._b&&b._b.isValid())this._lmap.fitBounds(b._b,{padding:[pad||30,pad||30]})}
+    setCenter(p){this._lmap.setView([p.lat,p.lng])}
+    setZoom(z){this._lmap.setZoom(z)}
+    addListener(ev,fn){
+      if(ev==='click')this._lmap.on('click',function(e){fn({latLng:{lat:e.latlng.lat,lng:e.latlng.lng}})});
+      else this._lmap.on(ev,fn);
+    }
+    invalidateSize(){this._lmap.invalidateSize()}
+  }
+  class GMarker {
+    constructor(o){
+      var p=o.position||{lat:0,lng:0};
+      var ic;
+      if(o.content instanceof HTMLElement){
+        ic=L.divIcon({html:o.content.outerHTML,className:'leaflet-div-icon',iconSize:[30,42],iconAnchor:[15,42]});
+      }
+      this._m=L.marker([p.lat,p.lng],{icon:ic||new L.Icon.Default(),draggable:!!o.gmpDraggable,title:o.title||''});
+      this.position={lat:p.lat,lng:p.lng};
+      if(o.map)this._m.addTo(o.map._lmap||o.map);
+      this.content=o.content;
+    }
+    set map(m){if(m)this._m.addTo(m._lmap||m);else try{this._m.remove()}catch(e){}}
+    get map(){return this._m._map?true:null}
+    addListener(ev,fn){
+      var self=this;
+      if(ev==='gmp-click'||ev==='click')this._m.on('click',fn);
+      else if(ev==='dragend')this._m.on('dragend',function(){var ll=self._m.getLatLng();self.position={lat:ll.lat,lng:ll.lng};fn()});
+      else this._m.on(ev,fn);
+    }
+  }
+  class GInfoWindow {
+    constructor(o){this._c=o&&o.content||''}
+    open(o){
+      var a=o&&(o.anchor||o);
+      if(a&&a._m)a._m.bindPopup(this._c,{maxWidth:300}).openPopup();
+    }
+    close(){}
+    setContent(c){this._c=c}
+  }
+  class GBounds {
+    constructor(){this._b=L.latLngBounds()}
+    extend(p){this._b.extend([p.lat,p.lng])}
+    isEmpty(){return!this._b.isValid()}
+  }
+  window.google={maps:{
+    Map:GMap,
+    marker:{AdvancedMarkerElement:GMarker},
+    InfoWindow:GInfoWindow,
+    LatLngBounds:GBounds,
+    event:{trigger:function(obj,ev){if(obj&&obj._m)obj._m.fire(ev==='gmp-click'?'click':ev)}}
+  }};
+  if(document.readyState==='complete')setTimeout(initMap,100);
+  else window.addEventListener('load',function(){setTimeout(initMap,100)});
+})();
+</script>
+</body>
+</html>

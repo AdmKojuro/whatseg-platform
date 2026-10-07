@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg — Modulos</title>
+  <link rel="icon" type="image/webp" href="/whatseg_favicon.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;background:linear-gradient(135deg,#071a0e 0%,#0d2818 40%,#0a1628 100%);color:#fff;overflow-x:hidden}
+
+    /* Particles */
+    .particles{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+    .particle{position:absolute;width:2px;height:2px;background:rgba(34,197,94,.3);border-radius:50%;animation:float linear infinite}
+    @keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-20px) scale(1);opacity:0}}
+
+    /* Grid background */
+    .grid-bg{position:fixed;inset:0;z-index:0;opacity:.03;background-image:linear-gradient(rgba(34,197,94,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.5) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
+
+    /* Header */
+    .header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .header-left{display:flex;align-items:center;gap:14px}
+    .header-left img{height:42px;width:auto;filter:drop-shadow(0 0 16px rgba(34,197,94,.25))}
+    .header-left span{font-size:12px;color:#64748b;font-weight:400}
+    .header-right{display:flex;align-items:center;gap:16px}
+    .user-info{display:flex;align-items:center;gap:10px}
+    .user-avatar{width:34px;height:34px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+    .user-name{font-size:13px;color:#94a3b8}
+    .user-role{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.5px}
+    .btn-logout{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94a3b8;padding:8px 16px;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;transition:all .2s;font-weight:500}
+    .btn-logout:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#ef4444}
+
+    /* Main content */
+    .main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 32px 60px}
+
+    /* Welcome section */
+    .welcome{text-align:center;margin-bottom:48px}
+    .welcome h1{font-size:32px;font-weight:700;margin-bottom:8px;letter-spacing:-.5px}
+    .welcome h1 span{color:#22c55e}
+    .welcome p{font-size:15px;color:#64748b;max-width:500px;margin:0 auto}
+
+    /* Modules grid */
+    .modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+
+    /* Module card */
+    .card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px 24px;cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;text-align:center}
+    .card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(34,197,94,.06) 0%,transparent 70%);opacity:0;transition:opacity .35s}
+    .card:hover{border-color:rgba(34,197,94,.3);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3),0 0 30px rgba(34,197,94,.08)}
+    .card:hover::before{opacity:1}
+    .card:hover .card-icon svg{transform:scale(1.05)}
+
+    .card-icon{width:180px;height:140px;margin-bottom:16px;position:relative}
+    .card-icon svg{width:100%;height:100%;display:block;transition:transform .35s}
+
+    .card-title{font-size:18px;font-weight:700;margin-bottom:6px;color:#fff}
+    .card-desc{font-size:13px;color:#64748b;line-height:1.5;max-width:280px}
+    .card-arrow{position:absolute;top:20px;right:20px;opacity:0;transform:translateX(-8px);transition:all .3s;color:#22c55e}
+    .card:hover .card-arrow{opacity:1;transform:translateX(0)}
+
+    /* Locked module */
+    .card.locked{pointer-events:none;opacity:.45;filter:grayscale(.6)}
+    .card.locked .card-arrow{display:none}
+    .lock-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.4);border-radius:16px;z-index:2;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+    .card.locked .lock-overlay{display:flex}
+    .lock-icon{width:40px;height:40px;background:rgba(148,163,184,.15);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .lock-label{font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+    /* Footer */
+    .footer{position:relative;z-index:1;text-align:center;padding:24px 32px;border-top:1px solid rgba(255,255,255,.06)}
+    .footer a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#475569;transition:color .2s;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+    .footer a:hover{color:#64748b}
+    .footer img{height:18px;width:auto;opacity:.5;transition:opacity .2s}
+    .footer a:hover img{opacity:.8}
+
+    @media(max-width:680px){
+      .modules{grid-template-columns:1fr}
+      .header{padding:16px 20px;flex-wrap:wrap;gap:12px}
+      .main{padding:24px 16px 40px}
+      .welcome h1{font-size:24px}
+      .user-name,.user-role{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div class="grid-bg"></div>
+
+  <div class="header">
+    <div class="header-left">
+      <img src="/edison.webp" alt="WhatsEg">
+      <span>Plataforma de Seguridad</span>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="user-avatar" id="avatar"></div>
+        <div>
+          <div class="user-name" id="userName"></div>
+          <div class="user-role" id="userRole"></div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">Cerrar sesi&oacute;n</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="welcome">
+      <h1>Bienvenido a <span>WhatsEg</span></h1>
+      <p>Selecciona un m&oacute;dulo para comenzar</p>
+    </div>
+
+    <div class="modules">
+
+      <!-- 1. Dashboard -->
+      <a href="/" class="card">
+        <svg class="card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <!-- Monitor frame -->
+            <rect x="12" y="8" width="156" height="100" rx="6" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".7"/>
+            <rect x="70" y="108" width="40" height="8" fill="#0f2d1a" stroke="#22c55e" stroke-width=".6" opacity=".4"/>
+            <rect x="55" y="116" width="70" height="4" rx="2" fill="#0f2d1a" stroke="#22c55e" stroke-width=".6" opacity=".4"/>
+            <!-- Top bar -->
+            <rect x="18" y="14" width="144" height="10" rx="2" fill="#0d2818" stroke="#22c55e" stroke-width=".4" opacity=".4"/>
+            <circle cx="26" cy="19" r="2.5" fill="#ef4444" opacity=".5"/>
+            <circle cx="34" cy="19" r="2.5" fill="#f59e0b" opacity=".5"/>
+            <circle cx="42" cy="19" r="2.5" fill="#22c55e" opacity=".5"/>
+            <text x="90" y="22" text-anchor="middle" fill="#22c55e" font-size="5" font-weight="500" font-family="IBM Plex Sans" opacity=".5">WhatsEg Dashboard</text>
+            <!-- Panel 1: Activaciones (top-left) -->
+            <rect x="20" y="28" width="68" height="34" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".6" opacity=".5"/>
+            <g transform="translate(32,36)">
+              <path d="M0-5c-4 0-6 3-6 7h12c0-4-2-7-6-7z" fill="#22c55e" opacity=".7"/>
+              <rect x="-7" y="2" width="14" height="2" rx="1" fill="#22c55e" opacity=".6"/>
+              <circle cx="0" cy="7" r="1.5" fill="#22c55e" opacity=".5"/>
+            </g>
+            <circle cx="32" cy="36" r="10" stroke="#22c55e" stroke-width=".6" fill="none" opacity=".3"><animate attributeName="r" values="10;20" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;0" dur="1.5s" repeatCount="indefinite"/></circle>
+            <text x="50" y="40" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans" opacity=".6">3</text>
+            <text x="50" y="47" fill="#22c55e" font-size="3.5" font-family="IBM Plex Sans" opacity=".4">activas</text>
+            <circle cx="82" cy="34" r="3" fill="#ef4444" opacity=".6"><animate attributeName="opacity" values=".6;.2;.6" dur=".8s" repeatCount="indefinite"/></circle>
+            <!-- Panel 2: Camaras (top-right) -->
+            <rect x="92" y="28" width="68" height="34" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".6" opacity=".5"/>
+            <g transform="translate(108,42)">
+              <rect x="-10" y="-8" width="20" height="14" rx="3" fill="none" stroke="#22c55e" stroke-width=".6" opacity=".5"/>
+              <circle cx="0" cy="-1" r="4" fill="none" stroke="#22c55e" stroke-width=".5" opacity=".4"/>
+              <circle cx="0" cy="-1" r="1.5" fill="#22c55e" opacity=".5"><animate attributeName="r" values="1.5;2;1.5" dur="2s" repeatCount="indefinite"/></circle>
+            </g>
+            <text x="128" y="40" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans" opacity=".6">12</text>
+            <text x="128" y="47" fill="#22c55e" font-size="3.5" font-family="IBM Plex Sans" opacity=".4">c&aacute;maras</text>
+            <circle cx="153" cy="34" r="2" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/></circle>
+            <text x="153" y="42" fill="#22c55e" font-size="3" font-family="IBM Plex Sans" opacity=".4">REC</text>
+            <!-- Panel 3: Accesos (bottom-left) -->
+            <rect x="20" y="66" width="68" height="34" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".6" opacity=".5"/>
+            <g transform="translate(38,80)">
+              <rect x="-6" y="-8" width="4" height="16" rx="1" fill="#0f2d1a" stroke="#22c55e" stroke-width=".4" opacity=".5"/>
+              <rect x="2" y="-8" width="4" height="16" rx="1" fill="#0f2d1a" stroke="#22c55e" stroke-width=".4" opacity=".5"/>
+              <rect x="-3" y="-2" width="6" height="5" rx="1.5" fill="#22c55e" opacity=".5"><animate attributeName="opacity" values=".5;.2;.2;.5" dur="3s" repeatCount="indefinite"/></rect>
+            </g>
+            <text x="58" y="78" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans" opacity=".6">8</text>
+            <text x="58" y="85" fill="#22c55e" font-size="3.5" font-family="IBM Plex Sans" opacity=".4">accesos</text>
+            <!-- Panel 4: Clientes (bottom-right) -->
+            <rect x="92" y="66" width="68" height="34" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".6" opacity=".5"/>
+            <g transform="translate(108,78)">
+              <circle cx="0" cy="-4" r="4" fill="none" stroke="#22c55e" stroke-width=".5" opacity=".5"/>
+              <path d="M-6 4c0-4 2.5-5 6-5s6 1 6 5" stroke="#22c55e" stroke-width=".5" fill="none" opacity=".4"/>
+              <circle cx="8" cy="-3" r="3" fill="none" stroke="#22c55e" stroke-width=".4" opacity=".3"/>
+            </g>
+            <text x="128" y="78" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans" opacity=".6">156</text>
+            <text x="128" y="85" fill="#22c55e" font-size="3.5" font-family="IBM Plex Sans" opacity=".4">clientes</text>
+            <!-- Shield badge -->
+            <g transform="translate(155,126)">
+              <path d="M0-8s-7 2-7 5v4c0 3 7 5 7 5s7-2 7-5v-4c0-3-7-5-7-5z" fill="#22c55e" opacity=".15" stroke="#22c55e" stroke-width=".6"/>
+              <text x="0" y="2" text-anchor="middle" fill="#22c55e" font-size="5" font-weight="700" font-family="IBM Plex Sans">&#10003;</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-title">Dashboard</div>
+        <div class="card-desc">Activaciones, c&aacute;maras, control de accesos y gesti&oacute;n de clientes en un solo panel</div>
+      </a>
+
+      <!-- 2. Monitoreo de Rondas -->
+      <a href="https://rondas.whatseg.com" class="card" data-modulo="RONDAS">
+        <div class="lock-overlay"><div class="lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="lock-label">No disponible</div></div>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <rect x="8" y="5" width="164" height="115" rx="7" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+            <g stroke="#22c55e" stroke-width=".4" opacity=".2"><line x1="45" y1="5" x2="45" y2="120"/><line x1="85" y1="5" x2="85" y2="120"/><line x1="125" y1="5" x2="125" y2="120"/><line x1="8" y1="35" x2="172" y2="35"/><line x1="8" y1="65" x2="172" y2="65"/><line x1="8" y1="95" x2="172" y2="95"/></g>
+            <rect x="50" y="40" width="30" height="22" rx="3" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".4"/>
+            <rect x="90" y="40" width="30" height="22" rx="3" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".4"/>
+            <rect x="50" y="70" width="30" height="22" rx="3" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".4"/>
+            <rect x="90" y="70" width="30" height="22" rx="3" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".4"/>
+            <path d="M22 32 L45 32 L45 63 L85 63 L85 32 L125 32 L125 93 L85 93 L85 63" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".4"/>
+            <circle r="5" fill="#22c55e" opacity=".9"><animateMotion dur="6s" repeatCount="indefinite" path="M22,32 L45,32 L45,63 L85,63 L85,32 L125,32 L125,93 L85,93 L85,63"/><animate attributeName="opacity" values=".9;.5;.9" dur="1s" repeatCount="indefinite"/></circle>
+            <circle r="5" fill="none" stroke="#22c55e" stroke-width=".8"><animateMotion dur="6s" repeatCount="indefinite" path="M22,32 L45,32 L45,63 L85,63 L85,32 L125,32 L125,93 L85,93 L85,63"/><animate attributeName="r" values="5;18" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".4;0" dur="1.5s" repeatCount="indefinite"/></circle>
+            <g transform="translate(8,126)"><rect width="70" height="12" rx="3" fill="#22c55e" opacity=".1"/><text x="6" y="9" fill="#22c55e" font-size="7" font-weight="500" font-family="IBM Plex Sans">Ronda 3/5</text></g>
+            <g transform="translate(100,126)"><rect width="72" height="12" rx="3" fill="#22c55e" opacity=".1"/><circle cx="10" cy="6" r="3" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/></circle><text x="18" y="9" fill="#22c55e" font-size="7" font-weight="500" font-family="IBM Plex Sans">EN RONDA</text></g>
+          </svg>
+        </div>
+        <div class="card-title">Monitoreo de Rondas</div>
+        <div class="card-desc">Seguimiento GPS de rondas de vigilancia con checkpoints y verificaci&oacute;n autom&aacute;tica</div>
+      </a>
+
+      <!-- 3. Boton de Panico -->
+      <a href="https://boton.whatseg.com" class="card" data-modulo="BOTON_PANICO">
+        <div class="lock-overlay"><div class="lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="lock-label">No disponible</div></div>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <g transform="translate(55,55)"><circle cx="0" cy="-18" r="9" fill="#0f2d1a" stroke="#22c55e" stroke-width="1" opacity=".7"/><path d="M-12 0c0-8 5-14 12-14s12 6 12 14v26h-24z" fill="#0f2d1a" stroke="#22c55e" stroke-width="1" opacity=".6"/><path d="M12 6 L32 -8" stroke="#22c55e" stroke-width="1.5" opacity=".6" stroke-linecap="round"/></g>
+            <g transform="translate(95,38)"><rect x="-13" y="-22" width="26" height="44" rx="7" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".8"/><circle cx="0" cy="-2" r="9" fill="#ef4444" opacity=".8"><animate attributeName="r" values="9;11;9" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;1;.8" dur="1.2s" repeatCount="indefinite"/></circle><text x="0" y="2" text-anchor="middle" fill="#fff" font-size="6" font-weight="700" font-family="IBM Plex Sans">SOS</text><circle cx="0" cy="-15" r="2" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.2;.7" dur=".6s" repeatCount="indefinite"/></circle></g>
+            <circle cx="95" cy="20" r="18" stroke="#ef4444" stroke-width="1.2" fill="none" opacity=".5"><animate attributeName="r" values="18;38" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0" dur="1.8s" repeatCount="indefinite"/></circle>
+            <circle cx="95" cy="20" r="18" stroke="#ef4444" stroke-width=".8" fill="none" opacity=".3"><animate attributeName="r" values="18;50" dur="1.8s" begin=".6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;0" dur="1.8s" begin=".6s" repeatCount="indefinite"/></circle>
+            <path d="M120 30 Q138 18 148 30 Q158 42 168 35" stroke="#22c55e" stroke-width="1" stroke-dasharray="4 2" fill="none" opacity=".5"><animate attributeName="stroke-dashoffset" values="0;-12" dur="1s" repeatCount="indefinite"/></path>
+            <g transform="translate(148,50)"><rect x="-16" y="-18" width="32" height="48" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1" opacity=".7"/><rect x="-12" y="-14" width="24" height="30" rx="2" fill="#0d2818" stroke="#22c55e" stroke-width=".6"/><rect x="-8" y="-10" width="16" height="7" rx="1" fill="#ef4444" opacity=".3"><animate attributeName="opacity" values=".3;.6;.3" dur="1s" repeatCount="indefinite"/></rect><text x="0" y="-4" text-anchor="middle" fill="#ef4444" font-size="4" font-weight="700" font-family="IBM Plex Sans">SOS</text></g>
+            <g transform="translate(65,112)"><rect x="-32" y="-7" width="64" height="14" rx="7" fill="#ef4444" opacity=".1" stroke="#ef4444" stroke-width=".6"/><circle cx="-20" cy="0" r="2" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur=".7s" repeatCount="indefinite"/></circle><text x="4" y="3" text-anchor="middle" fill="#ef4444" font-size="7" font-weight="600" font-family="IBM Plex Sans">SOS</text></g>
+          </svg>
+        </div>
+        <div class="card-title">Bot&oacute;n de P&aacute;nico</div>
+        <div class="card-desc">Control f&iacute;sico con GPS: alerta SOS con ubicaci&oacute;n exacta al instante</div>
+      </a>
+
+      <!-- 4. Reportes PTT -->
+      <a href="https://reportes.whatseg.com" class="card" data-modulo="REPORTES_PTT">
+        <div class="lock-overlay"><div class="lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="lock-label">No disponible</div></div>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <!-- Walkie-talkie -->
+            <g transform="translate(62,15)">
+              <!-- Antenna -->
+              <rect x="-2" y="-10" width="4" height="16" rx="2" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+              <circle cx="0" cy="-12" r="2" fill="#22c55e" opacity=".5"><animate attributeName="opacity" values=".5;1;.5" dur="1.2s" repeatCount="indefinite"/></circle>
+              <!-- Body -->
+              <rect x="-15" y="6" width="30" height="58" rx="6" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".8"/>
+              <!-- Speaker grille -->
+              <g opacity=".4">
+                <line x1="-9" y1="13" x2="9" y2="13" stroke="#22c55e" stroke-width=".7"/>
+                <line x1="-9" y1="17" x2="9" y2="17" stroke="#22c55e" stroke-width=".7"/>
+                <line x1="-9" y1="21" x2="9" y2="21" stroke="#22c55e" stroke-width=".7"/>
+                <line x1="-9" y1="25" x2="9" y2="25" stroke="#22c55e" stroke-width=".7"/>
+              </g>
+              <!-- PTT side button -->
+              <rect x="-18" y="20" width="4" height="16" rx="2" fill="#22c55e" opacity=".6"><animate attributeName="opacity" values=".6;1;.6" dur="2s" repeatCount="indefinite"/></rect>
+              <!-- Screen -->
+              <rect x="-9" y="32" width="18" height="10" rx="2" fill="#0d2818" stroke="#22c55e" stroke-width=".6"/>
+              <rect x="-7" y="35" width="14" height="2" rx="1" fill="#22c55e" opacity=".4"/>
+              <rect x="-7" y="39" width="9" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+              <!-- Buttons -->
+              <circle cx="-5" cy="50" r="2.5" fill="#164e28" stroke="#22c55e" stroke-width=".6"/>
+              <circle cx="0" cy="50" r="2.5" fill="#164e28" stroke="#22c55e" stroke-width=".6"/>
+              <circle cx="5" cy="50" r="2.5" fill="#164e28" stroke="#22c55e" stroke-width=".6"/>
+            </g>
+            <!-- Sound waves -->
+            <g transform="translate(80,35)" opacity=".5">
+              <path d="M3-6Q9 0 3 6" stroke="#22c55e" stroke-width="1.2" fill="none"><animate attributeName="opacity" values=".5;0;.5" dur="1.5s" repeatCount="indefinite"/></path>
+              <path d="M7-11Q18 0 7 11" stroke="#22c55e" stroke-width="1" fill="none"><animate attributeName="opacity" values=".4;0;.4" dur="1.5s" begin=".3s" repeatCount="indefinite"/></path>
+              <path d="M11-16Q27 0 11 16" stroke="#22c55e" stroke-width=".8" fill="none"><animate attributeName="opacity" values=".3;0;.3" dur="1.5s" begin=".6s" repeatCount="indefinite"/></path>
+            </g>
+            <!-- Arrow -->
+            <path d="M82 44 Q107 44 112 36" stroke="#22c55e" stroke-width="1" stroke-dasharray="3 2" fill="none" opacity=".4"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1s" repeatCount="indefinite"/></path>
+            <!-- Report document -->
+            <g transform="translate(112,8)">
+              <rect x="0" y="0" width="54" height="72" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".7"/>
+              <!-- Header -->
+              <rect x="6" y="6" width="42" height="9" rx="2" fill="#22c55e" opacity=".12"/>
+              <text x="27" y="13" text-anchor="middle" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans">REPORTE PTT</text>
+              <!-- Waveform bars -->
+              <g transform="translate(6,22)" opacity=".5">
+                <rect x="0"  y="3" width="2" height="5"  rx="1" fill="#22c55e"/>
+                <rect x="4"  y="1" width="2" height="9"  rx="1" fill="#22c55e"/>
+                <rect x="8"  y="4" width="2" height="3"  rx="1" fill="#22c55e"/>
+                <rect x="12" y="0" width="2" height="11" rx="1" fill="#22c55e"/>
+                <rect x="16" y="2" width="2" height="7"  rx="1" fill="#22c55e"/>
+                <rect x="20" y="3" width="2" height="5"  rx="1" fill="#22c55e"/>
+                <rect x="24" y="1" width="2" height="9"  rx="1" fill="#22c55e"/>
+                <rect x="28" y="4" width="2" height="3"  rx="1" fill="#22c55e"/>
+                <rect x="32" y="2" width="2" height="7"  rx="1" fill="#22c55e"/>
+                <rect x="36" y="5" width="2" height="2"  rx="1" fill="#22c55e"/>
+                <rect x="40" y="3" width="2" height="5"  rx="1" fill="#22c55e"/>
+              </g>
+              <!-- Text lines -->
+              <rect x="6" y="38" width="32" height="2" rx="1" fill="#22c55e" opacity=".3"/>
+              <rect x="6" y="44" width="40" height="2" rx="1" fill="#22c55e" opacity=".25"/>
+              <rect x="6" y="50" width="26" height="2" rx="1" fill="#22c55e" opacity=".2"/>
+              <!-- Timestamp -->
+              <rect x="6" y="58" width="42" height="8" rx="2" fill="#22c55e" opacity=".08"/>
+              <text x="27" y="64" text-anchor="middle" fill="#22c55e" font-size="5" font-family="IBM Plex Sans" opacity=".5">14:32 · 2m15s</text>
+            </g>
+            <!-- Status -->
+            <g transform="translate(20,120)">
+              <rect width="58" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".6"/>
+              <circle cx="9" cy="6" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/></circle>
+              <text x="18" y="9" fill="#22c55e" font-size="6" font-weight="500" font-family="IBM Plex Sans">GRABANDO</text>
+            </g>
+            <g transform="translate(100,120)">
+              <rect width="68" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".6"/>
+              <text x="8" y="9" fill="#22c55e" font-size="6" font-weight="500" font-family="IBM Plex Sans">12 reportes hoy</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-title">Reportes PTT</div>
+        <div class="card-desc">Env&iacute;a reportes de voz Push-to-Talk con transcripci&oacute;n y registro autom&aacute;tico</div>
+      </a>
+
+      <!-- 5. PTT con Asistente IA -->
+      <a href="https://asistente.whatseg.com" class="card" data-modulo="ASISTENTE_IA">
+        <div class="lock-overlay"><div class="lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="lock-label">No disponible</div></div>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <!-- AI Brain (center) -->
+            <g transform="translate(90,55)">
+              <circle cx="0" cy="0" r="26" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".6"/>
+              <circle cx="0" cy="0" r="18" fill="#0d2818" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+              <!-- Neural connections -->
+              <g stroke="#22c55e" stroke-width=".6" opacity=".4">
+                <line x1="-10" y1="-8" x2="3" y2="-13"/>
+                <line x1="3" y1="-13" x2="11" y2="-5"/>
+                <line x1="11" y1="-5" x2="8" y2="8"/>
+                <line x1="8" y1="8" x2="-5" y2="11"/>
+                <line x1="-5" y1="11" x2="-13" y2="2"/>
+                <line x1="-13" y1="2" x2="-10" y2="-8"/>
+                <line x1="-10" y1="-8" x2="8" y2="8"/>
+                <line x1="3" y1="-13" x2="-5" y2="11"/>
+              </g>
+              <!-- Neural nodes -->
+              <circle cx="-10" cy="-8" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" repeatCount="indefinite"/></circle>
+              <circle cx="3" cy="-13" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".3s" repeatCount="indefinite"/></circle>
+              <circle cx="11" cy="-5" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".6s" repeatCount="indefinite"/></circle>
+              <circle cx="8" cy="8" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin=".9s" repeatCount="indefinite"/></circle>
+              <circle cx="-5" cy="11" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin="1.2s" repeatCount="indefinite"/></circle>
+              <circle cx="-13" cy="2" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1.5s" begin="1.5s" repeatCount="indefinite"/></circle>
+              <!-- IA label -->
+              <text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700" font-family="IBM Plex Sans" opacity=".8">IA</text>
+            </g>
+            <!-- Pulse ring -->
+            <circle cx="90" cy="55" r="26" stroke="#22c55e" stroke-width=".8" fill="none" opacity=".3"><animate attributeName="r" values="26;42" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;0" dur="2s" repeatCount="indefinite"/></circle>
+            <!-- Left: Microphone -->
+            <g transform="translate(22,48)">
+              <!-- Mic -->
+              <rect x="-7" y="-18" width="14" height="28" rx="7" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".7"/>
+              <rect x="-4" y="-14" width="8" height="12" rx="4" fill="#164e28" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+              <line x1="-3" y1="-11" x2="3" y2="-11" stroke="#22c55e" stroke-width=".5" opacity=".3"/>
+              <line x1="-3" y1="-8" x2="3" y2="-8" stroke="#22c55e" stroke-width=".5" opacity=".3"/>
+              <line x1="-3" y1="-5" x2="3" y2="-5" stroke="#22c55e" stroke-width=".5" opacity=".3"/>
+              <!-- Stand -->
+              <rect x="-2" y="10" width="4" height="8" fill="#0f2d1a" stroke="#22c55e" stroke-width=".6"/>
+              <rect x="-8" y="18" width="16" height="3" rx="1.5" fill="#0f2d1a" stroke="#22c55e" stroke-width=".6"/>
+              <!-- Waves right -->
+              <path d="M9-6 Q14 0 9 6" stroke="#22c55e" stroke-width="1.2" fill="none" opacity=".5"><animate attributeName="opacity" values=".5;0;.5" dur="1s" repeatCount="indefinite"/></path>
+              <path d="M13-11 Q22 0 13 11" stroke="#22c55e" stroke-width=".8" fill="none" opacity=".3"><animate attributeName="opacity" values=".3;0;.3" dur="1s" begin=".3s" repeatCount="indefinite"/></path>
+            </g>
+            <!-- Arrow: mic → brain -->
+            <path d="M45 50 Q62 50 64 46" stroke="#22c55e" stroke-width="1" stroke-dasharray="3 2" fill="none" opacity=".4"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1s" repeatCount="indefinite"/></path>
+            <!-- Right: Chat bubble response -->
+            <g transform="translate(132,22)">
+              <rect x="-22" y="0" width="44" height="52" rx="5" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".7"/>
+              <!-- Typing lines -->
+              <rect x="-16" y="8" width="28" height="2" rx="1" fill="#22c55e" opacity=".5"><animate attributeName="width" values="0;28" dur="2s" repeatCount="indefinite"/></rect>
+              <rect x="-16" y="14" width="34" height="2" rx="1" fill="#22c55e" opacity=".4"><animate attributeName="width" values="0;34" dur="2s" begin=".4s" repeatCount="indefinite"/></rect>
+              <rect x="-16" y="20" width="22" height="2" rx="1" fill="#22c55e" opacity=".3"><animate attributeName="width" values="0;22" dur="2s" begin=".8s" repeatCount="indefinite"/></rect>
+              <rect x="-16" y="26" width="30" height="2" rx="1" fill="#22c55e" opacity=".35"><animate attributeName="width" values="0;30" dur="2s" begin="1.2s" repeatCount="indefinite"/></rect>
+              <!-- Chip suggestions -->
+              <rect x="-16" y="34" width="14" height="8" rx="4" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".5"/>
+              <rect x="2" y="34" width="16" height="8" rx="4" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".5"/>
+              <!-- Bubble tail -->
+              <path d="M-22 26 L-30 32 L-22 32" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".7"/>
+            </g>
+            <!-- Arrow: brain → response -->
+            <path d="M116 48 Q122 40 116 30" stroke="#22c55e" stroke-width="1" stroke-dasharray="3 2" fill="none" opacity=".4"><animate attributeName="stroke-dashoffset" values="0;-10" dur="1s" repeatCount="indefinite"/></path>
+            <!-- Status badges -->
+            <g transform="translate(12,120)">
+              <rect width="70" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".6"/>
+              <text x="8" y="8.5" fill="#22c55e" font-size="6" font-weight="500" font-family="IBM Plex Sans">Procesando voz...</text>
+            </g>
+            <g transform="translate(100,120)">
+              <rect width="66" height="12" rx="6" fill="#22c55e" opacity=".1" stroke="#22c55e" stroke-width=".6"/>
+              <circle cx="9" cy="6" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/></circle>
+              <text x="16" y="8.5" fill="#22c55e" font-size="6" font-weight="600" font-family="IBM Plex Sans">IA ACTIVA</text>
+            </g>
+            <!-- Top badge -->
+            <g transform="translate(90,6)">
+              <rect x="-28" y="-6" width="56" height="12" rx="6" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".6"/>
+              <text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="6" font-weight="600" font-family="IBM Plex Sans">ASISTENTE IA</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-title">PTT con Asistente IA</div>
+        <div class="card-desc">Inteligencia artificial analiza comunicaciones PTT y sugiere acciones en tiempo real</div>
+      </a>
+
+      <!-- 6. Soporte Bilingüe -->
+      <a href="https://soporte.whatseg.com" class="card" data-modulo="SOPORTE_BILINGUE">
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <!-- Burbuja izquierda (idioma extranjero) -->
+            <rect x="18" y="28" width="72" height="38" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".85"/>
+            <rect x="18" y="28" width="72" height="38" rx="10" fill="url(#bubbleGrad1)" opacity=".18"/>
+            <text x="54" y="50" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="700" font-family="IBM Plex Sans">Hello</text>
+            <text x="54" y="62" text-anchor="middle" fill="#22c55e" font-size="7.5" font-family="IBM Plex Sans" opacity=".7">How can I help?</text>
+            <!-- Cola burbuja izquierda -->
+            <polygon points="28,66 20,78 40,66" fill="#0f2d1a" stroke="#22c55e" stroke-width="1"/>
+            <!-- Burbuja derecha (traducción) -->
+            <rect x="90" y="60" width="72" height="38" rx="10" fill="#0a1f10" stroke="#22c55e" stroke-width="1.5" opacity=".8"/>
+            <rect x="90" y="60" width="72" height="38" rx="10" fill="url(#bubbleGrad2)" opacity=".15"/>
+            <text x="126" y="82" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="700" font-family="IBM Plex Sans">Hola</text>
+            <text x="126" y="94" text-anchor="middle" fill="#22c55e" font-size="7.5" font-family="IBM Plex Sans" opacity=".7">¿En qué ayudo?</text>
+            <!-- Cola burbuja derecha -->
+            <polygon points="152,98 162,110 140,98" fill="#0a1f10" stroke="#22c55e" stroke-width="1"/>
+            <!-- Flechas de traducción animadas -->
+            <g opacity=".9">
+              <path d="M76 58 Q90 48 104 62" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="3 2" fill="none">
+                <animate attributeName="stroke-dashoffset" values="0;-20" dur="1.5s" repeatCount="indefinite"/>
+              </path>
+              <polygon points="104,62 97,57 101,68" fill="#22c55e" opacity=".9"/>
+              <path d="M104 78 Q90 90 76 78" stroke="#22c55e" stroke-width="1.8" stroke-dasharray="3 2" fill="none">
+                <animate attributeName="stroke-dashoffset" values="0;-20" dur="1.5s" repeatCount="indefinite"/>
+              </path>
+              <polygon points="76,78 83,83 79,72" fill="#22c55e" opacity=".9"/>
+            </g>
+            <!-- Globo terráqueo pequeño -->
+            <circle cx="90" cy="118" r="12" fill="none" stroke="#22c55e" stroke-width="1.2" opacity=".5"/>
+            <ellipse cx="90" cy="118" rx="6" ry="12" fill="none" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+            <line x1="78" y1="118" x2="102" y2="118" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+            <line x1="80" y1="112" x2="100" y2="112" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+            <line x1="80" y1="124" x2="100" y2="124" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+            <defs>
+              <linearGradient id="bubbleGrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
+              <linearGradient id="bubbleGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="card-title">Soporte Bilingüe</div>
+        <div class="card-desc">Atención a extranjeros en su idioma con traducción en tiempo real</div>
+      </a>
+
+      <!-- 7. Videoportero -->
+      <a href="https://videoportero.whatseg.com" class="card" data-modulo="VIDEOPORTERO">
+        <div class="lock-overlay"><div class="lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="lock-label">No disponible</div></div>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <rect x="8" y="5" width="164" height="115" rx="7" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+            <!-- Panel videoportero (izquierda) -->
+            <rect x="18" y="18" width="52" height="82" rx="5" fill="#0d2818" stroke="#22c55e" stroke-width="1.2" opacity=".8"/>
+            <!-- Cámara -->
+            <circle cx="44" cy="33" r="11" fill="#0a1f10" stroke="#22c55e" stroke-width="1"/>
+            <circle cx="44" cy="33" r="7" fill="#0d2818" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+            <circle cx="44" cy="33" r="2.5" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;1;.7" dur="2s" repeatCount="indefinite"/></circle>
+            <!-- Pantalla con silueta visitante -->
+            <rect x="23" y="48" width="42" height="32" rx="3" fill="#0a1f10" stroke="#22c55e" stroke-width=".6" opacity=".7"/>
+            <circle cx="44" cy="57" r="5.5" fill="none" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+            <path d="M34 71c0-5.5 4.5-8 10-8s10 2.5 10 8" stroke="#22c55e" stroke-width=".8" fill="none" opacity=".4"/>
+            <!-- Botón timbre -->
+            <rect x="29" y="84" width="30" height="12" rx="6" fill="#22c55e" opacity=".15" stroke="#22c55e" stroke-width=".8"/>
+            <circle cx="44" cy="90" r="3.5" fill="#22c55e" opacity=".5"><animate attributeName="opacity" values=".5;1;.5" dur="1.5s" repeatCount="indefinite"/></circle>
+            <!-- Ondas señal -->
+            <path d="M74 65 Q90 54 106 65" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4 3" fill="none" opacity=".7"><animate attributeName="stroke-dashoffset" values="0;-14" dur="1s" repeatCount="indefinite"/></path>
+            <path d="M74 73 Q90 62 106 73" stroke="#22c55e" stroke-width="1.2" stroke-dasharray="4 3" fill="none" opacity=".45"><animate attributeName="stroke-dashoffset" values="0;-14" dur="1s" begin=".25s" repeatCount="indefinite"/></path>
+            <path d="M74 81 Q90 70 106 81" stroke="#22c55e" stroke-width=".9" stroke-dasharray="4 3" fill="none" opacity=".25"><animate attributeName="stroke-dashoffset" values="0;-14" dur="1s" begin=".5s" repeatCount="indefinite"/></path>
+            <!-- Teléfono con notificación WhatsApp (derecha) -->
+            <rect x="110" y="22" width="46" height="82" rx="7" fill="#0d2818" stroke="#22c55e" stroke-width="1.2" opacity=".8"/>
+            <!-- Notificación -->
+            <rect x="115" y="30" width="36" height="30" rx="3" fill="#0a1f10" stroke="#22c55e" stroke-width=".6" opacity=".8"/>
+            <circle cx="123" cy="43" r="7" fill="#22c55e" opacity=".18" stroke="#22c55e" stroke-width=".6"/>
+            <text x="123" y="47" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700" font-family="IBM Plex Sans">W</text>
+            <text x="136" y="39" fill="#22c55e" font-size="5" font-weight="600" font-family="IBM Plex Sans">Visitante</text>
+            <text x="136" y="47" fill="#22c55e" font-size="4.5" font-family="IBM Plex Sans" opacity=".6">Apt 201</text>
+            <!-- Pantalla llamada -->
+            <rect x="115" y="64" width="36" height="32" rx="3" fill="#0a1f10" stroke="#22c55e" stroke-width=".4" opacity=".5"/>
+            <circle cx="133" cy="74" r="5" fill="none" stroke="#22c55e" stroke-width=".8" opacity=".5"/>
+            <path d="M126 81c0-4 3-6 7-6s7 2 7 6" stroke="#22c55e" stroke-width=".6" fill="none" opacity=".4"/>
+            <!-- Botones aceptar/rechazar -->
+            <rect x="119" y="88" width="12" height="6" rx="3" fill="#22c55e" opacity=".35"/>
+            <rect x="135" y="88" width="12" height="6" rx="3" fill="#ef4444" opacity=".3"/>
+            <!-- Badges estado -->
+            <g transform="translate(8,126)"><rect width="80" height="12" rx="3" fill="#22c55e" opacity=".1"/><circle cx="10" cy="6" r="2.5" fill="#22c55e"><animate attributeName="opacity" values="1;.3;1" dur=".8s" repeatCount="indefinite"/></circle><text x="18" y="9" fill="#22c55e" font-size="6.5" font-weight="500" font-family="IBM Plex Sans">EN VIVO</text></g>
+            <g transform="translate(100,126)"><rect width="72" height="12" rx="3" fill="#22c55e" opacity=".1"/><text x="8" y="9" fill="#22c55e" font-size="6.5" font-weight="500" font-family="IBM Plex Sans">Apt 201 · Tocando</text></g>
+          </svg>
+        </div>
+        <div class="card-title">Videoportero</div>
+        <div class="card-desc">Gesti&oacute;n de accesos por video desde la tablet: torres, apartamentos, residentes y llamadas WhatsApp</div>
+      </a>
+
+      <!-- 8. Configuración de Módulos (solo SUPERADMIN) -->
+      <a href="/config-modulos.html" class="card" id="cardConfigModulos" style="display:none">
+        <svg class="card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <div class="card-icon">
+          <svg viewBox="0 0 180 140" fill="none">
+            <!-- Gear 1 -->
+            <g transform="translate(70,55)">
+              <circle cx="0" cy="0" r="20" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+              <circle cx="0" cy="0" r="10" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+              <circle cx="0" cy="0" r="4" fill="#22c55e" opacity=".5"/>
+              <g stroke="#22c55e" stroke-width="3" opacity=".7">
+                <line x1="0" y1="-24" x2="0" y2="-17"/>
+                <line x1="0" y1="17" x2="0" y2="24"/>
+                <line x1="-24" y1="0" x2="-17" y2="0"/>
+                <line x1="17" y1="0" x2="24" y2="0"/>
+                <line x1="-17" y1="-17" x2="-12" y2="-12"/>
+                <line x1="12" y1="12" x2="17" y2="17"/>
+                <line x1="17" y1="-17" x2="12" y2="-12"/>
+                <line x1="-12" y1="12" x2="-17" y2="17"/>
+              </g>
+              <animateTransform attributeName="transform" type="rotate" values="0;360" dur="10s" repeatCount="indefinite"/>
+            </g>
+            <!-- Gear 2 -->
+            <g transform="translate(115,80)">
+              <circle cx="0" cy="0" r="14" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.2" opacity=".6"/>
+              <circle cx="0" cy="0" r="7" fill="#0d2818" stroke="#22c55e" stroke-width=".8" opacity=".4"/>
+              <circle cx="0" cy="0" r="3" fill="#22c55e" opacity=".4"/>
+              <g stroke="#22c55e" stroke-width="2.5" opacity=".6">
+                <line x1="0" y1="-18" x2="0" y2="-12"/>
+                <line x1="0" y1="12" x2="0" y2="18"/>
+                <line x1="-18" y1="0" x2="-12" y2="0"/>
+                <line x1="12" y1="0" x2="18" y2="0"/>
+                <line x1="-13" y1="-13" x2="-9" y2="-9"/>
+                <line x1="9" y1="9" x2="13" y2="13"/>
+              </g>
+              <animateTransform attributeName="transform" type="rotate" values="360;0" dur="8s" repeatCount="indefinite"/>
+            </g>
+            <!-- Toggle switches -->
+            <g transform="translate(18,105)">
+              <rect width="50" height="14" rx="7" fill="#22c55e" opacity=".2" stroke="#22c55e" stroke-width=".6"/>
+              <circle cx="40" cy="7" r="5" fill="#22c55e" opacity=".7"><animate attributeName="cx" values="40;10;40" dur="3s" repeatCount="indefinite"/></circle>
+            </g>
+            <g transform="translate(18,125)">
+              <rect width="50" height="14" rx="7" fill="#94a3b8" opacity=".15" stroke="#94a3b8" stroke-width=".6"/>
+              <circle cx="10" cy="7" r="5" fill="#94a3b8" opacity=".5"/>
+            </g>
+            <!-- Module labels -->
+            <g transform="translate(78,112)">
+              <text fill="#22c55e" font-size="7" font-weight="500" font-family="IBM Plex Sans" opacity=".6">Rondas</text>
+            </g>
+            <g transform="translate(78,132)">
+              <text fill="#94a3b8" font-size="7" font-weight="500" font-family="IBM Plex Sans" opacity=".4">PTT</text>
+            </g>
+            <!-- Shield -->
+            <g transform="translate(145,25)">
+              <path d="M0-14s-12 4-12 9v8c0 6 12 9 12 9s12-3 12-9v-8c0-5-12-9-12-9z" fill="#22c55e" opacity=".15" stroke="#22c55e" stroke-width="1"/>
+              <text x="0" y="2" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700" font-family="IBM Plex Sans">&#9881;</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-title">Configuraci&oacute;n de M&oacute;dulos</div>
+        <div class="card-desc">Administra qu&eacute; m&oacute;dulos est&aacute;n disponibles para cada comunidad</div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://phenlinea.online" target="_blank" rel="noopener noreferrer">
+      <span>Desarrollado por</span>
+      <img src="/phenlinea_logo.png" alt="PHenLinea">
+    </a>
+  </div>
+
+  <script>
+    /* ---- Auth check ---- */
+    var token = localStorage.getItem('trd_token');
+    if (!token) window.location.replace('/login');
+
+    /* ---- User info ---- */
+    var admin = {};
+    try { admin = JSON.parse(localStorage.getItem('trd_admin') || '{}'); } catch(e) {}
+
+    /* Sync trd_user with trd_admin so the central dashboard always shows the correct user */
+    var trdAdmin = localStorage.getItem('trd_admin');
+    if (trdAdmin) localStorage.setItem('trd_user', trdAdmin);
+
+    /* Solo ADMIN y SUPERADMIN ven la página de módulos */
+    if (admin.rol !== 'SUPERADMIN' && admin.rol !== 'ADMIN') {
+      window.location.replace('/');
+    }
+
+    try {
+      document.getElementById('avatar').textContent = (admin.nombre || 'U').charAt(0).toUpperCase();
+      document.getElementById('userName').textContent = admin.nombre || '';
+      document.getElementById('userRole').textContent = admin.rol || '';
+    } catch(e) {}
+
+    /* ---- Logout ---- */
+    document.getElementById('btnLogout').addEventListener('click', function() {
+      localStorage.removeItem('trd_token');
+      localStorage.removeItem('trd_admin');
+      window.location.replace('/login');
+    });
+
+    /* ---- Mostrar card de configuración si es SUPERADMIN ---- */
+    if (admin.rol === 'SUPERADMIN') {
+      var cfgCard = document.getElementById('cardConfigModulos');
+      if (cfgCard) cfgCard.style.display = '';
+    }
+
+    /* ---- Cargar permisos de módulos ---- */
+    (async function() {
+      try {
+        var res = await fetch('/api/ext/modulos/mis-modulos', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        var permisos = await res.json(); // { RONDAS: true, BOTON_PANICO: false, ... }
+        document.querySelectorAll('.card[data-modulo]').forEach(function(card) {
+          var modulo = card.getAttribute('data-modulo');
+          if (modulo && permisos[modulo] === false) {
+            card.classList.add('locked');
+          }
+        });
+      } catch(e) { /* Si falla, todos los módulos se muestran activos */ }
+    })();
+
+    /* ---- Pass token to external subdomains ---- */
+    document.querySelectorAll('a.card[href*="whatseg.com"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        if (a.classList.contains('locked')) { e.preventDefault(); return; }
+        e.preventDefault();
+        var url = new URL(a.href);
+        url.searchParams.set('tk', token);
+        url.searchParams.set('admin', localStorage.getItem('trd_admin') || '');
+        window.location.href = url.toString();
+      });
+    });
+
+    /* ---- Particles ---- */
+    (function(){
+      var c = document.getElementById('particles');
+      for (var i = 0; i < 25; i++) {
+        var p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (6 + Math.random() * 10) + 's';
+        p.style.animationDelay = Math.random() * 8 + 's';
+        p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+        c.appendChild(p);
+      }
+    })();
+  </script>
+</body>
+</html>

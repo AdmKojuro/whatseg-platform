@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+  --color-whatsapp: #25d366;
+  --color-whatsapp-dark: #1da851;
+  --color-security: #dc2626;
+  --color-security-dark: #b91c1c;
+  --color-primary: #0a0a0a;
+  --color-secondary: #6b7280;
+  --color-surface: #f8f9fa;
+  --color-border: #e8e8e8;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-secondary); }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pulse-ring {
+  0% { opacity: 0.4; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}

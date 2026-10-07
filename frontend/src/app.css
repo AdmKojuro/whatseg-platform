@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — azul seguridad */
+  --color-brand-50:  #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  /* Surface — escala dark navy (estilo reportes) */
+  --color-surface-950: #090e1b;
+  --color-surface-900: #0e1728;
+  --color-surface-800: #192640;
+  --color-surface-700: #1f3050;
+  --color-surface-600: #27395e;
+  --color-surface-500: #364e72;
+  --color-surface-400: #4d6688;
+  --color-surface-300: #6d86a4;
+  --color-surface-200: #9ab0c8;
+  --color-surface-100: #c5d3e0;
+  --color-surface-50:  #e6ecf3;
+}
+
+/* ───── Base ───── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  font-family: "IBM Plex Sans", sans-serif;
+  background-color: #0e1728;
+  color: #e6ecf3;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ───── Scrollbar ───── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #161c2a; }
+::-webkit-scrollbar-thumb { background: #374155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4d5a70; }
+
+/* ───── Leaflet community label ───── */
+.leaflet-community-label {
+  background: rgba(255,255,255,0.92) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+  color: #111 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+.leaflet-community-label::before { display: none !important; }

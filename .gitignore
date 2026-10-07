@@ -1,0 +1,67 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+dist/
+build/
+.next/
+out/
+
+# Variables de entorno (contienen credenciales)
+.env
+.env.local
+.env.production
+.env.development
+*.env
+
+# Secretos
+secrets/
+*.pem
+*.key
+*.cert
+
+# Base de datos / backups
+base de datos/
+*.sql
+*.dump
+
+# Bytenode compilado (no incluir .jsc del backend en producción)
+*.jsc
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE / Claude
+.claude/
+*.code-workspace
+
+# Flutter / Android builds
+ptt-app/build/
+boton-app/build/
+ptt-app/android/.gradle/
+boton-app/android/.gradle/
+
+# Archivos temporales
+fix_*.py
+*.apk
+imou-bind.js
+
+# Análisis / docs temporales
+PLAN.md
+PTT-Company-Feature-Analysis.md
+PTT-Comapny.apk
+
+# Whatseg Videoportero tiene su propio repo
+Whatseg Videoportero/
+
+# Archivo reservado Windows
+frontend/nul
+nul

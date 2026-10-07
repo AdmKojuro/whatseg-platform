@@ -1,0 +1,20 @@
+{
+  "port": 8001,
+  "debug": false,
+  "yolo_model": "yolo11n.pt",
+  "person_confidence": 0.55,
+  "process_every_n": 4,
+  "main_imgsz": 480,
+  "face_enabled": true,
+  "face_model": "Facenet512",
+  "face_detector": "opencv",
+  "face_threshold": 0.30,
+  "face_min_size": 40,
+  "face_upscale": 2.5,
+  "face_process_every_n": 5,
+  "alert_cooldown_secs": 30,
+  "backend_ext_url": "http://localhost:3068",
+  "backend_ext_token": "",
+  "stream_quality": 70,
+  "max_stream_fps": 10
+}

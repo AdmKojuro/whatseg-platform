@@ -1,0 +1,418 @@
+// WhatsEg Backend-Ext — Nuevos modelos de base de datos
+// Se conecta a la MISMA base de datos PostgreSQL que el backend principal
+// y agrega tablas para las nuevas funcionalidades de seguridad ciudadana.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ZONA: Agrupación de comunidades en zonas de seguridad ─────────────────
+model Zona {
+  id          String   @id @default(uuid())
+  nombre      String
+  codigo      String   @unique
+  descripcion String?
+  activa      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  comunidades ZonaComunidad[]
+  despachos   Despacho[]
+
+  @@map("zonas")
+}
+
+model ZonaComunidad {
+  zona_id      String
+  comunidad_id String
+  assigned_at  DateTime @default(now())
+
+  zona Zona @relation(fields: [zona_id], references: [id], onDelete: Cascade)
+
+  @@id([zona_id, comunidad_id])
+  @@map("zonas_comunidades")
+}
+
+// ─── VISITA: Control de acceso con QR ──────────────────────────────────────
+model Visita {
+  id           String    @id @default(uuid())
+  nombre       String
+  documento    String?
+  motivo       String?
+  comunidad_id String
+  qr_token     String    @unique @default(uuid())
+  qr_usado     Boolean   @default(false)
+  foto_path    String?
+  valido_desde DateTime
+  valido_hasta DateTime
+  created_by   String    // admin_id
+  created_at   DateTime  @default(now())
+  usado_at     DateTime?
+  portero_id   String?   // quien registró el ingreso
+
+  @@map("visitas")
+}
+
+// ─── EVIDENCIA: Cadena de custodia digital ─────────────────────────────────
+model Evidencia {
+  id              String   @id @default(uuid())
+  activacion_id   String?
+  alerta_ia_id    String?
+  tipo            String   // VIDEO, IMAGEN, AUDIO, REPORTE
+  archivo_path    String
+  hash_sha256     String   // Integridad del archivo
+  tamano_bytes    Int?
+  duracion_seg    Int?     // para VIDEO/AUDIO
+  resolucion      String?  // para VIDEO/IMAGEN: "1920x1080"
+  firmado_at      DateTime @default(now())
+  firmado_por     String   // admin_id
+  descripcion     String?
+  metadata        Json?    // información adicional
+
+  alerta_ia AlertaIA? @relation(fields: [alerta_ia_id], references: [id])
+
+  @@map("evidencias")
+}
+
+// ─── ALERTA IA: Alertas generadas por el servicio de visión ──────────────
+model AlertaIA {
+  id              String   @id @default(uuid())
+  camera_id       String
+  comunidad_id    String?
+  tipo_alerta     String   // FACE_MATCH, FACE_RECURRENTE, ARMA, PLACA_ALERTA, MERODEO
+  severidad       String   // CRITICA, ALTA, MEDIA, BAJA
+  descripcion     String
+  face_track_id   String?  // FID-XXXXX del vision service
+  expediente_id   String?  // UUID del expediente en PostgreSQL
+  vision_alert_id Int?     // ID en SQLite del vision service
+  similitud       Float?   // 0.0 - 1.0
+  snapshot_path   String?
+  reconocido      Boolean  @default(false)  // revisado por operador
+  created_at      DateTime @default(now())
+
+  evidencias  Evidencia[]
+  despachos   Despacho[]
+
+  @@map("alertas_ia")
+}
+
+// ─── EXPEDIENTE: Perfiles de personas de interés ─────────────────────────
+model Expediente {
+  id           String   @id @default(uuid())
+  nombre       String?
+  descripcion  String?
+  tipo         String   @default("SOSPECHOSO")  // SOSPECHOSO, PERSONA_INTERES, VEHICULO
+  estado       String   @default("ACTIVO")       // ACTIVO, INACTIVO, CAPTURADO
+  vision_id    Int?     // ID en SQLite del vision service
+  foto_path    String?
+  notas        String?
+  alerta_nivel String   @default("ALTA")  // CRITICA, ALTA, MEDIA, BAJA
+  created_by   String   // admin_id
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("expedientes")
+}
+
+// ─── DESPACHO: Asignación y seguimiento de patrullas ─────────────────────
+model Despacho {
+  id              String    @id @default(uuid())
+  activacion_id   String?   // referencia a activacion del backend principal
+  alerta_ia_id    String?
+  zona_id         String?
+  cuadrante_id    String    // Admin con rol CUADRANTE
+  estado          String    @default("ASIGNADO")
+  // ASIGNADO → EN_CAMINO → EN_SITIO → CERRADO | CANCELADO
+  prioridad       Int       @default(2)  // 1=ALTA, 2=MEDIA, 3=BAJA
+  notas_despacho  String?
+  notas_cierre    String?
+  tiempo_respuesta_seg Int? // segundos desde asignación hasta cierre
+  created_at      DateTime  @default(now())
+  asignado_at     DateTime  @default(now())
+  en_camino_at    DateTime?
+  en_sitio_at     DateTime?
+  cierre_at       DateTime?
+  created_by      String    // admin_id que despachó
+
+  zona      Zona?     @relation(fields: [zona_id], references: [id])
+  alerta_ia AlertaIA? @relation(fields: [alerta_ia_id], references: [id])
+
+  @@map("despachos")
+}
+
+// ─── PLACA DENEGADA: Lista negra vehicular ────────────────────────────────
+model PlacaDenegada {
+  id          String   @id @default(uuid())
+  placa       String   @unique  // formato colombiano: ABC123 o ABC12D
+  descripcion String?
+  nivel       String   @default("MEDIA")  // ALTA, MEDIA, BAJA
+  activa      Boolean  @default(true)
+  created_by  String
+  created_at  DateTime @default(now())
+
+  alertas PlacaAlerta[]
+
+  @@map("placas_denegadas")
+}
+
+model PlacaAlerta {
+  id                String        @id @default(uuid())
+  camera_id         String
+  comunidad_id      String?
+  placa_detectada   String
+  confianza         Float         // 0.0 - 1.0
+  placa_denegada_id String?
+  snapshot_path     String?
+  reconocido        Boolean       @default(false)
+  created_at        DateTime      @default(now())
+
+  placa_denegada PlacaDenegada? @relation(fields: [placa_denegada_id], references: [id])
+
+  @@map("placas_alertas")
+}
+
+// ─── GUARDIA: Protocolo de seguridad y dead-man switch ───────────────────
+model GuardiaCheckIn {
+  id         String   @id @default(uuid())
+  guardia_id String   // admin con rol CUADRANTE
+  tipo       String   // OK, PANICO, COACCION
+  notas      String?
+  created_at DateTime @default(now())
+
+  @@map("guardia_checkins")
+}
+
+model AlertaGuardia {
+  id          String    @id @default(uuid())
+  guardia_id  String
+  tipo        String    // SIN_CHECKIN, COACCION, PANICO
+  nivel       String    @default("ALTA")
+  resuelto    Boolean   @default(false)
+  resuelto_at DateTime?
+  resuelto_por String?
+  created_at  DateTime  @default(now())
+
+  @@map("alertas_guardia")
+}
+
+// ─── COMPORTAMIENTO: Alertas sin identidad ───────────────────────────────
+model AlertaComportamiento {
+  id            String   @id @default(uuid())
+  camera_id     String
+  comunidad_id  String?
+  tipo          String   // MERODEO, VIGILANCIA_ESTACIONARIA, INTERCAMBIO_RAPIDO, AGLOMERACION
+  duracion_seg  Int?
+  track_ids     Json     // ["FID-001", "FID-002"]
+  snapshot_path String?
+  reconocido    Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  @@map("alertas_comportamiento")
+}
+
+// ─── FEDERACIÓN: Inteligencia compartida entre comunidades ───────────────
+model FederacionPar {
+  id                  String   @id @default(uuid())
+  nombre              String
+  comunidad_local_id  String
+  endpoint_remoto     String   // URL del backend-ext remoto
+  clave_compartida    String   // HMAC-SHA256 shared secret
+  activa              Boolean  @default(true)
+  created_at          DateTime @default(now())
+
+  patrones PatronAnonimo[]
+
+  @@map("federacion_pares")
+}
+
+model PatronAnonimo {
+  id             String   @id @default(uuid())
+  federacion_id  String
+  tipo           String   // ROSTRO, PLACA
+  vector_ruidoso Json     // embedding con ruido diferencial (ε=1.0)
+  nivel_amenaza  String   // ALTA, MEDIA
+  reportes       Int      @default(1)
+  activo         Boolean  @default(true)
+  created_at     DateTime @default(now())
+
+  federacion FederacionPar @relation(fields: [federacion_id], references: [id])
+
+  @@map("patrones_anonimos")
+}
+
+// ─── PUESTOS: Puntos de vigilancia dentro de cada comunidad ──────────────
+model Puesto {
+  id           String   @id @default(uuid())
+  comunidad_id String
+  nombre       String
+  descripcion  String?
+  latitud      Float?
+  longitud     Float?
+  direccion    String?
+  activo       Boolean  @default(true)
+  created_at   DateTime @default(now())
+
+  @@map("puestos")
+}
+
+// ─── RONDAS: Monitoreo de rondas de vigilancia con checkpoints ───────────
+model RutaRonda {
+  id            String   @id @default(uuid())
+  nombre        String
+  comunidad_id  String
+  descripcion   String?
+  intervalo_min Int      @default(60)
+  activa        Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  checkpoints Checkpoint[]
+  ejecuciones RondaEjecucion[]
+
+  @@map("rutas_ronda")
+}
+
+model Checkpoint {
+  id         String   @id @default(uuid())
+  ruta_id    String
+  nombre     String
+  orden      Int
+  latitud    Float?
+  longitud   Float?
+  qr_code         String   @unique @default(uuid())
+  nfc_tag         String?  @unique
+  hora_programada String?
+  created_at      DateTime @default(now())
+
+  ruta    RutaRonda          @relation(fields: [ruta_id], references: [id], onDelete: Cascade)
+  visitas CheckpointVisita[]
+
+  @@map("checkpoints")
+}
+
+model RondaEjecucion {
+  id                   String    @id @default(uuid())
+  ruta_id              String
+  guardia_id           String
+  estado               String    @default("EN_CURSO")
+  inicio_at            DateTime  @default(now())
+  fin_at               DateTime?
+  notas                String?
+  checkpoints_total    Int
+  checkpoints_marcados Int       @default(0)
+
+  ruta    RutaRonda          @relation(fields: [ruta_id], references: [id])
+  visitas CheckpointVisita[]
+
+  @@map("rondas_ejecucion")
+}
+
+model CheckpointVisita {
+  id            String   @id @default(uuid())
+  ejecucion_id  String
+  checkpoint_id String
+  metodo        String
+  latitud       Float?
+  longitud      Float?
+  notas         String?
+  marcado_at    DateTime @default(now())
+
+  ejecucion  RondaEjecucion @relation(fields: [ejecucion_id], references: [id], onDelete: Cascade)
+  checkpoint Checkpoint     @relation(fields: [checkpoint_id], references: [id])
+
+  @@map("checkpoint_visitas")
+}
+
+// ─── REPORTE POLICIAL: Exportaciones para Policía Nacional ───────────────
+model ReportePolicial {
+  id           String   @id @default(uuid())
+  titulo       String
+  periodo_desde DateTime
+  periodo_hasta DateTime
+  zona_id      String?
+  tipo         String   @default("GENERAL")  // GENERAL, ZONA, COMUNIDAD, INCIDENTES
+  generado_por String   // admin_id
+  archivo_path String?
+  formato      String   @default("PDF")  // PDF, EXCEL, SIES
+  metadata     Json?
+  created_at   DateTime @default(now())
+
+  @@map("reportes_policiales")
+}
+
+// ─── RONDAS USUARIOS: Personal de seguridad (supervisores y guardias) ────
+model RondaUsuario {
+  id            String   @id @default(uuid())
+  comunidad_id  String
+  cedula        String   @unique
+  nombre        String
+  telefono      String?
+  foto_path     String?
+  password_hash String
+  rol           String   @default("GUARDIA")  // SUPERVISOR, GUARDIA
+  turno         String?                        // DIURNO, NOCTURNO, MIXTO
+  puesto_id     String?
+  activo        Boolean  @default(true)
+  created_by    String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("rondas_usuarios")
+}
+
+// ─── REPORTES PTT: Comunicaciones de voz Push-to-Talk ───────────────────
+model ReportePTT {
+  id             String   @id @default(uuid())
+  comunidad_id   String
+  puesto_id      String?
+  guardia_id     String?                          // rondas_usuarios.id
+  guardia_nombre String
+  tipo           String   @default("NOVEDAD")    // NOVEDAD, INCIDENTE, EMERGENCIA, PRUEBA
+  descripcion    String?
+  archivo_path   String                           // path al archivo de audio
+  formato        String   @default("aac")        // aac, opus, mp3, webm
+  duracion_seg   Float?
+  tamanio_bytes  Int?     @map("tamanio_bytes")
+  estado         String   @default("PENDIENTE")  // PENDIENTE, EN_REVISION, APROBADO, DESCARTADO
+  revisado_por   String?
+  notas_revision String?
+  destinatario   String?                          // null = broadcast general, nombre = PTT dirigido
+  latitud        Float?
+  longitud       Float?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@map("reportes_ptt")
+}
+
+// ─── REPORTE IA: Transcripción y análisis automático de PTT ──────────────
+model ReporteIA {
+  id            String    @id @default(uuid())
+  reporte_id    String    @unique
+  transcripcion String?
+  tipo_ia       String?
+  resumen       String?
+  confianza     Float?
+  estado        String    @default("PENDIENTE") // PENDIENTE, PROCESANDO, OK, ERROR
+  error         String?
+  procesado_at  DateTime?
+  created_at    DateTime  @default(now())
+
+  @@map("reportes_ia")
+}
+
+// ─── MÓDULOS POR COMUNIDAD: Control de acceso a módulos ──────────────────
+model ComunidadModulo {
+  id           String   @id @default(uuid())
+  comunidad_id String
+  modulo       String
+  activo       Boolean  @default(false)
+  created_at   DateTime @default(now())
+
+  @@unique([comunidad_id, modulo])
+  @@map("comunidad_modulos")
+}

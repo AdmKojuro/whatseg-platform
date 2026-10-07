@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsEg · Soporte Bilingüe</title>
+<link rel="icon" type="image/webp" href="https://api.whatseg.com/whatseg_favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:      #0f1729;
+  --bg2:     #1a2744;
+  --bg3:     #243358;
+  --bg4:     #2d3e63;
+  --accent:  #6366f1;
+  --accent2: #3b82f6;
+  --green:   #10b981;
+  --red:     #ef4444;
+  --yellow:  #f59e0b;
+  --orange:  #f97316;
+  --purple:  #8b5cf6;
+  --text:    #e2e8f0;
+  --text2:   #94a3b8;
+  --border:  rgba(255,255,255,.08);
+  --radius:  10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── LOGIN ──────────────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;z-index:9999;background:#0a0f1a;display:flex;align-items:center;justify-content:center}
+.login-box{background:rgba(15,20,35,.95);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:40px 36px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:28px;text-align:center}
+.login-logo-icon{width:52px;height:52px;border-radius:14px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--accent);margin:0}
+.login-logo p{font-size:13px;color:#64748b;margin:0}
+.login-box h2{font-size:14px;color:var(--text2);margin-bottom:22px;text-align:center}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.form-group input{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--accent)}
+.form-group input::placeholder{color:#475569}
+.btn-primary{width:100%;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;transition:background .2s}
+.btn-primary:hover{background:#4f46e5}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.login-err{color:var(--red);font-size:12px;margin-top:12px;min-height:16px;text-align:center}
+
+/* ── HEADER ──────────────────────────────────────────────── */
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:rgba(26,39,68,.95);border-bottom:1px solid rgba(99,102,241,.12);flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-left img{height:32px}
+.header-right{display:flex;align-items:center;gap:10px}
+.stat-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;cursor:default;white-space:nowrap}
+.stat-red{color:var(--red);border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)}
+.stat-yellow{color:var(--yellow);border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08)}
+.stat-blue{color:var(--accent2);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.btn-nuevo{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-nuevo:hover{background:rgba(99,102,241,.22);border-color:#6366f1}
+.btn-back,.btn-logout{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#94a3b8;padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-back:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4);color:#a5b4fc}
+.btn-logout:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#ef4444}
+.btn-wa{background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);color:#25d366;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-wa:hover{background:rgba(37,211,102,.2);border-color:#25d366}
+.btn-wa.wa-on{border-color:#25d366;background:rgba(37,211,102,.15)}
+.btn-wa.wa-off{color:#64748b;border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.wa-dot{width:7px;height:7px;border-radius:50%;background:#64748b;transition:.3s}
+.wa-dot.on{background:#25d366;box-shadow:0 0 6px rgba(37,211,102,.6)}
+.wa-dot.connecting{background:var(--yellow);animation:pulse 1s infinite}
+.btn-send-wa{padding:7px 14px;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.35);border-radius:8px;color:#25d366;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-send-wa:hover{background:rgba(37,211,102,.25)}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);padding:6px 14px;border-radius:20px}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;color:#94a3b8}
+
+/* ── FILTROS ──────────────────────────────────────────────── */
+.filter-bar{display:flex;gap:6px;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;align-items:center}
+.fil-btn{padding:4px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;transition:.15s}
+.fil-btn:hover{color:var(--text);border-color:var(--accent)}
+.fil-btn.active{color:#fff;border-color:var(--accent);background:rgba(99,102,241,.15)}
+.fil-select{padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;outline:none;font-family:inherit}
+.fil-search{flex:1;min-width:160px;padding:4px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;outline:none;font-family:inherit}
+.fil-search:focus{border-color:var(--accent)}
+.fil-search::placeholder{color:#475569}
+.btn-export{margin-left:auto;padding:4px 12px;border-radius:8px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);color:#34d399;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:5px}
+.btn-export:hover{background:rgba(16,185,129,.15)}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.main-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR CASOS ────────────────────────────────────────── */
+.casos-sidebar{width:340px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.casos-list{flex:1;overflow-y:auto;padding:8px}
+.casos-list::-webkit-scrollbar{width:4px}
+.casos-list::-webkit-scrollbar-track{background:transparent}
+.casos-list::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.caso-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
+.caso-card:hover{border-color:rgba(99,102,241,.4);background:var(--bg3)}
+.caso-card.selected{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.caso-card.estado-abierto{border-left:3px solid var(--red)}
+.caso-card.estado-en_proceso{border-left:3px solid var(--yellow)}
+.caso-card.estado-cerrado{border-left:3px solid #475569;opacity:.7}
+.cc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cc-nombre{font-size:13px;font-weight:600;color:var(--text)}
+.cc-idioma{font-size:18px;line-height:1}
+.cc-asunto{font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.cc-estado{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.estado-ABIERTO{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.estado-EN_PROCESO{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.estado-CERRADO{background:rgba(71,85,105,.2);color:#94a3b8;border:1px solid rgba(71,85,105,.3)}
+.cc-fecha{font-size:10px;color:var(--text2)}
+.cc-msgs{font-size:10px;color:var(--text2);display:flex;align-items:center;gap:3px}
+.empty-list{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-list svg{margin-bottom:12px;opacity:.3}
+
+/* ── DETALLE ──────────────────────────────────────────────── */
+.caso-detail{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text2);gap:12px;opacity:.5}
+.detail-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 20px;flex-shrink:0}
+.dh-row1{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dh-nombre{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dh-telefono{font-size:12px;color:var(--text2);margin-top:2px}
+.dh-asunto{font-size:13px;color:var(--text2);margin-top:4px;font-style:italic}
+.dh-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.btn-accion{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-atender{color:#fcd34d;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1)}
+.btn-atender:hover{background:rgba(245,158,11,.2)}
+.btn-cerrar{color:#fca5a5;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)}
+.btn-cerrar:hover{background:rgba(239,68,68,.2)}
+.btn-reabrir{color:#6ee7b7;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.08)}
+.btn-reabrir:hover{background:rgba(16,185,129,.15)}
+.btn-eliminar-caso{color:#94a3b8;border-color:var(--border);background:transparent}
+.btn-eliminar-caso:hover{border-color:var(--red);color:var(--red)}
+.btn-comunidad-tag{color:#a5b4fc;border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.08);cursor:default;font-size:11px}
+
+/* ── MENSAJES ─────────────────────────────────────────────── */
+.messages-area{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.messages-area::-webkit-scrollbar{width:4px}
+.messages-area::-webkit-scrollbar-track{background:transparent}
+.messages-area::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.msg-bubble{max-width:72%;display:flex;flex-direction:column;gap:4px}
+.msg-bubble.agente{align-self:flex-end;align-items:flex-end}
+.msg-bubble.cliente{align-self:flex-start;align-items:flex-start}
+.msg-author{font-size:10px;color:var(--text2);padding:0 4px}
+.msg-box{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;position:relative}
+.msg-bubble.agente .msg-box{background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.25);border-bottom-right-radius:3px}
+.msg-bubble.cliente .msg-box{background:var(--bg3);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg-traduccion{font-size:11px;color:var(--text2);font-style:italic;background:rgba(255,255,255,.04);border-radius:6px;padding:4px 8px;margin-top:2px;border-left:2px solid rgba(99,102,241,.4)}
+.msg-footer{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text2)}
+.msg-del{background:none;border:none;color:transparent;cursor:pointer;padding:0 2px;line-height:0;transition:.15s}
+.msg-bubble:hover .msg-del{color:#475569}
+.msg-del:hover{color:var(--red)!important}
+
+/* ── REPLY BOX ────────────────────────────────────────────── */
+.reply-area{background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;flex-shrink:0}
+.reply-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.reply-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.reply-autor-sel{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;outline:none;font-family:inherit;cursor:pointer}
+.reply-idioma-sel{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;outline:none;font-family:inherit;cursor:pointer}
+.reply-row{display:flex;gap:8px;align-items:flex-end}
+.reply-input{flex:1;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:none;min-height:42px;max-height:120px;transition:border-color .2s;line-height:1.4}
+.reply-input:focus{border-color:var(--accent)}
+.reply-input::placeholder{color:#475569}
+.btn-send{padding:10px 18px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;flex-shrink:0}
+.btn-send:hover{background:#4f46e5}
+.btn-send:disabled{opacity:.4;cursor:not-allowed}
+.btn-traducir{padding:6px 12px;border-radius:8px;border:1px solid rgba(139,92,246,.35);background:rgba(139,92,246,.1);color:#c4b5fd;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
+.btn-traducir:hover{background:rgba(139,92,246,.2)}
+.traduccion-preview{margin-top:6px;font-size:12px;color:var(--text2);font-style:italic;background:rgba(99,102,241,.07);border-radius:6px;padding:6px 10px;border:1px solid rgba(99,102,241,.15);display:none}
+
+/* ── MODALES ───────────────────────────────────────────────── */
+.modal-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px 28px 24px;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-box h3{font-size:16px;font-weight:700;margin-bottom:18px;color:var(--text)}
+.modal-body .form-group{margin-bottom:14px}
+.modal-body .form-group label{display:block;font-size:11px;color:#64748b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.modal-body .form-group input,
+.modal-body .form-group select,
+.modal-body .form-group textarea{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.modal-body .form-group input:focus,
+.modal-body .form-group select:focus,
+.modal-body .form-group textarea:focus{border-color:var(--accent)}
+.modal-body .form-group select{cursor:pointer;background:var(--bg3)}
+.modal-body .form-group textarea{resize:vertical;min-height:80px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.btn-cancel{padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-cancel:hover{border-color:var(--red);color:var(--red)}
+.btn-confirm{padding:8px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-confirm:hover{background:#4f46e5}
+.btn-danger{background:var(--red)}
+.btn-danger:hover{background:#dc2626}
+
+/* ── REPORTE ───────────────────────────────────────────────── */
+.report-panel{position:fixed;right:0;top:0;bottom:0;width:420px;background:var(--bg2);border-left:1px solid var(--border);z-index:500;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.3)}
+.report-panel.open{transform:translateX(0)}
+.rp-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.rp-header h3{font-size:15px;font-weight:700}
+.rp-close{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1}
+.rp-body{flex:1;overflow-y:auto;padding:20px}
+.rp-section{margin-bottom:24px}
+.rp-section h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:600;margin-bottom:12px}
+.rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rp-card{background:var(--bg3);border-radius:10px;padding:14px;text-align:center}
+.rp-card .num{font-size:28px;font-weight:700}
+.rp-card .lbl{font-size:11px;color:var(--text2);margin-top:4px}
+.rp-table{width:100%;border-collapse:collapse;font-size:12px}
+.rp-table th{text-align:left;padding:6px 8px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)}
+.rp-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.btn-export-csv{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);color:#34d399;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;margin-top:8px}
+.btn-export-csv:hover{background:rgba(16,185,129,.15)}
+
+/* ── LOADER ────────────────────────────────────────────────── */
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.caso-card{animation:fadeIn .2s ease}
+.msg-bubble{animation:fadeIn .15s ease}
+/* Dots */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0}
+.dot-red{background:#ef4444}.dot-yellow{background:#f59e0b}.dot-gray{background:#64748b}.dot-green{background:#22c55e}
+/* Lang badge */
+.lang-code{display:inline-block;font-size:10px;font-weight:700;background:rgba(255,255,255,.1);border-radius:3px;padding:1px 4px;margin-right:3px;vertical-align:middle;letter-spacing:.5px}
+/* Responsive */
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;max-height:40vh;overflow-y:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .detail-panel{width:100%;min-height:60vh}
+  .header-right{gap:6px;flex-wrap:wrap}
+  .stat-badge{display:none}
+  .filter-bar{flex-wrap:wrap;gap:6px}
+  .fil-select{font-size:11px;padding:5px 8px}
+  .fil-btn{font-size:11px;padding:5px 10px}
+  .messages-area{max-height:45vh}
+  .reply-area{position:sticky;bottom:0}
+  .report-panel{width:100%!important;right:0!important}
+}
+@media(max-width:480px){
+  .btn-nuevo,.btn-back,.btn-wa span:first-of-type{display:none}
+  .user-name{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+/* ── Toast ─────────────────────────────────────────────────── */
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;max-width:340px;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:#ef4444}
+.toast.success{background:#22c55e}
+.toast.warn{background:#f59e0b}
+.toast.info{background:#3b82f6}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+      </div>
+      <h1>Soporte Bilingüe</h1>
+      <p>WhatsEg · Sistema de atención multiidioma</p>
+    </div>
+    <h2>Inicia sesión con tus credenciales</h2>
+    <div class="form-group">
+      <label>Usuario / Correo</label>
+      <input type="text" id="li-user" placeholder="usuario@ejemplo.com" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="li-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="li-err"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <img src="https://api.whatseg.com/edison.webp" alt="WhatsEg">
+  </div>
+  <div class="header-right">
+    <div class="stat-badge stat-red"    id="badge-abiertos">— Abiertos</div>
+    <div class="stat-badge stat-yellow" id="badge-proceso">— En proceso</div>
+    <div class="stat-badge stat-blue"   id="badge-hoy">— Hoy</div>
+    <button class="btn-nuevo" onclick="abrirModalNuevo()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo caso
+    </button>
+    <button class="btn-wa" id="btn-wa" onclick="abrirModalQR()" title="Estado WhatsApp">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span id="wa-status-txt">WhatsApp</span>
+      <span class="wa-dot" id="wa-dot"></span>
+    </button>
+    <a href="https://api.whatseg.com/modulos" class="btn-back">&#8592; Módulos</a>
+    <div class="user-pill">
+      <div class="user-avatar" id="hdr-avatar">—</div>
+      <span class="user-name" id="hdr-user">—</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="filter-bar">
+  <button class="fil-btn active" data-estado="" onclick="setFiltroEstado(this,'')">Todos</button>
+  <button class="fil-btn" data-estado="ABIERTO" onclick="setFiltroEstado(this,'ABIERTO')"><span class="dot dot-red"></span>Abiertos</button>
+  <button class="fil-btn" data-estado="EN_PROCESO" onclick="setFiltroEstado(this,'EN_PROCESO')"><span class="dot dot-yellow"></span>En proceso</button>
+  <button class="fil-btn" data-estado="CERRADO" onclick="setFiltroEstado(this,'CERRADO')"><span class="dot dot-gray"></span>Cerrados</button>
+  <select class="fil-select" id="fil-idioma" onchange="aplicarFiltros()">
+    <option value="">Todos los idiomas</option>
+    <option value="es">Español</option>
+    <option value="en">English</option>
+    <option value="pt">Português</option>
+    <option value="fr">Français</option>
+    <option value="de">Deutsch</option>
+    <option value="it">Italiano</option>
+    <option value="ru">Русский</option>
+    <option value="zh">中文</option>
+  </select>
+  <select class="fil-select" id="fil-comunidad" onchange="aplicarFiltros()">
+    <option value="">Todas las comunidades</option>
+  </select>
+  <input class="fil-search" id="fil-q" placeholder="Buscar nombre o asunto…" oninput="debounceSearch()">
+  <button class="btn-export" onclick="toggleReporte()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    Reportes
+  </button>
+  <button class="btn-export" style="border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.08);color:#60a5fa" onclick="exportarCSV()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    CSV
+  </button>
+</div>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- SIDEBAR: lista de casos -->
+  <div class="casos-sidebar">
+    <div class="casos-list" id="casos-list">
+      <div class="empty-list">
+        <div class="spinner" style="margin:0 auto 12px"></div>
+        <div>Cargando casos…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETALLE DEL CASO -->
+  <div class="caso-detail" id="caso-detail">
+    <div class="detail-empty" id="detail-empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <div style="font-size:14px">Selecciona un caso para ver el historial</div>
+    </div>
+
+    <!-- Header del caso seleccionado -->
+    <div class="detail-header" id="detail-header" style="display:none">
+      <div class="dh-row1">
+        <div>
+          <div class="dh-nombre" id="dh-nombre"></div>
+          <div class="dh-telefono" id="dh-telefono"></div>
+          <div class="dh-asunto" id="dh-asunto"></div>
+        </div>
+        <span class="cc-estado" id="dh-estado-badge"></span>
+      </div>
+      <div class="dh-actions" id="dh-actions"></div>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="messages-area" id="messages-area" style="display:none"></div>
+
+    <!-- Reply box -->
+    <div class="reply-area" id="reply-area" style="display:none">
+      <div class="reply-top">
+        <span class="reply-label">Enviar mensaje</span>
+        <select class="reply-autor-sel" id="reply-autor">
+          <option value="AGENTE">Como: Agente</option>
+          <option value="CLIENTE">Como: Cliente</option>
+        </select>
+        <select class="reply-idioma-sel" id="reply-idioma">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+          <option value="fr">FR</option>
+          <option value="de">DE</option>
+          <option value="it">IT</option>
+          <option value="ru">RU</option>
+          <option value="zh">ZH</option>
+        </select>
+        <button class="btn-traducir" onclick="traducirTexto()" title="Traducir con Beilys (próximamente)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6M4 6h7M2 6h2M7 2v2M21 16l-4-4 4-4M16 12h6"/></svg>
+          Traducir
+        </button>
+      </div>
+      <div class="traduccion-preview" id="traduccion-preview"></div>
+      <div class="reply-row">
+        <textarea class="reply-input" id="reply-input" placeholder="Escribe un mensaje…" rows="1" onkeydown="replyKeydown(event)" oninput="autoResize(this)"></textarea>
+        <button class="btn-send" id="btn-send" onclick="enviarMensaje()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo caso -->
+<div class="modal-ov" id="modal-nuevo" style="display:none">
+  <div class="modal-box">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo caso de soporte</h3>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nombre del cliente *</label>
+        <input type="text" id="nc-nombre" placeholder="Ej: María García">
+      </div>
+      <div class="form-group">
+        <label>Teléfono (opcional)</label>
+        <input type="text" id="nc-telefono" placeholder="+58 412 0000000">
+      </div>
+      <div class="form-group">
+        <label>Idioma del cliente *</label>
+        <select id="nc-idioma">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+          <option value="pt">Português</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="it">Italiano</option>
+          <option value="ru">Русский</option>
+          <option value="zh">中文</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Comunidad</label>
+        <select id="nc-comunidad"><option value="">— Sin comunidad específica —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Asunto / Motivo *</label>
+        <textarea id="nc-asunto" rows="3" placeholder="Describe brevemente el motivo del caso…"></textarea>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModalNuevo()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarNuevoCaso()">Crear caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Cerrar caso -->
+<div class="modal-ov" id="modal-cerrar" style="display:none">
+  <div class="modal-box">
+    <h3>Cerrar caso</h3>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Notas de cierre (opcional)</label>
+        <textarea id="notas-cierre" rows="4" placeholder="Describe la resolución del caso…"></textarea>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModalCerrar()">Cancelar</button>
+      <button class="btn-confirm" style="background:var(--red)" onclick="confirmarCerrar()">Cerrar caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Eliminar caso -->
+<div class="modal-ov" id="modal-eliminar" style="display:none">
+  <div class="modal-box" style="max-width:360px">
+    <h3 style="color:var(--red)">Eliminar caso</h3>
+    <p style="font-size:13px;color:var(--text2);margin:10px 0 20px">Esta acción eliminará el caso y todos sus mensajes de forma permanente. ¿Confirmas?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+      <button class="btn-confirm btn-danger" id="btn-confirmar-eliminar">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL REPORTE -->
+<div class="report-panel" id="report-panel">
+  <div class="rp-header">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reportes de Soporte</h3>
+    <button class="rp-close" onclick="toggleReporte()">×</button>
+  </div>
+  <div class="rp-body">
+    <div class="rp-section">
+      <h4>Resumen general</h4>
+      <div class="rp-grid" id="rp-resumen">
+        <div class="rp-card"><div class="num" id="rp-abiertos">—</div><div class="lbl">Abiertos</div></div>
+        <div class="rp-card"><div class="num" id="rp-proceso">—</div><div class="lbl">En proceso</div></div>
+        <div class="rp-card"><div class="num" id="rp-cerrados">—</div><div class="lbl">Cerrados</div></div>
+        <div class="rp-card"><div class="num" id="rp-hoy">—</div><div class="lbl">Creados hoy</div></div>
+      </div>
+    </div>
+    <div class="rp-section">
+      <h4>Por idioma</h4>
+      <div id="rp-idiomas" style="font-size:13px;color:var(--text2)">Cargando…</div>
+    </div>
+    <div class="rp-section">
+      <h4>Casos recientes</h4>
+      <div id="rp-recientes" style="font-size:13px;color:var(--text2)">Cargando…</div>
+    </div>
+    <button class="btn-export-csv" onclick="exportarCSV()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar como CSV
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: QR WhatsApp -->
+<div class="modal-ov" id="modal-qr" style="display:none">
+  <div class="modal-box" style="max-width:340px;text-align:center">
+    <h3 style="color:#25d366;margin-bottom:6px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366" style="vertical-align:middle;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Conectar WhatsApp
+    </h3>
+    <p id="qr-status-msg" style="font-size:12px;color:var(--text2);margin-bottom:16px">Cargando estado…</p>
+    <div id="qr-img-wrap" style="min-height:200px;display:flex;align-items:center;justify-content:center">
+      <div class="spinner"></div>
+    </div>
+    <p id="qr-hint" style="font-size:11px;color:var(--text2);margin-top:12px;display:none">
+      Abre WhatsApp en tu teléfono → Dispositivos vinculados → Vincular un dispositivo → Escanea este código
+    </p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+      <button class="btn-cancel" onclick="cerrarModalQR()">Cerrar</button>
+      <button class="btn-confirm" id="btn-wa-conectar" style="display:none" onclick="iniciarConexionWA()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Conectar
+      </button>
+      <button class="btn-danger" id="btn-wa-logout" style="display:none;padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit" onclick="desconectarWA()">Desconectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar desconexión WA -->
+<div class="modal-ov" id="modal-wa-disconnect" style="display:none">
+  <div class="modal-box" style="max-width:360px">
+    <h3>Desconectar WhatsApp</h3>
+    <p style="font-size:13px;color:var(--text2);margin:10px 0 20px">¿Desconectar WhatsApp? Tendrás que volver a escanear el QR para reconectar.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="document.getElementById('modal-wa-disconnect').style.display='none'">Cancelar</button>
+      <button class="btn-confirm btn-danger" id="btn-wa-disconnect-ok" onclick="confirmarDesconectarWA()">Desconectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Enviar mensaje WA -->
+<div class="modal-ov" id="modal-wa-msg" style="display:none">
+  <div class="modal-box" style="max-width:400px">
+    <h3>Enviar por WhatsApp</h3>
+    <div class="modal-body">
+      <p id="wa-msg-hint" style="font-size:12px;color:var(--text2);margin-bottom:8px"></p>
+      <div class="form-group">
+        <textarea id="wa-msg-input" rows="3" placeholder="Escribe tu mensaje…"></textarea>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="document.getElementById('modal-wa-msg').style.display='none'">Cancelar</button>
+      <button class="btn-confirm" id="btn-wa-msg-ok" onclick="confirmarEnviarWA()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Enviar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<script>
+const API = 'https://api.whatseg.com/api/ext/soporte'
+const IDIOMA_FLAG = {es:'ES',en:'EN',pt:'PT',fr:'FR',de:'DE',it:'IT',ru:'RU',zh:'ZH'}
+const IDIOMA_NAME = {es:'Español',en:'English',pt:'Português',fr:'Français',de:'Deutsch',it:'Italiano',ru:'Русский',zh:'中文'}
+
+// ─── Capturar ?tk= del redirect de modulos.html (IIFE) ────────
+;(function(){
+  const p = new URLSearchParams(window.location.search)
+  const tk = p.get('tk')
+  if (tk) {
+    sessionStorage.setItem('soporte_token', tk)
+    history.replaceState(null, '', window.location.pathname)
+  }
+})()
+
+let _token  = sessionStorage.getItem('soporte_token') || ''
+let _nombre = ''
+let _casos  = []
+let _total  = 0
+let _casoSeleccionado = null
+let _mensajes = []
+let _filtros  = { estado:'', idioma:'', comunidad_id:'', q:'' }
+let _offset   = 0
+const LIMIT   = 50
+let _searchTimer = null
+let _waStatus = 'disconnected'  // 'disconnected' | 'connecting' | 'connected'
+let _waPollInterval = null
+
+// Decodificar JWT para extraer nombre sin llamar al servidor
+function jwtPayload(tk) {
+  try { return JSON.parse(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))) }
+  catch { return {} }
+}
+
+// ─── Auth ─────────────────────────────────────────────────────
+
+async function doLogin() {
+  const u = document.getElementById('li-user').value.trim()
+  const p = document.getElementById('li-pass').value
+  if (!u || !p) { setErr('Completa usuario y contraseña'); return }
+  const btn = document.getElementById('li-btn')
+  btn.disabled = true; btn.textContent = 'Ingresando…'
+  try {
+    const r = await fetch('https://api.whatseg.com/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ correo: u, password: p })
+    })
+    const d = await r.json()
+    if (!r.ok) throw new Error(d.error || 'Error')
+    sessionStorage.setItem('soporte_token', d.token)
+    _token = d.token
+    mostrarApp(d.nombre || d.correo || u)
+  } catch(e) {
+    setErr(e.message)
+    btn.disabled = false; btn.textContent = 'Ingresar'
+  }
+}
+
+function setErr(msg) { document.getElementById('li-err').textContent = msg }
+
+document.getElementById('li-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin()
+})
+
+function logout() {
+  sessionStorage.removeItem('soporte_token')
+  location.href = location.pathname
+}
+
+// ─── Inicio ───────────────────────────────────────────────────
+
+function mostrarApp(nombre) {
+  const pl = jwtPayload(_token)
+  _nombre = nombre || pl.nombre || pl.correo || 'Admin'
+  document.getElementById('login-overlay').style.display = 'none'
+  document.getElementById('hdr-user').textContent   = _nombre
+  document.getElementById('hdr-avatar').textContent  = (_nombre[0] || '?').toUpperCase()
+  Promise.all([cargarComunidades(), cargarCasos(), cargarStats()])
+  // Iniciar polling de estado WA
+  pollWAStatus()
+  _waPollInterval = setInterval(pollWAStatus, 4000)
+}
+
+// Auto-login si hay token en sessionStorage
+if (_token) mostrarApp()
+
+// ─── API helpers ──────────────────────────────────────────────
+
+async function api(path, opts={}) {
+  const r = await fetch(API + path, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${_token}`, 'Content-Type':'application/json', ...(opts.headers||{}) }
+  })
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({}))
+    throw new Error(e.error || `HTTP ${r.status}`)
+  }
+  return r.json()
+}
+
+// ─── Comunidades ──────────────────────────────────────────────
+
+async function cargarComunidades() {
+  try {
+    const lista = await api('/comunidades')
+    const sel1 = document.getElementById('fil-comunidad')
+    const sel2 = document.getElementById('nc-comunidad')
+    lista.forEach(c => {
+      const o1 = new Option(c.nombre, c.id)
+      const o2 = new Option(c.nombre, c.id)
+      sel1.add(o1); sel2.add(o2)
+    })
+    // Si el admin solo tiene una comunidad: mostrar su nombre en el header
+    // y auto-seleccionar + ocultar el campo en el modal Nuevo Caso
+    if (lista.length === 1) {
+      const com = lista[0]
+      if (!_nombre || _nombre === 'Admin') {
+        _nombre = com.nombre + ' Admin'
+        document.getElementById('hdr-user').textContent = _nombre
+        document.getElementById('hdr-avatar').textContent = com.nombre[0].toUpperCase()
+      }
+      sel2.value = com.id
+      const grpCom = sel2.closest('.form-group')
+      if (grpCom) grpCom.style.display = 'none'
+      // También filtrar la vista por su comunidad automáticamente
+      sel1.value = com.id
+      _filtros.comunidad_id = com.id
+    }
+  } catch {}
+}
+
+// ─── Casos ────────────────────────────────────────────────────
+
+async function cargarCasos(reset=true) {
+  if (reset) { _offset = 0; _casos = [] }
+  try {
+    const p = new URLSearchParams({ limit: LIMIT, offset: _offset })
+    if (_filtros.estado)       p.set('estado',       _filtros.estado)
+    if (_filtros.idioma)       p.set('idioma',        _filtros.idioma)
+    if (_filtros.comunidad_id) p.set('comunidad_id',  _filtros.comunidad_id)
+    if (_filtros.q)            p.set('q',             _filtros.q)
+    const data = await api(`/casos?${p}`)
+    if (reset) _casos = data.items
+    else _casos = [..._casos, ...data.items]
+    _total = data.total
+    renderCasos()
+  } catch(e) {
+    document.getElementById('casos-list').innerHTML = `<div class="empty-list" style="color:var(--red)">${e.message}</div>`
+  }
+}
+
+function renderCasos() {
+  const el = document.getElementById('casos-list')
+  if (!_casos.length) {
+    el.innerHTML = `<div class="empty-list">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <div>Sin casos encontrados</div>
+    </div>`
+    return
+  }
+  el.innerHTML = _casos.map(c => casoCardHTML(c)).join('')
+  if (_casos.length < _total) {
+    el.innerHTML += `<div style="text-align:center;padding:12px">
+      <button class="fil-btn" onclick="cargarMas()">Cargar más (${_total - _casos.length} restantes)</button>
+    </div>`
+  }
+}
+
+function casoCardHTML(c) {
+  const flag  = IDIOMA_FLAG[c.idioma] || '🌐'
+  const fecha = formatFecha(c.updated_at || c.created_at)
+  const sel   = _casoSeleccionado?.id === c.id ? 'selected' : ''
+  const est   = (c.estado || 'ABIERTO').toLowerCase().replace('_','-')
+  return `<div class="caso-card estado-${est} ${sel}" onclick="seleccionarCaso('${c.id}')">
+    <div class="cc-top">
+      <div>
+        <div class="cc-nombre">${esc(c.cliente_nombre)}</div>
+        <div class="cc-asunto">${esc(c.asunto)}</div>
+      </div>
+      <div class="cc-idioma" title="${IDIOMA_NAME[c.idioma]||c.idioma}">${flag}</div>
+    </div>
+    <div class="cc-footer">
+      <span class="cc-estado estado-${c.estado}">${estadoLabel(c.estado)}</span>
+      <span class="cc-msgs">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        ${c.total_mensajes||0}
+      </span>
+      <span class="cc-fecha">${fecha}</span>
+    </div>
+  </div>`
+}
+
+async function cargarMas() {
+  _offset += LIMIT
+  await cargarCasos(false)
+}
+
+// ─── Stats ────────────────────────────────────────────────────
+
+async function cargarStats() {
+  try {
+    const s = await api('/stats')
+    document.getElementById('badge-abiertos').textContent = `${s.abiertos||0} Abiertos`
+    document.getElementById('badge-proceso').textContent  = `${s.en_proceso||0} En proceso`
+    document.getElementById('badge-hoy').textContent      = `${s.hoy||0} Hoy`
+    document.getElementById('badge-total').textContent    = `${s.total||0} Total`
+    // Reporte panel
+    document.getElementById('rp-abiertos').textContent = s.abiertos||0
+    document.getElementById('rp-proceso').textContent  = s.en_proceso||0
+    document.getElementById('rp-cerrados').textContent = s.cerrados||0
+    document.getElementById('rp-hoy').textContent      = s.hoy||0
+  } catch {}
+}
+
+// ─── Seleccionar caso ─────────────────────────────────────────
+
+async function seleccionarCaso(id) {
+  _casoSeleccionado = _casos.find(c => c.id === id) || { id }
+  renderCasos() // actualizar selección visual
+  document.getElementById('detail-empty').style.display  = 'none'
+  document.getElementById('detail-header').style.display = ''
+  document.getElementById('messages-area').style.display = ''
+  document.getElementById('reply-area').style.display    = ''
+  renderDetailHeader()
+  await cargarMensajes()
+}
+
+function renderDetailHeader() {
+  const c = _casoSeleccionado
+  if (!c) return
+  const flag = IDIOMA_FLAG[c.idioma] || '?'
+  document.getElementById('dh-nombre').innerHTML =
+    `<span class="lang-code">${flag}</span>${esc(c.cliente_nombre)} <small style="font-size:12px;font-weight:400;color:var(--text2)">(${IDIOMA_NAME[c.idioma]||c.idioma})</small>`
+  document.getElementById('dh-telefono').innerHTML = c.cliente_telefono ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 10.15 19.79 19.79 0 0 1 1.61 1.49 2 2 0 0 1 3.6 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 7.91a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.cliente_telefono}` : ''
+  document.getElementById('dh-asunto').textContent   = c.asunto || ''
+  const badge = document.getElementById('dh-estado-badge')
+  badge.textContent  = estadoLabel(c.estado)
+  badge.className    = `cc-estado estado-${c.estado}`
+
+  // Botones de acción
+  const acts = document.getElementById('dh-actions')
+  let btns = ''
+  if (c.comunidad_id) btns += `<span class="btn-accion btn-comunidad-tag"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>${c.comunidad_id}</span>`
+  if (c.estado === 'ABIERTO')     btns += `<button class="btn-accion btn-atender"  onclick="atenderCaso()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Atender</button>`
+  if (c.estado !== 'CERRADO')     btns += `<button class="btn-accion btn-cerrar"   onclick="abrirModalCerrar()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Cerrar</button>`
+  if (c.estado === 'CERRADO')     btns += `<button class="btn-accion btn-reabrir"  onclick="reabrirCaso()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Reabrir</button>`
+  if (c.cliente_telefono && _waStatus === 'connected')
+    btns += `<button class="btn-send-wa" onclick="enviarPorWA()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>Enviar WA</button>`
+  btns += `<button class="btn-accion btn-eliminar-caso" onclick="abrirModalEliminar()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Eliminar
+  </button>`
+  acts.innerHTML = btns
+}
+
+// ─── Mensajes ─────────────────────────────────────────────────
+
+async function cargarMensajes() {
+  const area = document.getElementById('messages-area')
+  area.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>'
+  try {
+    _mensajes = await api(`/casos/${_casoSeleccionado.id}/mensajes`)
+    renderMensajes()
+  } catch(e) {
+    area.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">${e.message}</div>`
+  }
+}
+
+function renderMensajes() {
+  const area = document.getElementById('messages-area')
+  if (!_mensajes.length) {
+    area.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Sin mensajes aún. ¡Sé el primero en escribir!</div>`
+    return
+  }
+  area.innerHTML = _mensajes.map(m => mensajeBubbleHTML(m)).join('')
+  area.scrollTop = area.scrollHeight
+}
+
+function mensajeBubbleHTML(m) {
+  const autor  = (m.autor||'AGENTE').toLowerCase()
+  const flag   = IDIOMA_FLAG[m.idioma_origen] || '?'
+  const fecha  = formatFechaHora(m.created_at)
+  const trad   = m.texto_traducido
+    ? `<div class="msg-traduccion"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>${esc(m.texto_traducido)} <small>(${IDIOMA_NAME[m.idioma_destino]||m.idioma_destino||''})</small></div>`
+    : ''
+  return `<div class="msg-bubble ${autor}">
+    <div class="msg-author"><span class="lang-code">${flag}</span>${m.autor||'AGENTE'}</div>
+    <div class="msg-box">${esc(m.texto_original).replace(/\n/g,'<br>')}</div>
+    ${trad}
+    <div class="msg-footer">
+      <span>${fecha}</span>
+      <button class="msg-del" onclick="eliminarMensaje('${m.id}')" title="Eliminar mensaje">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+  </div>`
+}
+
+async function enviarMensaje() {
+  const input  = document.getElementById('reply-input')
+  const texto  = input.value.trim()
+  if (!texto || !_casoSeleccionado) return
+  const btn    = document.getElementById('btn-send')
+  btn.disabled = true
+  const autor  = document.getElementById('reply-autor').value
+  const idioma = document.getElementById('reply-idioma').value
+  const prevEl = document.getElementById('traduccion-preview')
+  const textoTrad = prevEl.style.display !== 'none' ? prevEl.dataset.texto : null
+  const idiomaDest= prevEl.style.display !== 'none' ? prevEl.dataset.idioma : null
+  try {
+    const msg = await api(`/casos/${_casoSeleccionado.id}/mensajes`, {
+      method: 'POST',
+      body: JSON.stringify({
+        autor, texto_original: texto, idioma_origen: idioma,
+        texto_traducido: textoTrad || null,
+        idioma_destino:  idiomaDest || null
+      })
+    })
+    _mensajes.push(msg)
+    input.value = ''
+    autoResize(input)
+    prevEl.style.display = 'none'
+    renderMensajes()
+    // Actualizar total_mensajes en card
+    const idx = _casos.findIndex(c => c.id === _casoSeleccionado.id)
+    if (idx >= 0) { _casos[idx].total_mensajes = (_casos[idx].total_mensajes||0)+1; renderCasos() }
+  } catch(e) {
+    showToast(e.message, 'error')
+  }
+  btn.disabled = false
+}
+
+function replyKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje() }
+}
+
+async function eliminarMensaje(id) {
+  if (!_casoSeleccionado) return
+  try {
+    await api(`/casos/${_casoSeleccionado.id}/mensajes/${id}`, { method:'DELETE' })
+    _mensajes = _mensajes.filter(m => m.id !== id)
+    renderMensajes()
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+// ─── Acciones sobre casos ─────────────────────────────────────
+
+async function atenderCaso() {
+  try {
+    await api(`/casos/${_casoSeleccionado.id}/atender`, { method:'PUT' })
+    actualizarEstado('EN_PROCESO')
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+function abrirModalCerrar() {
+  document.getElementById('notas-cierre').value = ''
+  document.getElementById('modal-cerrar').style.display = 'flex'
+}
+function cerrarModalCerrar() { document.getElementById('modal-cerrar').style.display = 'none' }
+async function confirmarCerrar() {
+  const notas = document.getElementById('notas-cierre').value
+  try {
+    await api(`/casos/${_casoSeleccionado.id}/cerrar`, { method:'PUT', body: JSON.stringify({ notas }) })
+    cerrarModalCerrar()
+    actualizarEstado('CERRADO')
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+async function reabrirCaso() {
+  try {
+    await api(`/casos/${_casoSeleccionado.id}/reabrir`, { method:'PUT' })
+    actualizarEstado('ABIERTO')
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+function actualizarEstado(nuevo) {
+  if (!_casoSeleccionado) return
+  _casoSeleccionado.estado = nuevo
+  const idx = _casos.findIndex(c => c.id === _casoSeleccionado.id)
+  if (idx >= 0) _casos[idx].estado = nuevo
+  renderDetailHeader()
+  renderCasos()
+  cargarStats()
+}
+
+// ─── Eliminar caso ────────────────────────────────────────────
+
+let _pendingDeleteId = null
+function abrirModalEliminar() {
+  _pendingDeleteId = _casoSeleccionado?.id
+  document.getElementById('modal-eliminar').style.display = 'flex'
+  document.getElementById('btn-confirmar-eliminar').onclick = async () => {
+    if (!_pendingDeleteId) return
+    try {
+      await api(`/casos/${_pendingDeleteId}`, { method:'DELETE' })
+      cerrarModalEliminar()
+      _casos = _casos.filter(c => c.id !== _pendingDeleteId)
+      _casoSeleccionado = null
+      document.getElementById('detail-empty').style.display  = ''
+      document.getElementById('detail-header').style.display = 'none'
+      document.getElementById('messages-area').style.display = 'none'
+      document.getElementById('reply-area').style.display    = 'none'
+      renderCasos()
+      cargarStats()
+    } catch(e) { showToast(e.message, 'error') }
+  }
+}
+function cerrarModalEliminar() {
+  document.getElementById('modal-eliminar').style.display = 'none'
+  _pendingDeleteId = null
+}
+
+// ─── Nuevo caso ───────────────────────────────────────────────
+
+function abrirModalNuevo() { document.getElementById('modal-nuevo').style.display = 'flex' }
+function cerrarModalNuevo(){ document.getElementById('modal-nuevo').style.display = 'none' }
+async function confirmarNuevoCaso() {
+  const nombre   = document.getElementById('nc-nombre').value.trim()
+  const telefono = document.getElementById('nc-telefono').value.trim()
+  const idioma   = document.getElementById('nc-idioma').value
+  const cid      = document.getElementById('nc-comunidad').value
+  const asunto   = document.getElementById('nc-asunto').value.trim()
+  if (!nombre || !asunto) { showToast('Nombre y asunto son obligatorios', 'warn'); return }
+  try {
+    const caso = await api('/casos', {
+      method:'POST',
+      body: JSON.stringify({ cliente_nombre:nombre, cliente_telefono:telefono||null,
+                             idioma, comunidad_id:cid||null, asunto })
+    })
+    cerrarModalNuevo()
+    document.getElementById('nc-nombre').value  = ''
+    document.getElementById('nc-telefono').value= ''
+    document.getElementById('nc-asunto').value  = ''
+    _casos.unshift(caso)
+    renderCasos()
+    cargarStats()
+    seleccionarCaso(caso.id)
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+// ─── Filtros ──────────────────────────────────────────────────
+
+function setFiltroEstado(btn, estado) {
+  document.querySelectorAll('.fil-btn[data-estado]').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  _filtros.estado = estado
+  cargarCasos()
+}
+
+function aplicarFiltros() {
+  _filtros.idioma       = document.getElementById('fil-idioma').value
+  _filtros.comunidad_id = document.getElementById('fil-comunidad').value
+  cargarCasos()
+}
+
+function debounceSearch() {
+  clearTimeout(_searchTimer)
+  _searchTimer = setTimeout(() => {
+    _filtros.q = document.getElementById('fil-q').value.trim()
+    cargarCasos()
+  }, 350)
+}
+
+// ─── Traducción (placeholder para Beilys) ─────────────────────
+
+function traducirTexto() {
+  const texto = document.getElementById('reply-input').value.trim()
+  if (!texto) { showToast('Escribe primero el texto a traducir', 'warn'); return }
+  const idiomaSrc = document.getElementById('reply-idioma').value
+  const casoIdioma = _casoSeleccionado?.idioma || 'es'
+  const dest = idiomaSrc === casoIdioma ? 'es' : casoIdioma
+  // Placeholder: en el futuro Beilys implementará la traducción real
+  const prev = document.getElementById('traduccion-preview')
+  prev.textContent = `[Traducción pendiente de implementar por Beilys — ${IDIOMA_NAME[idiomaSrc]||idiomaSrc} → ${IDIOMA_NAME[dest]||dest}]`
+  prev.dataset.texto  = ''
+  prev.dataset.idioma = dest
+  prev.style.display  = 'block'
+}
+
+// ─── Reporte ──────────────────────────────────────────────────
+
+function toggleReporte() {
+  const p = document.getElementById('report-panel')
+  const open = p.classList.toggle('open')
+  if (open) cargarReporte()
+}
+
+async function cargarReporte() {
+  try {
+    const s = await api('/stats')
+    document.getElementById('rp-abiertos').textContent = s.abiertos||0
+    document.getElementById('rp-proceso').textContent  = s.en_proceso||0
+    document.getElementById('rp-cerrados').textContent = s.cerrados||0
+    document.getElementById('rp-hoy').textContent      = s.hoy||0
+
+    // Por idioma: sacar de los casos cargados
+    const idiomaCount = {}
+    _casos.forEach(c => { idiomaCount[c.idioma] = (idiomaCount[c.idioma]||0)+1 })
+    const idiomaEl = document.getElementById('rp-idiomas')
+    if (Object.keys(idiomaCount).length) {
+      idiomaEl.innerHTML = Object.entries(idiomaCount)
+        .sort(([,a],[,b])=>b-a)
+        .map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+          <span><span class="lang-code">${IDIOMA_FLAG[k]||'?'}</span>${IDIOMA_NAME[k]||k}</span>
+          <strong>${v}</strong>
+        </div>`).join('')
+    } else {
+      idiomaEl.textContent = 'Sin datos'
+    }
+
+    // Recientes
+    const recEl = document.getElementById('rp-recientes')
+    if (_casos.length) {
+      recEl.innerHTML = `<table class="rp-table">
+        <tr><th>Cliente</th><th>Idioma</th><th>Estado</th><th>Fecha</th></tr>
+        ${_casos.slice(0,8).map(c=>`<tr>
+          <td>${esc(c.cliente_nombre)}</td>
+          <td><span class="lang-code">${IDIOMA_FLAG[c.idioma]||'?'}</span></td>
+          <td>${estadoLabel(c.estado)}</td>
+          <td>${formatFecha(c.created_at)}</td>
+        </tr>`).join('')}
+      </table>`
+    } else {
+      recEl.textContent = 'Sin casos'
+    }
+  } catch(e) { }
+}
+
+function exportarCSV() {
+  if (!_casos.length) { showToast('No hay casos para exportar', 'warn'); return }
+  const header = ['ID','Cliente','Teléfono','Idioma','Asunto','Estado','Atendido por','Mensajes','Fecha']
+  const rows = _casos.map(c => [
+    c.id, c.cliente_nombre, c.cliente_telefono||'', IDIOMA_NAME[c.idioma]||c.idioma,
+    c.asunto, c.estado, c.atendido_por||'', c.total_mensajes||0,
+    formatFechaHora(c.created_at)
+  ])
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n')
+  const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = Object.assign(document.createElement('a'), { href:url, download:`soporte_${new Date().toISOString().slice(0,10)}.csv` })
+  a.click(); URL.revokeObjectURL(url)
+}
+
+// ─── Utilidades ───────────────────────────────────────────────
+
+function estadoLabel(e) {
+  const m = {ABIERTO:'Abierto',EN_PROCESO:'En proceso',CERRADO:'Cerrado'}
+  return m[e] || e
+}
+
+function esc(t) {
+  return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
+function formatFecha(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = now - d
+  if (diff < 60000) return 'hace un momento'
+  if (diff < 3600000) return `hace ${Math.floor(diff/60000)}min`
+  if (diff < 86400000) return `hace ${Math.floor(diff/3600000)}h`
+  return d.toLocaleDateString('es', { day:'2-digit', month:'short' })
+}
+
+function formatFechaHora(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleString('es', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+}
+
+function autoResize(el) {
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+}
+
+
+// ─── WhatsApp (Baileys) ────────────────────────────────────────
+
+async function pollWAStatus() {
+  if (!_token) return
+  try {
+    const s = await api('/wa/status')
+    _waStatus = s.status
+    // Actualizar botón en header
+    const btn  = document.getElementById('btn-wa')
+    const dot  = document.getElementById('wa-dot')
+    if (!btn || !dot) return
+    btn.classList.remove('wa-on','wa-off')
+    dot.classList.remove('on','connecting')
+    if (s.status === 'connected') {
+      btn.classList.add('wa-on')
+      dot.classList.add('on')
+      btn.title = 'WhatsApp conectado: ' + (s.phone || '')
+    } else if (s.status === 'connecting') {
+      dot.classList.add('connecting')
+      btn.title = 'Esperando escaneo de QR…'
+    } else {
+      btn.classList.add('wa-off')
+      btn.title = 'WhatsApp desconectado'
+    }
+    // Actualizar QR modal si está abierto
+    const modal = document.getElementById('modal-qr')
+    if (modal && modal.style.display !== 'none') _actualizarModalQR(s)
+    // Refrescar botones del caso si hay uno seleccionado
+    if (_casoSeleccionado) renderDetailHeader()
+  } catch(e) { /* silencioso */ }
+}
+
+function abrirModalQR() {
+  document.getElementById('modal-qr').style.display = 'flex'
+  // Pedir estado inmediatamente para mostrar QR si hay
+  api('/wa/status').then(s => _actualizarModalQR(s)).catch(()=>{})
+}
+
+function cerrarModalQR() {
+  document.getElementById('modal-qr').style.display = 'none'
+}
+
+function _actualizarModalQR(s) {
+  const msg       = document.getElementById('qr-status-msg')
+  const wrap      = document.getElementById('qr-img-wrap')
+  const hint      = document.getElementById('qr-hint')
+  const logBtn    = document.getElementById('btn-wa-logout')
+  const conectBtn = document.getElementById('btn-wa-conectar')
+
+  if (s.status === 'connected') {
+    msg.textContent  = 'Conectado como ' + (s.phone || 'número desconocido')
+    wrap.innerHTML   = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'
+    hint.style.display = 'none'
+    logBtn.style.display = ''
+    conectBtn.style.display = 'none'
+  } else if (s.status === 'connecting' && s.qr) {
+    msg.textContent  = 'Escanea el código QR con WhatsApp'
+    wrap.innerHTML   = '<img src="' + s.qr + '" style="width:220px;height:220px;border-radius:8px">'
+    hint.style.display = ''
+    logBtn.style.display = 'none'
+    conectBtn.style.display = 'none'
+  } else if (s.status === 'connecting') {
+    msg.textContent  = 'Generando código QR…'
+    wrap.innerHTML   = '<div class="spinner"></div>'
+    hint.style.display = 'none'
+    logBtn.style.display = 'none'
+    conectBtn.style.display = 'none'
+  } else {
+    msg.textContent  = 'Desconectado'
+    wrap.innerHTML   = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    hint.style.display = 'none'
+    logBtn.style.display = 'none'
+    conectBtn.style.display = ''
+  }
+}
+
+function desconectarWA() {
+  desconectarWAConfirmar()
+}
+
+function enviarPorWA() {
+  abrirModalWAMensaje()
+}
+
+// Cerrar modales con Esc
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return
+  document.querySelectorAll('.modal-ov').forEach(m => m.style.display = 'none')
+})
+// Cerrar al click fuera
+document.querySelectorAll('.modal-ov').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.style.display = 'none' })
+})
+
+// ─── Toast ─────────────────────────────────────────────────────
+function showToast(msg, type='info') {
+  const c = document.getElementById('toastContainer')
+  const t = document.createElement('div')
+  t.className = 'toast ' + type
+  t.textContent = msg
+  c.appendChild(t)
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')) })
+  setTimeout(() => {
+    t.classList.remove('show')
+    setTimeout(() => t.remove(), 300)
+  }, 3500)
+}
+
+// ─── Iniciar conexión WA (cuando está desconectado) ────────────
+async function iniciarConexionWA() {
+  try {
+    document.getElementById('btn-wa-conectar').style.display = 'none'
+    document.getElementById('qr-status-msg').textContent = 'Iniciando conexión…'
+    document.getElementById('qr-img-wrap').innerHTML = '<div class="spinner"></div>'
+    await api('/wa/init', { method:'POST' })
+    // Esperar y luego actualizar el estado
+    setTimeout(() => api('/wa/status').then(s => _actualizarModalQR(s)).catch(()=>{}), 2000)
+  } catch(e) {
+    showToast('Error al iniciar: ' + e.message, 'error')
+    document.getElementById('btn-wa-conectar').style.display = ''
+  }
+}
+
+// ─── Modal confirmar WA logout ──────────────────────────────────
+function desconectarWAConfirmar() {
+  document.getElementById('modal-wa-disconnect').style.display = 'flex'
+}
+async function confirmarDesconectarWA() {
+  document.getElementById('modal-wa-disconnect').style.display = 'none'
+  try {
+    await api('/wa/logout', { method:'POST' })
+    cerrarModalQR()
+    _waStatus = 'disconnected'
+    pollWAStatus()
+    showToast('WhatsApp desconectado', 'info')
+  } catch(e) { showToast(e.message, 'error') }
+}
+
+// ─── Modal envío WA ────────────────────────────────────────────
+function abrirModalWAMensaje() {
+  const c = _casoSeleccionado
+  if (!c || !c.cliente_telefono) return
+  document.getElementById('wa-msg-hint').textContent = 'Mensaje a enviar a ' + c.cliente_telefono
+  document.getElementById('wa-msg-input').value = ''
+  document.getElementById('modal-wa-msg').style.display = 'flex'
+  document.getElementById('wa-msg-input').focus()
+}
+async function confirmarEnviarWA() {
+  const texto = document.getElementById('wa-msg-input').value.trim()
+  if (!texto) { showToast('Escribe el mensaje antes de enviar', 'warn'); return }
+  const c = _casoSeleccionado
+  document.getElementById('modal-wa-msg').style.display = 'none'
+  try {
+    await api('/casos/' + c.id + '/enviar-wa', { method:'POST', body: JSON.stringify({ texto }) })
+    await cargarMensajes()
+    showToast('Mensaje enviado por WhatsApp', 'success')
+  } catch(e) { showToast('Error WA: ' + e.message, 'error') }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+ultralytics>=8.3.0
+opencv-python>=4.10.0
+deepface>=0.0.93
+tf-keras>=2.18.0
+numpy>=1.26.0
+flask>=3.1.0
+flask-socketio>=5.5.0
+flask-cors>=5.0.0
+eventlet>=0.39.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+Pillow>=10.4.0
+scipy>=1.14.0
+
+# ALPR — Reconocimiento automático de placas (opcional, pesado)
+# Instalar con: pip install paddlepaddle paddleocr
+# paddlepaddle>=2.6.0
+# paddleocr>=2.9.0
+
+# Detección acústica — YAMNet (opcional, requiere micrófono en servidor)
+# Instalar con: pip install sounddevice tensorflow-hub
+# sounddevice>=0.4.6
+# tensorflow-hub>=0.16.0

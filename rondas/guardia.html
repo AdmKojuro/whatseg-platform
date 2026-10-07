@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg — Ronda de Guardia</title>
+  <link rel="icon" type="image/webp" href="https://api.whatseg.com/whatseg_favicon.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;background:#0a0f1a;color:#e2e8f0}
+    .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(15,20,35,.95);border-bottom:1px solid rgba(34,197,94,.15);position:sticky;top:0;z-index:100}
+    .header-left{display:flex;align-items:center;gap:10px}
+    .header-left img{height:28px}
+    .header-left h1{font-size:14px;font-weight:600;color:#22c55e}
+    .user-info{display:flex;align-items:center;gap:8px}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+    .user-name{font-size:12px;color:#94a3b8}
+    .user-rol{font-size:10px;color:#22c55e;text-transform:uppercase;font-weight:600}
+    .btn-logout{background:none;border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit}
+    .content{max-width:500px;margin:0 auto;padding:16px}
+    /* Card */
+    .card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;margin-bottom:16px}
+    .card-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:12px}
+    /* Buttons */
+    .btn{padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+    .btn-primary{background:#22c55e;color:#fff}
+    .btn-primary:hover{background:#16a34a}
+    .btn-secondary{background:rgba(255,255,255,.06);color:#94a3b8;border:1px solid rgba(255,255,255,.1)}
+    .btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    /* Progress */
+    .progress-ring{width:120px;height:120px;margin:0 auto 16px}
+    .progress-text{text-align:center;font-size:32px;font-weight:700;color:#22c55e}
+    .progress-label{text-align:center;font-size:12px;color:#64748b;margin-bottom:16px}
+    /* Checkpoint list */
+    .cp-item{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+    .cp-item:last-child{border-bottom:none}
+    .cp-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+    .cp-pendiente{background:rgba(148,163,184,.15);color:#94a3b8}
+    .cp-visitado{background:rgba(34,197,94,.2);color:#22c55e}
+    .cp-info{flex:1}
+    .cp-name{font-size:14px;font-weight:500}
+    .cp-time{font-size:11px;color:#64748b}
+    .cp-check{color:#22c55e;font-size:20px}
+    /* Select */
+    select{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit;margin-bottom:12px}
+    select:focus{outline:none;border-color:#22c55e}
+    /* QR input */
+    .qr-input{width:100%;padding:14px;background:rgba(255,255,255,.05);border:1px solid rgba(34,197,94,.3);border-radius:10px;color:#e2e8f0;font-size:16px;font-family:inherit;text-align:center;margin-bottom:12px}
+    .qr-input:focus{outline:none;border-color:#22c55e;background:rgba(34,197,94,.05)}
+    /* Status */
+    .status-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:12px}
+    .status-dot{width:8px;height:8px;border-radius:50%}
+    .status-online{background:#22c55e}
+    .turno-badge{background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase}
+    .empty{text-align:center;padding:30px;color:#475569;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <img src="https://api.whatseg.com/edison.webp" alt="WhatsEg">
+      <h1>Rondas</h1>
+    </div>
+    <div class="user-info">
+      <div>
+        <div class="user-name" id="userName"></div>
+        <div class="user-rol" id="userRol"></div>
+      </div>
+      <button class="btn-logout" id="btnLogout">Salir</button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot status-online"></div>
+    <span style="color:#64748b" id="turnoLabel"></span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:5px">
+      <div id="gps-dot" style="width:7px;height:7px;border-radius:50%;background:#64748b;transition:.3s"></div>
+      <span id="gps-label" style="font-size:11px;color:#64748b">GPS inactivo</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Vista: Sin ronda activa -->
+    <div id="vistaInicio">
+      <div class="card">
+        <div class="card-title">Iniciar Ronda</div>
+        <select id="selectRuta">
+          <option value="">Seleccionar ruta...</option>
+        </select>
+        <button class="btn btn-primary" id="btnIniciar" onclick="iniciarRonda()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Iniciar Ronda
+        </button>
+      </div>
+    </div>
+
+    <!-- Vista: Ronda en curso -->
+    <div id="vistaRonda" style="display:none">
+      <div class="card" style="text-align:center">
+        <div class="card-title" id="rondaRutaNombre">Ronda en curso</div>
+        <div class="progress-text" id="rondaProgreso">0/0</div>
+        <div class="progress-label">Checkpoints visitados</div>
+        <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-bottom:16px">
+          <div id="rondaProgressBar" style="height:100%;background:#22c55e;border-radius:3px;transition:width .3s;width:0%"></div>
+        </div>
+        <div style="font-size:12px;color:#64748b" id="rondaInicio"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Marcar Checkpoint</div>
+        <input type="text" class="qr-input" id="qrInput" placeholder="Escanea el c&oacute;digo QR aqu&iacute;" autofocus>
+        <button class="btn btn-primary" onclick="marcarQR()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3H3v2M21 3h-2M5 21H3v-2M21 21h-2M12 7v10M7 12h10"/></svg>
+          Marcar Checkpoint
+        </button>
+        <div id="marcarMsg" style="text-align:center;font-size:13px;margin-top:10px;min-height:20px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Checkpoints</div>
+        <div id="checkpointsList"></div>
+      </div>
+
+      <button class="btn btn-danger" onclick="finalizarRonda()" style="margin-top:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Finalizar Ronda
+      </button>
+    </div>
+  </div>
+
+  <script>
+  var API = '/api/ext/rondas'
+
+  var token = localStorage.getItem('trd_token')
+  if (!token) window.location.replace('/login.html')
+
+  var usuario = {}
+  try { usuario = JSON.parse(localStorage.getItem('trd_admin') || '{}') } catch(e){}
+
+  /* Si es admin, redirigir al dashboard */
+  if (usuario.rol === 'SUPERADMIN' || usuario.rol === 'ADMIN' || usuario.rol === 'COMANDANTE' || usuario.rol === 'MONITOR' || usuario.rol === 'CUADRANTE') {
+    window.location.replace('/')
+  }
+
+  document.getElementById('userName').textContent = usuario.nombre || ''
+  document.getElementById('userRol').textContent = usuario.rol || ''
+  document.getElementById('turnoLabel').textContent = usuario.turno ? 'Turno: ' + usuario.turno : ''
+
+  document.getElementById('btnLogout').onclick = function() {
+    localStorage.removeItem('trd_token')
+    localStorage.removeItem('trd_admin')
+    window.location.replace('/login.html')
+  }
+
+  function headers() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } }
+
+  async function api(path, opts) {
+    var res = await fetch(API + path, Object.assign({ headers: headers() }, opts || {}))
+    if (res.status === 401) { localStorage.removeItem('trd_token'); window.location.replace('/login.html') }
+    return res.json()
+  }
+
+  /* ─── Cargar rutas disponibles ───────────────────────────────────── */
+  async function cargarRutas() {
+    var data = await api('/rutas' + (usuario.comunidad_id ? '?comunidad_id=' + usuario.comunidad_id : ''))
+    var sel = document.getElementById('selectRuta')
+    sel.innerHTML = '<option value="">Seleccionar ruta...</option>'
+    if (Array.isArray(data)) {
+      data.forEach(function(r) {
+        if (r.activa) sel.innerHTML += '<option value="' + r.id + '">' + r.nombre + ' (' + (r.checkpoints ? r.checkpoints.length : 0) + ' puntos)</option>'
+      })
+    }
+  }
+
+  /* ─── Verificar ronda activa ─────────────────────────────────────── */
+  var rondaActiva = null
+
+  async function verificarRondaActiva() {
+    var data = await api('/activa')
+    if (data && data.id) {
+      rondaActiva = data
+      mostrarRondaActiva()
+      conectarWS(rondaActiva.id)
+    } else {
+      rondaActiva = null
+      document.getElementById('vistaInicio').style.display = 'block'
+      document.getElementById('vistaRonda').style.display = 'none'
+      cargarRutas()
+    }
+  }
+
+  function mostrarRondaActiva() {
+    document.getElementById('vistaInicio').style.display = 'none'
+    document.getElementById('vistaRonda').style.display = 'block'
+
+    var r = rondaActiva
+    document.getElementById('rondaRutaNombre').textContent = r.ruta ? r.ruta.nombre : 'Ronda en curso'
+    document.getElementById('rondaProgreso').textContent = r.checkpoints_marcados + '/' + r.checkpoints_total
+    var pct = r.checkpoints_total > 0 ? Math.round((r.checkpoints_marcados / r.checkpoints_total) * 100) : 0
+    document.getElementById('rondaProgressBar').style.width = pct + '%'
+    document.getElementById('rondaInicio').textContent = 'Inicio: ' + new Date(r.inicio_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+
+    /* Lista de checkpoints */
+    var checkpoints = r.ruta ? r.ruta.checkpoints : []
+    var visitados = {}
+    if (r.visitas) r.visitas.forEach(function(v) { visitados[v.checkpoint_id] = v })
+
+    var html = ''
+    checkpoints.forEach(function(cp, i) {
+      var v = visitados[cp.id]
+      html += '<div class="cp-item">'
+        + '<div class="cp-num ' + (v ? 'cp-visitado' : 'cp-pendiente') + '">' + (i + 1) + '</div>'
+        + '<div class="cp-info"><div class="cp-name">' + cp.nombre + '</div>'
+        + (v ? '<div class="cp-time">' + new Date(v.marcado_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + ' - ' + v.metodo + '</div>' : '<div class="cp-time">Pendiente</div>')
+        + '</div>'
+        + (v ? '<div class="cp-check">&#10003;</div>' : '')
+        + '</div>'
+    })
+    document.getElementById('checkpointsList').innerHTML = html || '<div class="empty">Sin checkpoints</div>'
+  }
+
+  /* ─── Iniciar ronda ──────────────────────────────────────────────── */
+  async function iniciarRonda() {
+    var rutaId = document.getElementById('selectRuta').value
+    if (!rutaId) { alert('Selecciona una ruta'); return }
+    document.getElementById('btnIniciar').disabled = true
+    try {
+      var data = await api('/iniciar', { method: 'POST', body: JSON.stringify({ ruta_id: rutaId }) })
+      if (data.error) { alert(data.error); return }
+      await verificarRondaActiva()
+      if (rondaActiva) conectarWS(rondaActiva.id)
+    } catch(e) {
+      alert('Error al iniciar ronda')
+    } finally {
+      document.getElementById('btnIniciar').disabled = false
+    }
+  }
+
+  /* ─── Marcar checkpoint ──────────────────────────────────────────── */
+  async function marcarQR() {
+    var qrCode = document.getElementById('qrInput').value.trim()
+    if (!qrCode) { return }
+    var msgEl = document.getElementById('marcarMsg')
+    msgEl.textContent = 'Marcando...'
+    msgEl.style.color = '#64748b'
+
+    try {
+      var body = { qr_code: qrCode }
+      /* Intentar obtener GPS */
+      if (navigator.geolocation) {
+        try {
+          var pos = await new Promise(function(resolve, reject) {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+          })
+          body.latitud = pos.coords.latitude
+          body.longitud = pos.coords.longitude
+        } catch(e) {}
+      }
+
+      var data = await api('/marcar', { method: 'POST', body: JSON.stringify(body) })
+      if (data.error) {
+        msgEl.textContent = data.error
+        msgEl.style.color = '#ef4444'
+      } else {
+        msgEl.textContent = 'Checkpoint "' + data.checkpoint + '" marcado. ' + data.progreso
+        msgEl.style.color = '#22c55e'
+        document.getElementById('qrInput').value = ''
+        verificarRondaActiva()
+      }
+    } catch(e) {
+      msgEl.textContent = 'Error al marcar checkpoint'
+      msgEl.style.color = '#ef4444'
+    }
+  }
+
+  /* ─── Finalizar ronda ────────────────────────────────────────────── */
+  async function finalizarRonda() {
+    if (!rondaActiva) return
+    if (!confirm('Finalizar esta ronda?')) return
+    desconectarWS()
+    try {
+      await api('/finalizar/' + rondaActiva.id, { method: 'POST', body: JSON.stringify({}) })
+      verificarRondaActiva()
+    } catch(e) {
+      alert('Error al finalizar')
+    }
+  }
+
+  /* Auto-marcar si escanean QR (input detecta paste/scan) */
+  document.getElementById('qrInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') marcarQR()
+  })
+
+  /* ─── Init ──────────────────────────────────────────────────────── */
+  
+  /* ─── GPS Continuo via WebSocket ──────────────────── */
+  var wsRondas = null
+  var _gpsInterval = null
+
+  function conectarWS(ejecucionId) {
+    if (wsRondas) { try { wsRondas.close() } catch(e){} wsRondas = null }
+    clearInterval(_gpsInterval)
+    wsRondas = new WebSocket('wss://api.whatseg.com/ws/rondas?token=' + token)
+    wsRondas.onopen = function() {
+      document.getElementById('gps-dot').style.background = '#22c55e'
+      document.getElementById('gps-label').textContent = 'GPS activo'
+      enviarGPS(ejecucionId)
+      _gpsInterval = setInterval(function() { enviarGPS(ejecucionId) }, 15000)
+    }
+    wsRondas.onclose = function() {
+      clearInterval(_gpsInterval); _gpsInterval = null
+      document.getElementById('gps-dot').style.background = '#64748b'
+      document.getElementById('gps-label').textContent = 'GPS inactivo'
+    }
+    wsRondas.onerror = function() {
+      setTimeout(function() { if (rondaActiva) conectarWS(rondaActiva.id) }, 10000)
+    }
+  }
+
+  function enviarGPS(ejecucionId) {
+    if (!wsRondas || wsRondas.readyState !== 1) return
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      wsRondas.send(JSON.stringify({
+        type:         'GPS_UPDATE',
+        ejecucion_id: ejecucionId,
+        latitud:      pos.coords.latitude,
+        longitud:     pos.coords.longitude,
+        accuracy:     pos.coords.accuracy  || null,
+        heading:      pos.coords.heading   || null,
+      }))
+    }, null, { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 })
+  }
+
+  function desconectarWS() {
+    clearInterval(_gpsInterval); _gpsInterval = null
+    if (wsRondas) { try { wsRondas.close() } catch(e){} wsRondas = null }
+    if (document.getElementById('gps-dot')) {
+      document.getElementById('gps-dot').style.background = '#64748b'
+      document.getElementById('gps-label').textContent = 'GPS inactivo'
+    }
+  }
+
+verificarRondaActiva()
+  </script>
+</body>
+</html>

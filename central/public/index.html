@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsEg — Central de Monitoreo</title>
+  <link rel="icon" type="image/webp" href="/whatseg_favicon.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    /* ── Login Split Panel ────────────── */
+    .login-bg {
+      min-height:100vh;display:flex;background:#0a0f1a;font-family:'IBM Plex Sans',system-ui,sans-serif;
+    }
+    .login-left{display:none;width:55%;position:relative;overflow:hidden;background:linear-gradient(135deg,#071a0e 0%,#0d2818 40%,#0a1628 100%)}
+    .login-left::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(22,163,74,.08) 0%,transparent 70%)}
+    .login-left-content{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    @media(min-width:1024px){.login-left{display:flex;align-items:center;justify-content:center}}
+    .cl-logo-area{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:36px}
+    .cl-logo-area img{height:56px;width:auto;filter:drop-shadow(0 0 24px rgba(34,197,94,.3))}
+    .cl-logo-area .cl-logo-text{font-size:13px;color:#64748b;font-weight:400;letter-spacing:.5px;text-align:left}
+    .cl-carousel{position:relative;width:420px;max-width:90%;height:420px}
+    .cl-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateX(60px);transition:all .6s cubic-bezier(.4,0,.2,1);pointer-events:none}
+    .cl-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+    .cl-slide.exit{opacity:0;transform:translateX(-60px)}
+    .cl-illustration{width:340px;height:280px;margin:0 auto 24px auto;position:relative}
+    .cl-illustration svg{width:100%;height:100%;display:block}
+    .cl-slide-title{font-size:24px;font-weight:700;color:#fff;text-align:center;margin-bottom:10px;letter-spacing:-.3px;width:100%}
+    .cl-slide-desc{font-size:14px;color:#94a3b8;text-align:center;max-width:380px;line-height:1.5;margin:0 auto}
+    .cl-dots{display:flex;gap:8px;justify-content:center;margin-top:28px}
+    .cl-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:all .3s;border:none;padding:0}
+    .cl-dot.active{background:#22c55e;width:24px;border-radius:4px;box-shadow:0 0 12px rgba(34,197,94,.4)}
+    .cl-particles{position:absolute;inset:0;overflow:hidden;z-index:0}
+    .cl-particle{position:absolute;width:2px;height:2px;background:rgba(34,197,94,.3);border-radius:50%;animation:cl-float linear infinite}
+    @keyframes cl-float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-20px) scale(1);opacity:0}}
+    .cl-grid-bg{position:absolute;inset:0;z-index:0;opacity:.04;background-image:linear-gradient(rgba(34,197,94,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.5) 1px,transparent 1px);background-size:40px 40px}
+    .cl-left-footer{position:absolute;bottom:24px;left:0;right:0;display:flex;align-items:center;gap:8px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);z-index:1;justify-content:center}
+    .cl-left-footer span{font-size:10px;color:#475569;letter-spacing:.5px;text-transform:uppercase}
+    .login-right{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;background:#fff}
+    .login-form-wrap{width:100%;max-width:380px}
+    .cl-mobile-logo{display:flex;justify-content:center;margin-bottom:32px}
+    .cl-mobile-logo img{height:48px;width:auto}
+    @media(min-width:1024px){.cl-mobile-logo{display:none}}
+    .cl-form-header{margin-bottom:32px}
+    .cl-form-header .cl-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(22,163,74,.08);margin-bottom:16px}
+    .cl-form-header .cl-badge svg{color:#16a34a;width:16px;height:16px}
+    .cl-form-header .cl-badge span{font-size:12px;font-weight:600;color:#16a34a;text-transform:uppercase;letter-spacing:.5px}
+    .cl-form-header h2{font-size:26px;font-weight:700;color:#0f172a;margin-bottom:4px}
+    .cl-form-header p{font-size:14px;color:#94a3b8}
+    .login-error{background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;display:none;border:1px solid #fecaca}
+    .cl-field{margin-bottom:20px}
+    .cl-field label{display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px}
+    .cl-field input{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#0f172a;background:#f8fafc;outline:none;transition:all .2s}
+    .cl-field input:focus{border-color:#16a34a;background:#fff;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+    .cl-field input::placeholder{color:#94a3b8}
+    .cl-btn-submit{width:100%;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;font-family:'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(22,163,74,.3)}
+    .cl-btn-submit:hover{box-shadow:0 6px 20px rgba(22,163,74,.4);transform:translateY(-1px)}
+    .cl-btn-submit:active{transform:translateY(0)}
+    .cl-btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .cl-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:cl-spin .6s linear infinite;vertical-align:-3px;margin-right:8px}
+    @keyframes cl-spin{to{transform:rotate(360deg)}}
+    .cl-divider{display:flex;align-items:center;gap:12px;margin:24px 0}
+    .cl-divider::before,.cl-divider::after{content:'';flex:1;height:1px;background:#e2e8f0}
+    .cl-divider span{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+    .cl-form-footer{margin-top:32px;text-align:center}
+    .cl-form-footer a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#94a3b8;transition:color .2s}
+    .cl-form-footer a:hover{color:#64748b}
+    .cl-form-footer span{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+    .cl-form-footer img{height:20px;width:auto;opacity:.7;transition:opacity .2s}
+    .cl-form-footer a:hover img{opacity:1}
+
+    /* ── Dashboard ─────────────────────── */
+    .dashboard { display: none; }
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e0e0e0; padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h2 { font-size: 18px; } .topbar h2 span.g { color: #0e8e2e; } .topbar h2 span.r { color: #d60000; }
+    .topbar .right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .topbar .user-name { font-size: 13px; color: #555; }
+    .btn-sm {
+      padding: 6px 14px; border: none; border-radius: 6px; font-size: 13px;
+      cursor: pointer; transition: all .2s; font-weight: 600;
+    }
+    .btn-logout { background: #e0e0e0; color: #333; }
+    .btn-logout:hover { background: #ccc; }
+    .btn-refresh { background: #0e8e2e; color: #fff; }
+    .btn-refresh:hover { background: #0b7625; }
+    .btn-favs { border: 2px solid #f59e0b; background: #fffbeb; color: #92400e; }
+    .btn-favs.active { background: #f59e0b; color: #fff; }
+    .btn-favs:hover { background: #fde68a; }
+    .btn-favs.active:hover { background: #d97706; }
+
+    .content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── Tabs ──────────────────────────── */
+    .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+    .tab-btn {
+      padding: 10px 24px; background: none; border: none; border-bottom: 3px solid transparent;
+      font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; transition: all .2s;
+      margin-bottom: -2px;
+    }
+    .tab-btn:hover { color: #333; }
+    .tab-btn.active { color: #0e8e2e; border-bottom-color: #0e8e2e; }
+    .tab-btn.active-hist { color: #2563eb; border-bottom-color: #2563eb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Search ────────────────────────── */
+    .search-bar {
+      margin-bottom: 16px; position: relative;
+    }
+    .search-bar input {
+      width: 100%; padding: 10px 14px 10px 36px; border: 1px solid #ddd; border-radius: 8px;
+      font-size: 14px; background: #fff; transition: border-color .2s;
+    }
+    .search-bar input:focus { outline: none; border-color: #0e8e2e; }
+    .search-bar .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: #999; font-size: 14px;
+    }
+
+    /* ── Stats ─────────────────────────── */
+    .stats-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat-card {
+      background: #fff; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 120px;
+      border: 1px solid #e8e8e8;
+    }
+    .stat-card .val { font-size: 24px; font-weight: 700; }
+    .stat-card .lbl { font-size: 12px; color: #888; margin-top: 2px; }
+    .stat-card.online .val { color: #0e8e2e; }
+    .stat-card.offline .val { color: #d60000; }
+    .stat-card.total .val { color: #2563eb; }
+    .stat-card.favs .val { color: #f59e0b; }
+
+    /* ── Community groups ──────────────── */
+    .community-group { margin-bottom: 24px; }
+    .community-header {
+      font-size: 16px; font-weight: 600; color: #333; margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 2px solid #0e8e2e; display: flex; align-items: center; gap: 8px;
+    }
+    .community-header.fav-group { border-bottom-color: #f59e0b; }
+    .community-header .badge {
+      background: #0e8e2e; color: #fff; border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600;
+    }
+    .community-header.fav-group .badge { background: #f59e0b; }
+
+    /* ── Device cards ──────────────────── */
+    .devices-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+    }
+    .device-card {
+      background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e8e8e8;
+      transition: box-shadow .2s; position: relative;
+    }
+    .device-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .device-card.is-fav { border-color: #fde68a; background: #fffef5; }
+    .device-card .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .device-card .header-left { display: flex; align-items: center; gap: 8px; }
+    .device-card .name { font-size: 15px; font-weight: 600; }
+    .device-card .type-badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase;
+    }
+    .type-ALARMA { background: #fef2f2; color: #dc2626; }
+    .type-PUERTA { background: #eff6ff; color: #2563eb; }
+    .type-PORTON { background: #f5f3ff; color: #7c3aed; }
+    .btn-fav {
+      background: none; border: none; cursor: pointer; font-size: 20px; padding: 2px 4px;
+      transition: transform .2s; line-height: 1;
+    }
+    .btn-fav:hover { transform: scale(1.2); }
+    .btn-fav .star { color: #d1d5db; }
+    .btn-fav .star.filled { color: #f59e0b; }
+    .device-card .status-row { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.on { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+    .status-dot.off { background: #ef4444; }
+    .mqtt-id { color: #888; font-size: 12px; font-family: monospace; }
+    .device-card .actions { display: flex; gap: 8px; }
+    .btn-act {
+      flex: 1; padding: 10px 0; border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-act:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-on { background: #dcfce7; color: #166534; }
+    .btn-on:hover:not(:disabled) { background: #bbf7d0; }
+    .btn-off { background: #fef2f2; color: #991b1b; }
+    .btn-off:hover:not(:disabled) { background: #fecaca; }
+    .btn-act .spinner {
+      width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent;
+      border-radius: 50%; animation: spin .6s linear infinite; display: none;
+    }
+    .btn-act.loading .spinner { display: inline-block; }
+    .btn-act.loading .icon { display: none; }
+
+    /* ── History ───────────────────────── */
+    .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .btn-load-more {
+      padding: 6px 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+    }
+    .btn-load-more:hover { background: #1d4ed8; }
+    .history-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8e8e8; }
+    .history-table th {
+      background: #f8fafc; padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e8e8e8;
+    }
+    .history-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: #f8fafc; }
+    .result-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .result-EXITOSO { background: #dcfce7; color: #166534; }
+    .result-FALLIDO { background: #fef2f2; color: #991b1b; }
+    .result-PENDIENTE { background: #fefce8; color: #854d0e; }
+    .result-DISPOSITIVO_OFFLINE { background: #f1f5f9; color: #475569; }
+    .tipo-badge-sm { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .tipo-POLICIA { background: #dbeafe; color: #1e40af; }
+    .tipo-EMERGENCIA { background: #fef2f2; color: #dc2626; }
+    .tipo-MEDICA { background: #fce7f3; color: #9d174d; }
+    .tipo-INCENDIO { background: #fff7ed; color: #c2410c; }
+    .tipo-CENTRAL { background: #f0fdf4; color: #166534; }
+    .history-empty { text-align: center; color: #888; padding: 30px; font-size: 14px; }
+    .history-time { color: #64748b; font-size: 12px; }
+    .history-client { font-size: 12px; color: #64748b; }
+    .history-comunidad { font-size: 11px; color: #94a3b8; }
+
+    /* ── Cameras ──────────────────────── */
+    .cameras-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;
+    }
+    .cam-card {
+      background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .cam-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .cam-card .cam-img-wrap {
+      position: relative; background: #111; aspect-ratio: 16/9; display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
+    }
+    .cam-card .cam-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .cam-card .cam-img-wrap .cam-placeholder {
+      color: #555; font-size: 13px; text-align: center;
+    }
+    .cam-card .cam-img-wrap .cam-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex;
+      align-items: center; justify-content: center; opacity: 0; transition: opacity .2s;
+    }
+    .cam-card .cam-img-wrap:hover .cam-overlay { opacity: 1; }
+    .cam-card .cam-img-wrap .cam-overlay svg { color: #fff; }
+    .cam-card .cam-status {
+      position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+    }
+    .cam-status.online { background: rgba(22,163,74,0.9); color: #fff; }
+    .cam-status.offline { background: rgba(220,38,38,0.85); color: #fff; }
+    .cam-card .cam-info { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+    .cam-card .cam-name { font-size: 14px; font-weight: 600; }
+    .cam-card .cam-serial { font-size: 11px; color: #94a3b8; font-family: monospace; }
+    .cam-card .cam-actions { display: flex; gap: 6px; }
+    .cam-btn {
+      padding: 6px 12px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 4px;
+    }
+    .cam-btn-snap { background: #dbeafe; color: #1e40af; }
+    .cam-btn-snap:hover { background: #bfdbfe; }
+    .cam-btn-snap:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Camera fullscreen modal ──── */
+    .cam-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 60;
+      align-items: center; justify-content: center; cursor: pointer;
+    }
+    .cam-modal-overlay.show { display: flex; }
+    .cam-modal-overlay img { max-width: 95vw; max-height: 90vh; border-radius: 8px; }
+    .cam-modal-overlay .cam-modal-title {
+      position: absolute; top: 16px; left: 16px; color: #fff; font-size: 16px; font-weight: 600;
+    }
+    .cam-modal-overlay .cam-modal-close {
+      position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2);
+      border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%;
+      font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Toast ─────────────────────────── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 10px;
+      color: #fff; font-size: 14px; font-weight: 500; z-index: 100; opacity: 0;
+      transform: translateY(20px); transition: all .3s;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #16a34a; }
+    .toast.error { background: #dc2626; }
+    .no-devices { text-align: center; color: #888; padding: 40px; font-size: 15px; }
+
+    /* ── Modal ─────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 14px; padding: 24px; width: 320px; max-width: 90vw; }
+    .modal h3 { margin-bottom: 16px; font-size: 16px; }
+    .modal label { font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+    .modal input[type=range] { width: 100%; margin-bottom: 4px; accent-color: #0e8e2e; }
+    .modal .range-val { text-align: center; font-size: 20px; font-weight: 700; color: #0e8e2e; margin-bottom: 16px; }
+    .modal .modal-actions { display: flex; gap: 8px; }
+    .modal .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .modal .btn-cancel { background: #e5e7eb; color: #333; }
+    .modal .btn-confirm { background: #0e8e2e; color: #fff; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .content { padding: 12px; }
+      .devices-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 8px; }
+      .stat-card { min-width: 80px; padding: 10px 12px; }
+      .stat-card .val { font-size: 18px; }
+      .topbar { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+      .topbar h2 { font-size: 16px; }
+      .history-table th, .history-table td { padding: 8px 6px; font-size: 12px; }
+      .history-table .hide-mobile { display: none; }
+      .tab-btn { padding: 8px 16px; font-size: 13px; }
+      .sb-layout { flex-direction: column; height: auto; }
+      .sb-chat-list { width: 100% !important; max-height: 200px; }
+      .sb-chat-panel { min-height: 300px; }
+    }
+
+    /* ── Soporte Bilingüe ─────────────────── */
+    .sb-status-bar {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: #1e293b; border-radius: 10px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .sb-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .sb-status-text { font-size: 13px; color: #cbd5e1; flex: 1; }
+    .sb-qr-wrapper { margin-top: 10px; padding: 12px; background: #0f172a; border-radius: 8px; text-align: center; }
+    .sb-layout { display: flex; gap: 12px; height: 520px; margin-top: 4px; }
+    .sb-chat-list {
+      width: 270px; flex-shrink: 0; background: #1e293b; border-radius: 10px;
+      overflow-y: auto; padding: 8px;
+    }
+    .sb-chat-item {
+      padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px;
+      border: 1px solid transparent; transition: background .15s;
+    }
+    .sb-chat-item:hover { background: #334155; }
+    .sb-chat-item.selected { background: #0f3460; border-color: #2563eb; }
+    .sb-chat-phone { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .sb-chat-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .sb-chat-preview { font-size: 11px; color: #94a3b8; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sb-chat-panel {
+      flex: 1; display: flex; flex-direction: column; background: #1e293b;
+      border-radius: 10px; overflow: hidden; min-width: 0;
+    }
+    .sb-chat-header {
+      padding: 12px 14px; border-bottom: 1px solid #334155;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .sb-chat-header-info { flex: 1; min-width: 0; }
+    .sb-chat-header-phone { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+    .sb-chat-header-community { font-size: 11px; color: #64748b; }
+    .sb-lang-select {
+      background: #0f172a; border: 1px solid #334155; color: #cbd5e1;
+      border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer;
+    }
+    .sb-btn-close {
+      background: #ef4444; color: #fff; border: none; border-radius: 6px;
+      padding: 5px 10px; font-size: 12px; cursor: pointer; font-weight: 600;
+    }
+    .sb-btn-close:hover { background: #dc2626; }
+    .sb-messages {
+      flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .sb-msg { display: flex; }
+    .sb-msg.extranjero { justify-content: flex-start; }
+    .sb-msg.operador   { justify-content: flex-end; }
+    .sb-msg.sistema    { justify-content: center; }
+    .sb-bubble {
+      max-width: 70%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4;
+    }
+    .sb-msg.extranjero .sb-bubble { background: #334155; border-bottom-left-radius: 2px; }
+    .sb-msg.operador   .sb-bubble { background: #14532d; border-bottom-right-radius: 2px; }
+    .sb-msg.sistema    .sb-bubble { background: #1e3a5f; font-size: 11px; color: #94a3b8; text-align: center; }
+    .sb-msg-label { font-size: 10px; color: #64748b; margin-bottom: 3px; }
+    .sb-msg-orig { color: #e2e8f0; }
+    .sb-msg-trans { font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,.1); margin-top: 4px; padding-top: 4px; }
+    .sb-reply-bar {
+      padding: 10px 12px; border-top: 1px solid #334155; display: flex; gap: 8px; align-items: flex-end;
+    }
+    .sb-reply-input {
+      flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+      border-radius: 8px; padding: 8px 12px; font-size: 13px; resize: none;
+      font-family: inherit; line-height: 1.4;
+    }
+    .sb-reply-input:focus { outline: none; border-color: #0e8e2e; }
+    .sb-btn-send {
+      background: #0e8e2e; color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .sb-btn-send:hover { background: #0b7625; }
+    .sb-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; color: #64748b; text-align: center; padding: 20px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</head>
+<body>
+
+  <!-- ── LOGIN ──────────────────────── -->
+  <div class="login-bg" id="loginView">
+    <div class="login-left">
+      <div class="cl-particles" id="cl-particles"></div>
+      <div class="cl-grid-bg"></div>
+      <div class="login-left-content">
+        <div class="cl-logo-area">
+          <img src="/edison.webp" alt="WhatsEg">
+          <div class="cl-logo-text">Plataforma de<br>Seguridad Inteligente</div>
+        </div>
+        <div class="cl-carousel" id="cl-carousel">
+          <!-- Slide 1: Alarmas -->
+          <div class="cl-slide active" data-index="0">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <rect x="80" y="120" width="180" height="130" rx="8" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+                <rect x="105" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <rect x="157" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <rect x="209" y="145" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <rect x="105" y="190" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <rect x="209" y="190" width="26" height="26" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <rect x="155" y="202" width="32" height="48" rx="3" fill="#164e28" stroke="#22c55e" stroke-width="1.5"/>
+                <g transform="translate(170,60)">
+                  <path d="M0-24c-15 0-24 11-24 28h48c0-17-9-28-24-28z" fill="#22c55e" opacity=".9"/>
+                  <rect x="-28" y="4" width="56" height="7" rx="3.5" fill="#22c55e"/>
+                  <circle cx="0" cy="18" r="5.5" fill="#22c55e"/>
+                  <rect x="-3" y="-32" width="6" height="11" rx="3" fill="#22c55e"/>
+                </g>
+                <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="2" fill="none" opacity=".6"><animate attributeName="r" values="32;68" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;0" dur="1.5s" repeatCount="indefinite"/></circle>
+                <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="1.5" fill="none" opacity=".4"><animate attributeName="r" values="32;80" dur="1.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".4;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/></circle>
+                <circle cx="170" cy="60" r="32" stroke="#22c55e" stroke-width="1" fill="none" opacity=".3"><animate attributeName="r" values="32;95" dur="1.5s" begin="1s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;0" dur="1.5s" begin="1s" repeatCount="indefinite"/></circle>
+                <circle cx="275" cy="40" r="6" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur=".8s" repeatCount="indefinite"/></circle>
+                <text x="275" y="60" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600" font-family="IBM Plex Sans">ALERTA</text>
+                <g transform="translate(20,35)"><rect width="65" height="28" rx="6" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/><circle cx="15" cy="14" r="5" fill="#22c55e" opacity=".6"/><rect x="26" y="9" width="30" height="3" rx="1.5" fill="#22c55e" opacity=".4"/><rect x="26" y="15" width="20" height="3" rx="1.5" fill="#22c55e" opacity=".3"/></g>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Activaci&oacute;n de Alarmas</div>
+            <div class="cl-slide-desc">Activa alarmas de p&aacute;nico en tiempo real con notificaci&oacute;n instant&aacute;nea a la central de monitoreo</div>
+          </div>
+          <!-- Slide 2: Control de Accesos -->
+          <div class="cl-slide" data-index="1">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <rect x="30" y="50" width="22" height="190" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <rect x="288" y="50" width="22" height="190" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/>
+                <rect x="30" y="42" width="280" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/>
+                <g><rect x="52" y="58" width="115" height="174" fill="#164e28" stroke="#22c55e" stroke-width="1" opacity=".5"><animate attributeName="width" values="115;12;12;115" dur="4s" repeatCount="indefinite"/></rect><line x1="75" y1="58" x2="75" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="75;54;54;75" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="75;54;54;75" dur="4s" repeatCount="indefinite"/></line><line x1="105" y1="58" x2="105" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="105;56;56;105" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="105;56;56;105" dur="4s" repeatCount="indefinite"/></line><line x1="135" y1="58" x2="135" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="135;58;58;135" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="135;58;58;135" dur="4s" repeatCount="indefinite"/></line></g>
+                <g><rect x="173" y="58" width="115" height="174" fill="#164e28" stroke="#22c55e" stroke-width="1" opacity=".5"><animate attributeName="x" values="173;296;296;173" dur="4s" repeatCount="indefinite"/><animate attributeName="width" values="115;12;12;115" dur="4s" repeatCount="indefinite"/></rect><line x1="210" y1="58" x2="210" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="210;298;298;210" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="210;298;298;210" dur="4s" repeatCount="indefinite"/></line><line x1="245" y1="58" x2="245" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="245;300;300;245" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="245;300;300;245" dur="4s" repeatCount="indefinite"/></line><line x1="270" y1="58" x2="270" y2="232" stroke="#22c55e" stroke-width=".8" opacity=".4"><animate attributeName="x1" values="270;302;302;270" dur="4s" repeatCount="indefinite"/><animate attributeName="x2" values="270;302;302;270" dur="4s" repeatCount="indefinite"/></line></g>
+                <g transform="translate(170,145)"><rect x="-16" y="-3" width="32" height="24" rx="4" fill="#22c55e" opacity=".8"><animate attributeName="opacity" values=".8;.2;.2;.8" dur="4s" repeatCount="indefinite"/></rect><path d="M-8-3v-11a8 8 0 0116 0v11" stroke="#22c55e" stroke-width="2.5" fill="none" opacity=".6"><animate attributeName="opacity" values=".6;.15;.15;.6" dur="4s" repeatCount="indefinite"/></path><circle cx="0" cy="9" r="3" fill="#0a1628"><animate attributeName="fill" values="#0a1628;#22c55e;#22c55e;#0a1628" dur="4s" repeatCount="indefinite"/></circle></g>
+                <g transform="translate(170,20)"><rect x="-38" y="-10" width="76" height="20" rx="10" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/><text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="600" font-family="IBM Plex Sans">ABRIENDO</text></g>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Control de Accesos</div>
+            <div class="cl-slide-desc">Apertura remota de puertas y portones desde el panel, con registro autom&aacute;tico de cada evento</div>
+          </div>
+          <!-- Slide 3: Snapshots -->
+          <div class="cl-slide" data-index="2">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <g transform="translate(170,95)"><rect x="-8" y="-72" width="16" height="28" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width="1"/><rect x="-54" y="-44" width="108" height="68" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5"/><circle cx="0" cy="-10" r="24" fill="#0d2818" stroke="#22c55e" stroke-width="1.5"/><circle cx="0" cy="-10" r="16" fill="#0a1628" stroke="#22c55e" stroke-width="1"/><circle cx="0" cy="-10" r="8" fill="#164e28" stroke="#22c55e" stroke-width=".8"><animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/></circle><circle cx="-38" cy="-28" r="4" fill="#ef4444" opacity=".6"><animate attributeName="opacity" values=".6;.2;.6" dur="1.2s" repeatCount="indefinite"/></circle><circle cx="38" cy="-28" r="4" fill="#22c55e" opacity=".8"><animate attributeName="opacity" values=".8;.3;.8" dur="1s" repeatCount="indefinite"/></circle></g>
+                <rect x="55" y="50" width="230" height="3" rx="1.5" fill="#22c55e" opacity=".3"><animate attributeName="y" values="50;195;50" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;.1;.5" dur="3s" repeatCount="indefinite"/></rect>
+                <g stroke="#22c55e" stroke-width="2.5" opacity=".7"><path d="M60 60h28M60 60v20"/><path d="M280 60h-28M280 60v20"/><path d="M60 210h28M60 210v-20"/><path d="M280 210h-28M280 210v-20"/></g>
+                <rect x="55" y="50" width="230" height="168" rx="6" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;0;0;0;0;.5;0;0;0;0" dur="4s" repeatCount="indefinite"/></rect>
+                <g transform="translate(170,240)"><rect x="-42" y="-10" width="84" height="20" rx="10" fill="#22c55e" opacity=".12" stroke="#22c55e" stroke-width=".8"/><text x="0" y="4" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600" font-family="IBM Plex Sans">SNAPSHOT</text></g>
+                <g transform="translate(255,68)"><circle r="5" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur="1s" repeatCount="indefinite"/></circle><text x="12" y="5" fill="#ef4444" font-size="10" font-weight="700" font-family="IBM Plex Sans">REC</text></g>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Snapshots de C&aacute;maras</div>
+            <div class="cl-slide-desc">Captura instant&aacute;nea desde c&aacute;maras IP con evidencia fotogr&aacute;fica autom&aacute;tica ante cada evento</div>
+          </div>
+          <!-- Slide 4: Rondas -->
+          <div class="cl-slide" data-index="3">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <rect x="15" y="10" width="310" height="220" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="1" opacity=".5"/>
+                <g stroke="#22c55e" stroke-width=".5" opacity=".2"><line x1="80" y1="10" x2="80" y2="230"/><line x1="145" y1="10" x2="145" y2="230"/><line x1="210" y1="10" x2="210" y2="230"/><line x1="275" y1="10" x2="275" y2="230"/><line x1="15" y1="65" x2="325" y2="65"/><line x1="15" y1="120" x2="325" y2="120"/><line x1="15" y1="175" x2="325" y2="175"/></g>
+                <rect x="85" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/><rect x="150" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/><rect x="215" y="70" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/><rect x="85" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/><rect x="150" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/><rect x="215" y="125" width="55" height="45" rx="4" fill="#164e28" opacity=".3" stroke="#22c55e" stroke-width=".5"/>
+                <path d="M40 60 L80 60 L80 118 L145 118 L145 60 L210 60 L210 173 L145 173 L145 118" stroke="#22c55e" stroke-width="2" stroke-dasharray="8 4" fill="none" opacity=".4"/>
+                <circle r="8" fill="#22c55e" opacity=".9"><animateMotion dur="6s" repeatCount="indefinite" path="M40,60 L80,60 L80,118 L145,118 L145,60 L210,60 L210,173 L145,173 L145,118"/><animate attributeName="opacity" values=".9;.5;.9" dur="1s" repeatCount="indefinite"/></circle>
+                <circle r="8" fill="none" stroke="#22c55e" stroke-width="1"><animateMotion dur="6s" repeatCount="indefinite" path="M40,60 L80,60 L80,118 L145,118 L145,60 L210,60 L210,173 L145,173 L145,118"/><animate attributeName="r" values="8;30" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0" dur="1.5s" repeatCount="indefinite"/></circle>
+                <g transform="translate(80,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g><g transform="translate(145,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g><g transform="translate(210,60)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g><g transform="translate(210,173)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g><g transform="translate(145,173)"><circle r="5" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><circle r="2" fill="#22c55e" opacity=".6"/></g>
+                <g transform="translate(15,248)"><rect width="120" height="18" rx="4" fill="#22c55e" opacity=".1"/><text x="10" y="13" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">Ronda 3/5 - 68%</text></g>
+                <g transform="translate(205,248)"><rect width="120" height="18" rx="4" fill="#22c55e" opacity=".1"/><circle cx="14" cy="9" r="4" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="1s" repeatCount="indefinite"/></circle><text x="24" y="13" fill="#22c55e" font-size="9" font-weight="500" font-family="IBM Plex Sans">EN RONDA</text></g>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Monitoreo de Rondas</div>
+            <div class="cl-slide-desc">Seguimiento GPS de rondas de vigilancia con checkpoints y verificaci&oacute;n autom&aacute;tica del recorrido</div>
+          </div>
+          <!-- Slide 5: Boton de Panico -->
+          <div class="cl-slide" data-index="4">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <g transform="translate(100,100)"><circle cx="0" cy="-30" r="14" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/><path d="M-18 0c0-12 8-20 18-20s18 8 18 20v40h-36z" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".6"/><path d="M18 10 L50 -10" stroke="#22c55e" stroke-width="2" opacity=".6" stroke-linecap="round"/></g>
+                <g transform="translate(160,70)"><rect x="-20" y="-35" width="40" height="70" rx="10" fill="#0f2d1a" stroke="#22c55e" stroke-width="2" opacity=".8"/><circle cx="0" cy="-5" r="14" fill="#ef4444" opacity=".8"><animate attributeName="r" values="14;16;14" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;1;.8" dur="1.2s" repeatCount="indefinite"/></circle><text x="0" y="0" text-anchor="middle" fill="#fff" font-size="8" font-weight="700" font-family="IBM Plex Sans">SOS</text><circle cx="0" cy="-24" r="3" fill="#22c55e" opacity=".7"><animate attributeName="opacity" values=".7;.2;.7" dur=".6s" repeatCount="indefinite"/></circle><rect x="-8" y="18" width="16" height="6" rx="3" fill="#164e28" stroke="#22c55e" stroke-width=".8"/></g>
+                <circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width="1.5" fill="none" opacity=".5"><animate attributeName="r" values="30;60" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0" dur="1.8s" repeatCount="indefinite"/></circle><circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width="1" fill="none" opacity=".3"><animate attributeName="r" values="30;80" dur="1.8s" begin=".6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;0" dur="1.8s" begin=".6s" repeatCount="indefinite"/></circle><circle cx="160" cy="35" r="30" stroke="#ef4444" stroke-width=".8" fill="none" opacity=".2"><animate attributeName="r" values="30;100" dur="1.8s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".2;0" dur="1.8s" begin="1.2s" repeatCount="indefinite"/></circle>
+                <path d="M210 50 Q240 30 260 50 Q280 70 300 55" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity=".5"><animate attributeName="stroke-dashoffset" values="0;-16" dur="1s" repeatCount="indefinite"/></path>
+                <g transform="translate(260,80)"><rect x="-30" y="-30" width="60" height="80" rx="6" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".7"/><rect x="-24" y="-24" width="48" height="55" rx="3" fill="#0d2818" stroke="#22c55e" stroke-width=".8"/><rect x="-18" y="-18" width="36" height="12" rx="2" fill="#ef4444" opacity=".3"><animate attributeName="opacity" values=".3;.6;.3" dur="1s" repeatCount="indefinite"/></rect><text x="0" y="-9" text-anchor="middle" fill="#ef4444" font-size="6" font-weight="700" font-family="IBM Plex Sans">ALERTA SOS</text><circle cx="-6" cy="10" r="4" fill="#ef4444" opacity=".5"><animate attributeName="opacity" values=".5;1;.5" dur="1.2s" repeatCount="indefinite"/></circle><rect x="2" y="4" width="16" height="2" rx="1" fill="#22c55e" opacity=".3"/><rect x="2" y="9" width="12" height="2" rx="1" fill="#22c55e" opacity=".3"/><rect x="2" y="14" width="18" height="2" rx="1" fill="#22c55e" opacity=".3"/><circle cx="0" cy="38" r="4" fill="none" stroke="#22c55e" stroke-width=".8" opacity=".4"/></g>
+                <g transform="translate(100,40)"><path d="M0 12L-8-2a10 10 0 1116 0z" fill="#22c55e" opacity=".5"/><circle cx="0" cy="-6" r="4" fill="#0a1628"/><text x="0" y="-3" text-anchor="middle" fill="#22c55e" font-size="5" font-weight="700" font-family="IBM Plex Sans">GPS</text></g>
+                <g transform="translate(130,230)"><rect x="-55" y="-10" width="110" height="20" rx="10" fill="#ef4444" opacity=".12" stroke="#ef4444" stroke-width=".8"/><circle cx="-38" cy="0" r="3" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur=".7s" repeatCount="indefinite"/></circle><text x="5" y="4" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600" font-family="IBM Plex Sans">EMERGENCIA</text></g>
+                <g transform="translate(50,250)" opacity=".5"><text x="0" y="0" fill="#64748b" font-size="8" font-family="IBM Plex Sans">4.6097&deg;N, 74.0817&deg;W</text></g>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Bot&oacute;n de P&aacute;nico Personal</div>
+            <div class="cl-slide-desc">Control f&iacute;sico con GPS: al presionar el bot&oacute;n SOS, la ubicaci&oacute;n exacta llega al instante a la central</div>
+          </div>
+          <!-- Slide 6: Soporte Bilingüe -->
+          <div class="cl-slide" data-index="5">
+            <div class="cl-illustration">
+              <svg viewBox="0 0 340 280" fill="none">
+                <!-- Burbuja izquierda (extranjero) -->
+                <rect x="20" y="55" width="140" height="58" rx="14" fill="#0f2d1a" stroke="#22c55e" stroke-width="1.5" opacity=".85"/>
+                <text x="90" y="82" text-anchor="middle" fill="#22c55e" font-size="17" font-weight="700" font-family="IBM Plex Sans">Hello!</text>
+                <text x="90" y="100" text-anchor="middle" fill="#22c55e" font-size="10" font-family="IBM Plex Sans" opacity=".7">How can I get help?</text>
+                <polygon points="48,113 30,136 78,113" fill="#0f2d1a" stroke="#22c55e" stroke-width="1"/>
+                <!-- Burbuja derecha (respuesta en español) -->
+                <rect x="180" y="128" width="140" height="58" rx="14" fill="#0a1f10" stroke="#22c55e" stroke-width="1.5" opacity=".8"/>
+                <text x="250" y="155" text-anchor="middle" fill="#22c55e" font-size="17" font-weight="700" font-family="IBM Plex Sans">¡Hola!</text>
+                <text x="250" y="173" text-anchor="middle" fill="#22c55e" font-size="10" font-family="IBM Plex Sans" opacity=".7">¿En qué te ayudamos?</text>
+                <polygon points="295,186 316,208 270,186" fill="#0a1f10" stroke="#22c55e" stroke-width="1"/>
+                <!-- Flecha traducción → -->
+                <path d="M148 90 Q165 74 192 100" stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3" fill="none">
+                  <animate attributeName="stroke-dashoffset" values="0;-16" dur="1.2s" repeatCount="indefinite"/>
+                </path>
+                <polygon points="192,100 181,91 186,106" fill="#22c55e"/>
+                <!-- Flecha traducción ← -->
+                <path d="M192,148 Q165,166 148,150" stroke="#22c55e" stroke-width="2" stroke-dasharray="5 3" fill="none">
+                  <animate attributeName="stroke-dashoffset" values="0;-16" dur="1.2s" repeatCount="indefinite"/>
+                </path>
+                <polygon points="148,150 159,158 153,144" fill="#22c55e"/>
+                <!-- Globo terráqueo -->
+                <circle cx="170" cy="238" r="22" fill="none" stroke="#22c55e" stroke-width="1.5" opacity=".5"/>
+                <ellipse cx="170" cy="238" rx="11" ry="22" fill="none" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+                <line x1="148" y1="238" x2="192" y2="238" stroke="#22c55e" stroke-width="1" opacity=".4"/>
+                <line x1="151" y1="227" x2="189" y2="227" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+                <line x1="151" y1="249" x2="189" y2="249" stroke="#22c55e" stroke-width=".8" opacity=".3"/>
+                <!-- Badge EN -->
+                <rect x="22" y="228" width="28" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+                <text x="36" y="240" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700" font-family="IBM Plex Sans">EN</text>
+                <!-- Badge ES -->
+                <rect x="290" y="228" width="28" height="16" rx="4" fill="#0f2d1a" stroke="#22c55e" stroke-width=".8" opacity=".7"/>
+                <text x="304" y="240" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700" font-family="IBM Plex Sans">ES</text>
+              </svg>
+            </div>
+            <div class="cl-slide-title">Soporte Biling&uuml;e</div>
+            <div class="cl-slide-desc">Atenci&oacute;n a extranjeros en su idioma: chats con traducci&oacute;n autom&aacute;tica para brindar ayuda en tiempo real</div>
+          </div>
+        </div>
+        <div class="cl-dots" id="cl-dots">
+          <button class="cl-dot active" data-slide="0"></button>
+          <button class="cl-dot" data-slide="1"></button>
+          <button class="cl-dot" data-slide="2"></button>
+          <button class="cl-dot" data-slide="3"></button>
+          <button class="cl-dot" data-slide="4"></button>
+          <button class="cl-dot" data-slide="5"></button>
+        </div>
+      </div>
+      <div class="cl-left-footer"><span>WhatsEg v2.0 &middot; Seguridad Ciudadana Inteligente</span></div>
+    </div>
+    <div class="login-right">
+      <div class="login-form-wrap">
+        <div class="cl-mobile-logo"><img src="/edison.webp" alt="WhatsEg"></div>
+        <div class="cl-form-header">
+          <div class="cl-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Acceso seguro</span>
+          </div>
+          <h2>Central de Monitoreo</h2>
+          <p>Ingresa tus credenciales para continuar</p>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <form id="loginForm">
+          <div class="cl-field">
+            <label>Correo electr&oacute;nico</label>
+            <input type="email" id="email" required placeholder="central@whatseg.com" autocomplete="email">
+          </div>
+          <div class="cl-field">
+            <label>Contrase&ntilde;a</label>
+            <input type="password" id="password" required placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password">
+          </div>
+          <button type="submit" class="cl-btn-submit" id="btnLogin">Ingresar al sistema</button>
+        </form>
+        <div class="cl-divider"><span>Seguridad</span></div>
+        <div class="cl-form-footer">
+          <a href="https://phenlinea.online" target="_blank" rel="noopener noreferrer">
+            <span>Desarrollado por</span>
+            <img src="/phenlinea_logo.png" alt="PHenLinea">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ──────────────────── -->
+  <div class="dashboard" id="dashboardView">
+    <div class="topbar">
+      <h2><span class="g">WHAT</span><span class="r">SEG</span> &mdash; Central</h2>
+      <div class="right">
+        <span class="user-name" id="userName"></span>
+        <button class="btn-sm btn-favs" id="btnFavFilter" onclick="toggleFavFilter()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Favoritos</button>
+        <button class="btn-sm btn-refresh" onclick="refreshAll()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Actualizar</button>
+        <button class="btn-sm btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-bar" id="statsBar"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('devices')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg>Dispositivos</button>
+        <button class="tab-btn" onclick="switchTab('cameras')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Camaras</button>
+        <button class="tab-btn" onclick="switchTab('history')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Historial</button>
+        <button class="tab-btn" onclick="switchTab('bilingual')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Soporte Biling&uuml;e</button>
+      </div>
+
+      <!-- Tab: Dispositivos -->
+      <div class="tab-content active" id="tab-devices">
+        <div class="search-bar">
+          <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
+          <input type="text" id="searchInput" placeholder="Buscar comunidad o dispositivo..." oninput="renderDevices()">
+        </div>
+        <div id="devicesContainer"><div class="no-devices">Cargando dispositivos...</div></div>
+      </div>
+
+      <!-- Tab: Camaras -->
+      <div class="tab-content" id="tab-cameras">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <span style="font-size:13px;color:#64748b" id="camerasCount"></span>
+          <button class="cam-btn cam-btn-snap" onclick="refreshAllSnapshots()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Actualizar todas</button>
+        </div>
+        <div id="camerasContainer"><div class="no-devices">Cargando camaras...</div></div>
+      </div>
+
+      <!-- Tab: Historial -->
+      <div class="tab-content" id="tab-history">
+        <div class="history-toolbar">
+          <span style="font-size:13px;color:#64748b" id="historyCount"></span>
+          <button class="btn-load-more" onclick="loadHistory(true)">Cargar mas</button>
+        </div>
+        <div id="historyContainer"><div class="history-empty">Cargando historial...</div></div>
+      </div>
+
+      <!-- Tab: Soporte Bilingüe -->
+      <div class="tab-content" id="tab-bilingual">
+        <!-- WhatsApp connection status -->
+        <div class="sb-status-bar" id="sbStatusBar">
+          <div class="sb-status-dot" id="sbStatusDot" style="background:#64748b"></div>
+          <span class="sb-status-text" id="sbStatusText">Verificando WhatsApp...</span>
+          <button style="background:#334155;color:#cbd5e1;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer" onclick="checkWAStatus()">&#8635; Actualizar</button>
+        </div>
+        <!-- QR code for linking WhatsApp -->
+        <div id="sbQRWrapper" class="sb-qr-wrapper" style="display:none">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:10px">Escanea con WhatsApp para vincular el n&uacute;mero de <strong style="color:#e2e8f0">Soporte Biling&uuml;e</strong></div>
+          <div id="sbQRCanvas" style="display:inline-block;background:#fff;padding:10px;border-radius:8px"></div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px">El QR se actualiza cada 60 s. Recarga si expira.</div>
+        </div>
+        <!-- Split layout -->
+        <div class="sb-layout">
+          <!-- Left: chat list -->
+          <div class="sb-chat-list" id="sbChatList">
+            <div style="font-size:11px;font-weight:700;color:#64748b;padding:4px 8px 8px;text-transform:uppercase;letter-spacing:.05em">Chats Activos <span id="sbChatCount" style="background:#334155;border-radius:10px;padding:1px 7px;margin-left:4px">0</span></div>
+            <div id="sbChatListItems">
+              <div style="text-align:center;padding:30px 10px;color:#475569;font-size:12px">Sin chats activos</div>
+            </div>
+          </div>
+          <!-- Right: conversation panel -->
+          <div class="sb-chat-panel" id="sbChatPanel">
+            <div id="sbNoChat" class="sb-empty">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.2" style="margin-bottom:12px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              <div style="font-size:14px;font-weight:600;color:#475569">Selecciona un chat</div>
+              <div style="font-size:12px;margin-top:4px">Los mensajes del extranjero aparecer&aacute;n aqu&iacute;</div>
+            </div>
+            <div id="sbChatActive" style="display:none;flex:1;flex-direction:column;overflow:hidden;display:none">
+              <div class="sb-chat-header">
+                <div class="sb-chat-header-info">
+                  <div class="sb-chat-header-phone" id="sbHeaderPhone"></div>
+                  <div class="sb-chat-header-community" id="sbHeaderCommunity"></div>
+                </div>
+                <select class="sb-lang-select" id="sbLangSelect" onchange="cambiarIdioma(this.value)">
+                  <option value="en">Ingl&eacute;s</option>
+                  <option value="fr">Franc&eacute;s</option>
+                  <option value="de">Alem&aacute;n</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Portugu&eacute;s</option>
+                  <option value="zh">Chino</option>
+                  <option value="ru">Ruso</option>
+                  <option value="ar">&Aacute;rabe</option>
+                  <option value="ja">Japon&eacute;s</option>
+                </select>
+                <button class="sb-btn-close" onclick="cerrarSesion()">&#x2715; Cerrar</button>
+              </div>
+              <div class="sb-messages" id="sbMessages"></div>
+              <div class="sb-reply-bar">
+                <textarea class="sb-reply-input" id="sbReplyInput" rows="2" placeholder="Escribe en espa&ntilde;ol... (se traduce autom&aacute;ticamente)" onkeydown="if(event.ctrlKey&&event.key==='Enter')enviarRespuesta()"></textarea>
+                <button class="sb-btn-send" onclick="enviarRespuesta()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Duration Modal ─────────────── -->
+  <div class="modal-overlay" id="durationModal">
+    <div class="modal">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Tiempo de activaci&oacute;n</h3>
+      <label>Segundos</label>
+      <input type="range" id="durationRange" min="1" max="30" value="3">
+      <div class="range-val" id="durationVal">3s</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeDurationModal()">Cancelar</button>
+        <button class="btn-confirm" onclick="confirmActivate()">Activar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Camera Fullscreen Modal ──── -->
+  <div class="cam-modal-overlay" id="camModal" onclick="closeCamModal()">
+    <span class="cam-modal-title" id="camModalTitle"></span>
+    <button class="cam-modal-close" onclick="closeCamModal()">&times;</button>
+    <img id="camModalImg" src="" alt="Snapshot">
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const API = "";
+let token = localStorage.getItem("central_token") || "";
+let userName = localStorage.getItem("central_user") || "";
+let pendingActivation = null;
+let showOnlyFavs = false;
+let allDeviceItems = [];
+let currentTab = "devices";
+
+// ── Favorites ─────────────────────
+function getFavs() { try { return JSON.parse(localStorage.getItem("central_favs") || "[]"); } catch { return []; } }
+function saveFavs(f) { localStorage.setItem("central_favs", JSON.stringify(f)); }
+function isFav(id) { return getFavs().includes(id); }
+function toggleFav(id) {
+  var f = getFavs(), i = f.indexOf(id);
+  if (i >= 0) f.splice(i, 1); else f.push(id);
+  saveFavs(f); renderDevices();
+}
+function toggleFavFilter() {
+  showOnlyFavs = !showOnlyFavs;
+  document.getElementById("btnFavFilter").classList.toggle("active", showOnlyFavs);
+  renderDevices();
+}
+
+// ── Tabs ──────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  var tabNames = ["devices", "cameras", "history", "bilingual"];
+  document.querySelectorAll(".tab-btn").forEach(function(b, i) {
+    b.classList.remove("active", "active-hist");
+    if (tabNames[i] === tab) {
+      b.classList.add(tab === "history" ? "active-hist" : "active");
+    }
+  });
+  tabNames.forEach(function(t) {
+    var el = document.getElementById("tab-" + t);
+    if (el) el.classList.toggle("active", t === tab);
+  });
+  if (tab === "history")   loadHistory(false);
+  if (tab === "cameras")   loadCameras();
+  if (tab === "bilingual") initBilingualTab();
+}
+
+// ── Init ──────────────────────────
+if (token) showDashboard();
+
+// ── Particles ────────────────────
+(function(){var c=document.getElementById('cl-particles');if(!c)return;for(var i=0;i<30;i++){var p=document.createElement('div');p.className='cl-particle';p.style.left=Math.random()*100+'%';p.style.animationDuration=(6+Math.random()*10)+'s';p.style.animationDelay=Math.random()*8+'s';p.style.width=p.style.height=(1+Math.random()*2)+'px';c.appendChild(p);}})();
+
+// ── Carousel ─────────────────────
+(function(){var slides=document.querySelectorAll('.cl-slide');var dots=document.querySelectorAll('.cl-dot');if(!slides.length)return;var current=0;var total=slides.length;var interval;function goTo(n){slides[current].classList.remove('active');slides[current].classList.add('exit');dots[current].classList.remove('active');setTimeout(function(){slides[current].classList.remove('exit');current=n;slides[current].classList.add('active');dots[current].classList.add('active');},100);}function next(){goTo((current+1)%total);}function startAuto(){interval=setInterval(next,5000);}function resetAuto(){clearInterval(interval);startAuto();}dots.forEach(function(d){d.addEventListener('click',function(){var idx=parseInt(this.dataset.slide);if(idx!==current){goTo(idx);resetAuto();}});});startAuto();})();
+
+// ── Login ─────────────────────────
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById("btnLogin");
+  var errEl = document.getElementById("loginError");
+  btn.disabled = true; btn.innerHTML = '<span class="cl-spinner"></span>Verificando...'; errEl.style.display = "none";
+  try {
+    var res = await fetch(API + "/api/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value }),
+    });
+    var data = await res.json();
+    if (!res.ok || !data.token) throw new Error(data.mensaje || data.error?.message || "Credenciales invalidas");
+    token = data.token;
+    userName = data.admin?.nombre || data.nombre || "Central";
+    localStorage.setItem("central_token", token);
+    localStorage.setItem("central_user", userName);
+    showDashboard();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = "Ingresar al sistema"; }
+});
+
+function showDashboard() {
+  document.getElementById("loginView").style.display = "none";
+  document.getElementById("dashboardView").style.display = "block";
+  document.getElementById("userName").textContent = userName;
+  loadDevices();
+}
+
+function logout() {
+  token = ""; userName = "";
+  localStorage.removeItem("central_token"); localStorage.removeItem("central_user");
+  document.getElementById("loginView").style.display = "";
+  document.getElementById("dashboardView").style.display = "none";
+}
+
+function refreshAll() { loadDevices(); if (currentTab === "history") loadHistory(false); }
+
+// ── Load devices ──────────────────
+async function loadDevices() {
+  var container = document.getElementById("devicesContainer");
+  container.innerHTML = '<div class="no-devices">Cargando...</div>';
+  try {
+    var res = await fetch(API + "/api/mqtt-devices/devices", { headers: { Authorization: "Bearer " + token } });
+    if (res.status === 401) { logout(); return; }
+    var devices = await res.json();
+    if (!Array.isArray(devices)) devices = [];
+    allDeviceItems = [];
+    for (var d of devices) {
+      var comName = d.comunidad?.nombre || "Sin comunidad";
+      for (var ch of (d.channels || [])) {
+        allDeviceItems.push({ mqttId: d.device_id, deviceName: ch.nombre || d.device_id, tipo: ch.tipo || "OTRO", online: d.online || false, channelId: ch.id, comunidad: comName });
+      }
+    }
+    renderDevices();
+  } catch (err) { container.innerHTML = '<div class="no-devices">Error: ' + err.message + '</div>'; }
+}
+
+function renderDevices() {
+  var container = document.getElementById("devicesContainer");
+  var favs = getFavs();
+  var searchVal = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+  var items = allDeviceItems;
+
+  if (showOnlyFavs) items = items.filter(function(d) { return favs.includes(d.mqttId); });
+  if (searchVal) items = items.filter(function(d) { return d.comunidad.toLowerCase().includes(searchVal) || d.deviceName.toLowerCase().includes(searchVal) || d.mqttId.toLowerCase().includes(searchVal); });
+
+  var totalDevices = allDeviceItems.length;
+  var onlineCount = allDeviceItems.filter(function(d) { return d.online; }).length;
+  document.getElementById("statsBar").innerHTML =
+    '<div class="stat-card total"><div class="val">' + totalDevices + '</div><div class="lbl">Total dispositivos</div></div>' +
+    '<div class="stat-card online"><div class="val">' + onlineCount + '</div><div class="lbl">En linea</div></div>' +
+    '<div class="stat-card offline"><div class="val">' + (totalDevices - onlineCount) + '</div><div class="lbl">Fuera de linea</div></div>' +
+    '<div class="stat-card favs"><div class="val">' + favs.length + '</div><div class="lbl">Favoritos</div></div>';
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="no-devices">' + (searchVal ? 'No se encontraron resultados para "' + esc(searchVal) + '"' : showOnlyFavs ? 'No tienes favoritos.' : 'No hay dispositivos.') + '</div>';
+    return;
+  }
+
+  var favItems = items.filter(function(d) { return favs.includes(d.mqttId); });
+  var nonFavItems = items.filter(function(d) { return !favs.includes(d.mqttId); });
+  var html = "";
+
+  if (favItems.length > 0) {
+    html += '<div class="community-group"><div class="community-header fav-group"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Favoritos <span class="badge">' + favItems.length + '</span></div><div class="devices-grid">';
+    for (var d of favItems) html += renderDeviceCard(d, true);
+    html += '</div></div>';
+  }
+  if (!showOnlyFavs && nonFavItems.length > 0) {
+    var groups = {};
+    for (var d of nonFavItems) { if (!groups[d.comunidad]) groups[d.comunidad] = []; groups[d.comunidad].push(d); }
+    var sortedGroups = Object.keys(groups).sort();
+    for (var comName of sortedGroups) {
+      var devs = groups[comName];
+      html += '<div class="community-group"><div class="community-header">' + comName + ' <span class="badge">' + devs.length + '</span></div><div class="devices-grid">';
+      for (var d of devs) html += renderDeviceCard(d, false);
+      html += '</div></div>';
+    }
+  }
+  container.innerHTML = html;
+}
+
+function renderDeviceCard(d, isFavorite) {
+  var sc = d.online ? "on" : "off", st = d.online ? "En linea" : "Fuera de linea";
+  var starCls = isFavorite ? "filled" : "", cardCls = isFavorite ? "device-card is-fav" : "device-card";
+  return '<div class="' + cardCls + '"><div class="header"><div class="header-left">' +
+    '<button class="btn-fav" onclick="toggleFav(\'' + d.mqttId + '\')" title="' + (isFavorite ? 'Quitar' : 'Agregar') + ' favorito"><span class="star ' + starCls + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span></button>' +
+    '<span class="name">' + esc(d.deviceName) + '</span></div>' +
+    '<span class="type-badge type-' + d.tipo + '">' + d.tipo + '</span></div>' +
+    '<div class="status-row"><span class="status-dot ' + sc + '"></span> ' + st + ' <span class="mqtt-id">' + esc(d.mqttId) + '</span></div>' +
+    '<div class="actions">' +
+    '<button class="btn-act btn-on" onclick="askActivate(\'' + d.mqttId + '\',\'' + esc(d.deviceName) + '\')" ' + (!d.online ? 'disabled' : '') + '><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><span class="spinner"></span> Activar</button>' +
+    '<button class="btn-act btn-off" onclick="deactivate(\'' + d.mqttId + '\',\'' + esc(d.deviceName) + '\', this)" ' + (!d.online ? 'disabled' : '') + '><span class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span><span class="spinner"></span> Desactivar</button>' +
+    '</div></div>';
+}
+
+// ── Duration modal ────────────────
+var rangeEl = document.getElementById("durationRange");
+var rangeValEl = document.getElementById("durationVal");
+rangeEl.addEventListener("input", function() { rangeValEl.textContent = rangeEl.value + "s"; });
+
+function askActivate(mqttId, deviceName) {
+  pendingActivation = { mqttId: mqttId, deviceName: deviceName };
+  rangeEl.value = 3; rangeValEl.textContent = "3s";
+  document.getElementById("durationModal").classList.add("show");
+}
+function closeDurationModal() { document.getElementById("durationModal").classList.remove("show"); pendingActivation = null; }
+
+async function confirmActivate() {
+  if (!pendingActivation) return;
+  var mqttId = pendingActivation.mqttId, deviceName = pendingActivation.deviceName;
+  var seconds = parseInt(rangeEl.value) || 3;
+  closeDurationModal();
+  try {
+    var res = await fetch(API + "/cmd/activate/" + mqttId, {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ seconds: seconds }),
+    });
+    if (res.status === 401) { logout(); return; }
+    var data = await res.json();
+    if (data.success) showToast(deviceName + " activado (" + seconds + "s)", "success");
+    else showToast("Error: " + data.error, "error");
+  } catch (err) { showToast("Error: " + err.message, "error"); }
+}
+
+async function deactivate(mqttId, deviceName, btnEl) {
+  btnEl.classList.add("loading");
+  try {
+    var res = await fetch(API + "/cmd/deactivate/" + mqttId, {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    });
+    if (res.status === 401) { logout(); return; }
+    var data = await res.json();
+    if (data.success) showToast(deviceName + " desactivado", "success");
+    else showToast("Error: " + data.error, "error");
+  } catch (err) { showToast("Error: " + err.message, "error"); }
+  finally { btnEl.classList.remove("loading"); }
+}
+
+// ── Toast ─────────────────────────
+function showToast(msg, type) {
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast " + type + " show";
+  setTimeout(function() { t.classList.remove("show"); }, 3000);
+}
+function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+// ── History ───────────────────────
+var historyLimit = 20;
+
+async function loadHistory(loadMore) {
+  if (loadMore) historyLimit += 20;
+  var container = document.getElementById("historyContainer");
+  try {
+    var res = await fetch(API + "/api/dashboard/activaciones-recientes?limit=" + historyLimit, {
+      headers: { Authorization: "Bearer " + token },
+    });
+    if (res.status === 401) return;
+    var items = await res.json();
+    document.getElementById("historyCount").textContent = "Mostrando " + items.length + " activaciones";
+    if (!items.length) { container.innerHTML = '<div class="history-empty">No hay activaciones registradas.</div>'; return; }
+    var html = '<table class="history-table"><thead><tr><th>Fecha / Hora</th><th>Dispositivo</th><th class="hide-mobile">Comunidad</th><th class="hide-mobile">Tipo</th><th>Resultado</th><th class="hide-mobile">Activado por</th></tr></thead><tbody>';
+    for (var a of items) {
+      var dt = new Date(a.created_at);
+      var fecha = dt.toLocaleDateString("es-CO", { day:"2-digit", month:"short" });
+      var hora = dt.toLocaleTimeString("es-CO", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+      var devName = a.dispositivo?.nombre || "?";
+      var devTipo = a.dispositivo?.tipo || "";
+      var comName = a.comunidad?.nombre || "";
+      var tipoEm = a.tipo_emergencia || "";
+      var resultado = a.resultado || "PENDIENTE";
+      var cliente = a.cliente?.nombre || a.jefe?.nombre || (a.detalle && a.detalle.includes("Central") ? "Central" : "");
+      html += '<tr>' +
+        '<td><div>' + fecha + '</div><div class="history-time">' + hora + '</div></td>' +
+        '<td><strong>' + esc(devName) + '</strong>' + (devTipo ? ' <span class="type-badge type-' + devTipo + '">' + devTipo + '</span>' : '') + '</td>' +
+        '<td class="hide-mobile"><div class="history-comunidad">' + esc(comName) + '</div></td>' +
+        '<td class="hide-mobile">' + (tipoEm ? '<span class="tipo-badge-sm tipo-' + tipoEm + '">' + tipoEm + '</span>' : '-') + '</td>' +
+        '<td><span class="result-badge result-' + resultado + '">' + resultado + '</span></td>' +
+        '<td class="hide-mobile"><div class="history-client">' + esc(cliente) + '</div></td></tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch (err) { container.innerHTML = '<div class="history-empty">Error cargando historial</div>'; }
+}
+
+// ── Cameras ──────────────────────
+var camerasData = [];
+var cameraSnapshots = {}; // deviceId -> url
+
+async function loadCameras() {
+  var container = document.getElementById("camerasContainer");
+  if (camerasData.length === 0) container.innerHTML = '<div class="no-devices">Cargando camaras...</div>';
+  try {
+    var res = await fetch(API + "/cam/cameras", { headers: { Authorization: "Bearer " + token } });
+    if (res.status === 401) { logout(); return; }
+    var camRes = await res.json();
+    camerasData = Array.isArray(camRes) ? camRes : [];
+    document.getElementById("camerasCount").textContent = camerasData.length + " camara(s)";
+    renderCameras();
+    // Auto-load first snapshot for each camera
+    for (var cam of camerasData) {
+      if (!cameraSnapshots[cam.deviceId]) loadSnapshot(cam.deviceId, cam.channelId || "0");
+    }
+  } catch (err) {
+    container.innerHTML = '<div class="no-devices">Error: ' + err.message + '</div>';
+  }
+}
+
+function renderCameras() {
+  var container = document.getElementById("camerasContainer");
+  if (camerasData.length === 0) {
+    container.innerHTML = '<div class="no-devices">No hay camaras configuradas.</div>';
+    return;
+  }
+  // Group cameras by comunidad
+  var groups = {};
+  for (var cam of camerasData) {
+    var comName = cam.comunidad || "Sin comunidad";
+    if (!groups[comName]) groups[comName] = [];
+    groups[comName].push(cam);
+  }
+  var html = '';
+  var sortedGroups = Object.keys(groups).sort();
+  for (var comName of sortedGroups) {
+    var cams = groups[comName];
+    html += '<div class="community-group"><div class="community-header">' + esc(comName) + ' <span class="badge">' + cams.length + '</span></div><div class="cameras-grid">';
+    for (var cam of cams) {
+      var camName = cam.name || cam.deviceId;
+      var chId = cam.channelId || "0";
+      var snapUrl = cameraSnapshots[cam.deviceId];
+      var imgContent = snapUrl
+        ? '<img src="' + esc(snapUrl) + '" alt="' + esc(camName) + '" onerror="this.parentElement.innerHTML=\'<div class=cam-placeholder>Error cargando imagen</div>\'">'
+        : '<div class="cam-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><br>Cargando snapshot...</div>';
+
+      html += '<div class="cam-card">' +
+        '<div class="cam-img-wrap" onclick="openCamModal(\'' + esc(cam.deviceId) + '\',\'' + esc(camName) + '\')">' +
+          imgContent +
+          '<div class="cam-overlay"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>' +
+        '</div>' +
+        '<div class="cam-info">' +
+          '<div><div class="cam-name">' + esc(camName) + '</div><div class="cam-serial">' + cam.deviceId + '</div></div>' +
+          '<div class="cam-actions">' +
+            '<button class="cam-btn cam-btn-snap" onclick="loadSnapshot(\'' + cam.deviceId + '\',\'' + chId + '\')" title="Tomar snapshot">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Capturar' +
+            '</button>' +
+          '</div>' +
+        '</div></div>';
+    }
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+async function loadSnapshot(deviceId, channelId) {
+  try {
+    var res = await fetch(API + "/cam/snapshot/" + deviceId + "?channel=" + channelId, {
+      headers: { Authorization: "Bearer " + token },
+    });
+    if (res.status === 401) { logout(); return; }
+    var data = await res.json();
+    if (data.url) {
+      cameraSnapshots[deviceId] = data.url;
+      renderCameras();
+    } else if (!data.offline) {
+      showToast("Sin snapshot para " + deviceId, "error");
+    }
+  } catch (err) {
+    showToast("Error snapshot: " + err.message, "error");
+  }
+}
+
+function refreshAllSnapshots() {
+  cameraSnapshots = {};
+  for (var cam of camerasData) {
+    loadSnapshot(cam.deviceId, cam.channelId || "0");
+  }
+  showToast("Actualizando snapshots...", "success");
+}
+
+function openCamModal(deviceId, name) {
+  var url = cameraSnapshots[deviceId];
+  if (!url) return;
+  document.getElementById("camModalImg").src = url;
+  document.getElementById("camModalTitle").textContent = name;
+  document.getElementById("camModal").classList.add("show");
+}
+function closeCamModal() { document.getElementById("camModal").classList.remove("show"); }
+
+// ── Keyboard: ESC closes modals ──
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") { closeDurationModal(); closeCamModal(); }
+});
+
+// Auto-refresh every 30s
+setInterval(function() { if (token) { loadDevices(); if (currentTab === "history") loadHistory(false); } }, 30000);
+
+// ── Soporte Bilingüe ─────────────────────────────────────────────────────
+var sbSelectedPhone = null;
+var sbPollingInterval = null;
+var sbMsgPolling = null;
+
+async function initBilingualTab() {
+  await checkWAStatus();
+  await refreshChatList();
+  clearInterval(sbPollingInterval);
+  sbPollingInterval = setInterval(function() {
+    if (currentTab === "bilingual") {
+      refreshChatList();
+      if (sbSelectedPhone) loadMessages(sbSelectedPhone);
+    }
+  }, 3000);
+}
+
+async function checkWAStatus() {
+  try {
+    var res = await fetch(API + "/soporte/wa-status", { headers: { Authorization: "Bearer " + token } });
+    var data = await res.json();
+    var dot  = document.getElementById("sbStatusDot");
+    var txt  = document.getElementById("sbStatusText");
+    var qrW  = document.getElementById("sbQRWrapper");
+    if (data.connected) {
+      dot.style.background = "#22c55e";
+      txt.textContent = "WhatsApp Soporte Bilingüe conectado";
+      if (qrW) qrW.style.display = "none";
+    } else if (data.hasQR) {
+      dot.style.background = "#f59e0b";
+      txt.textContent = "WhatsApp pendiente — escanea el QR para vincular";
+      loadAndShowQR();
+    } else {
+      dot.style.background = "#ef4444";
+      txt.textContent = "WhatsApp desconectado — instalando...";
+      if (qrW) qrW.style.display = "none";
+    }
+  } catch(e) {}
+}
+
+var sbQRInstance = null;
+async function loadAndShowQR() {
+  try {
+    var res = await fetch(API + "/soporte/wa-qr", { headers: { Authorization: "Bearer " + token } });
+    var data = await res.json();
+    var qrW = document.getElementById("sbQRWrapper");
+    var qrC = document.getElementById("sbQRCanvas");
+    if (data.qr && qrW && qrC) {
+      qrW.style.display = "block";
+      qrC.innerHTML = "";
+      sbQRInstance = new QRCode(qrC, { text: data.qr, width: 200, height: 200 });
+    }
+  } catch(e) {}
+}
+
+async function refreshChatList() {
+  try {
+    var res = await fetch(API + "/soporte/chats", { headers: { Authorization: "Bearer " + token } });
+    if (res.status === 401) { logout(); return; }
+    var chats = await res.json();
+    renderChatList(chats);
+  } catch(e) {}
+}
+
+function renderChatList(chats) {
+  var countEl = document.getElementById("sbChatCount");
+  var listEl  = document.getElementById("sbChatListItems");
+  if (!listEl) return;
+  if (countEl) countEl.textContent = chats.length;
+  if (!chats.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px 10px;color:#475569;font-size:12px">Sin chats activos</div>';
+    return;
+  }
+  listEl.innerHTML = chats.map(function(c) {
+    var isSelected = c.phone === sbSelectedPhone ? " selected" : "";
+    var ts = c.ultimo_at ? new Date(c.ultimo_at).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) : "";
+    var comunidad = c.comunidad_nombre || c.comunidad_id || "—";
+    var preview = (c.ultimo_mensaje || "").slice(0, 50);
+    return '<div class="sb-chat-item' + isSelected + '" onclick="selectChat(\'' + c.phone + '\',\'' + (c.idioma||"en") + '\',\'' + comunidad.replace(/'/g,"") + '\',\'' + (c.puesto_id||"") + '\')">' +
+      '<div class="sb-chat-phone">+' + c.phone + '</div>' +
+      '<div class="sb-chat-meta">' + comunidad + (c.puesto_id ? ' &middot; Puesto ' + c.puesto_id : '') + (ts ? ' &middot; ' + ts : '') + '</div>' +
+      (preview ? '<div class="sb-chat-preview">' + esc(preview) + '</div>' : '') +
+      '</div>';
+  }).join("");
+}
+
+function selectChat(phone, idioma, comunidad, puesto) {
+  sbSelectedPhone = phone;
+  var noChat = document.getElementById("sbNoChat");
+  var active = document.getElementById("sbChatActive");
+  if (noChat) noChat.style.display = "none";
+  if (active) { active.style.display = "flex"; active.style.flexDirection = "column"; }
+  var elPhone = document.getElementById("sbHeaderPhone");
+  var elComm  = document.getElementById("sbHeaderCommunity");
+  var elLang  = document.getElementById("sbLangSelect");
+  if (elPhone) elPhone.textContent = "+" + phone;
+  if (elComm)  elComm.textContent  = (comunidad ? comunidad : "—") + (puesto ? " · Puesto " + puesto : "");
+  if (elLang)  elLang.value = idioma || "en";
+  refreshChatList();
+  loadMessages(phone);
+}
+
+async function loadMessages(phone) {
+  try {
+    var res = await fetch(API + "/soporte/chat/" + phone + "/mensajes", { headers: { Authorization: "Bearer " + token } });
+    var msgs = await res.json();
+    renderMessages(msgs);
+  } catch(e) {}
+}
+
+function renderMessages(msgs) {
+  var el = document.getElementById("sbMessages");
+  if (!el) return;
+  var wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  el.innerHTML = msgs.map(function(m) {
+    var cls = "sb-msg " + (m.remitente || "sistema");
+    var label = { extranjero: "Extranjero", operador: "Operador", sistema: "" }[m.remitente] || "";
+    var trans = (m.texto_traducido && m.texto_traducido !== m.texto_original)
+      ? '<div class="sb-msg-trans">&rarr; ' + esc(m.texto_traducido) + '</div>' : "";
+    return '<div class="' + cls + '">' +
+      '<div class="sb-bubble">' +
+      (label ? '<div class="sb-msg-label">' + label + '</div>' : '') +
+      '<div class="sb-msg-orig">' + esc(m.texto_original) + '</div>' +
+      trans +
+      '</div></div>';
+  }).join("");
+  if (wasAtBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function enviarRespuesta() {
+  if (!sbSelectedPhone) return;
+  var input = document.getElementById("sbReplyInput");
+  var msg = (input ? input.value : "").trim();
+  if (!msg) return;
+  try {
+    var res = await fetch(API + "/soporte/responder", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: sbSelectedPhone, mensaje: msg }),
+    });
+    var data = await res.json();
+    if (data.success) {
+      input.value = "";
+      loadMessages(sbSelectedPhone);
+      if (data.whatsapp_ok === false) {
+        showToast("⚠️ Mensaje guardado pero NO llegó al WhatsApp: " + (data.whatsapp_error || "error desconocido"), "error");
+      } else {
+        showToast("Enviado: \"" + data.enviado + "\"", "success");
+      }
+    } else {
+      showToast(data.error || "Error al enviar", "error");
+    }
+  } catch(e) { showToast("Error de red", "error"); }
+}
+
+async function cambiarIdioma(idioma) {
+  if (!sbSelectedPhone) return;
+  try {
+    await fetch(API + "/soporte/idioma/" + sbSelectedPhone, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ idioma }),
+    });
+  } catch(e) {}
+}
+
+async function cerrarSesion() {
+  if (!sbSelectedPhone) return;
+  if (!confirm("¿Cerrar la sesión de soporte con +" + sbSelectedPhone + "?")) return;
+  try {
+    await fetch(API + "/soporte/cerrar/" + sbSelectedPhone, {
+      method: "POST", headers: { Authorization: "Bearer " + token },
+    });
+    sbSelectedPhone = null;
+    document.getElementById("sbNoChat").style.display = "";
+    document.getElementById("sbChatActive").style.display = "none";
+    await refreshChatList();
+    showToast("Sesión cerrada", "success");
+  } catch(e) {}
+}
+
+
+</script>
+</body>
+</html>
