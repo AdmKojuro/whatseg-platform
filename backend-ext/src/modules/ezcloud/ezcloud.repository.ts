@@ -53,7 +53,7 @@ export async function crearCuenta(data: CreateCuentaInput): Promise<CuentaEzclou
       ${data.nombre},
       ${data.app_key},
       ${data.app_secret},
-      ${data.base_url ?? 'https://open.ezcloud.uniview.com'}
+      ${data.base_url ?? 'https://global.ezcloud.uniview.com'}
     )
     RETURNING
       id::text,

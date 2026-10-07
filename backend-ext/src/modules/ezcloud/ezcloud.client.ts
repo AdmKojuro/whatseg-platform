@@ -52,7 +52,7 @@ export class EzcloudClient {
   constructor(
     private readonly appKey: string,
     private readonly appSecret: string,
-    private readonly baseUrl: string = 'https://open.ezcloud.uniview.com'
+    private readonly baseUrl: string = 'https://global.ezcloud.uniview.com'
   ) {}
 
   // ─── helpers ────────────────────────────────────────────────────────────────

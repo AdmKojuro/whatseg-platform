@@ -68,7 +68,7 @@ export default function DispositivoListPage() {
   const [showEzcloud, setShowEzcloud] = useState(false)
   const [cuentasEz, setCuentasEz] = useState<CuentaEzcloud[]>([])
   const [loadingEz, setLoadingEz] = useState(false)
-  const [ezForm, setEzForm] = useState<CreateCuentaEzcloudInput & { id?: string }>({ nombre: '', app_key: '', app_secret: '', base_url: 'https://open.ezcloud.uniview.com' })
+  const [ezForm, setEzForm] = useState<CreateCuentaEzcloudInput & { id?: string }>({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })
   const [savingEz, setSavingEz] = useState(false)
   const [ezStreamUrl, setEzStreamUrl] = useState<string | null>(null)
   const [loadingStream, setLoadingStream] = useState(false)
@@ -151,7 +151,7 @@ export default function DispositivoListPage() {
         await ezcloudService.crearCuenta({ nombre: ezForm.nombre, app_key: ezForm.app_key, app_secret: ezForm.app_secret, base_url: ezForm.base_url })
         showMsg('Cuenta EZCloud creada')
       }
-      setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://open.ezcloud.uniview.com' })
+      setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })
       fetchCuentasEz()
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Error al guardar cuenta EZCloud')
@@ -730,7 +730,7 @@ export default function DispositivoListPage() {
                 <div className="flex justify-end gap-2">
                   {ezForm.id && (
                     <button type="button"
-                      onClick={() => setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://open.ezcloud.uniview.com' })}
+                      onClick={() => setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })}
                       className="px-3 py-1.5 text-xs text-gray-400 hover:text-white">
                       Cancelar edición
                     </button>
