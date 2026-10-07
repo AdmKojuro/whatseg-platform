@@ -59,6 +59,11 @@ export default function DispositivoListPage() {
   // Desasignar
   const [unassigning, setUnassigning] = useState(false)
 
+  // Asignar a comunidad
+  const [showAsignar, setShowAsignar] = useState(false)
+  const [asignarComunidadId, setAsignarComunidadId] = useState('')
+  const [assigning, setAssigning] = useState(false)
+
   // Funciones (Tuya)
   const [funciones, setFunciones] = useState<TuyaFunction[]>([])
   const [loadingFn, setLoadingFn] = useState(false)
@@ -168,15 +173,35 @@ export default function DispositivoListPage() {
   }
 
   const handleGetStream = async () => {
-    if (!selected?.ezcloud_serial) return
+    const serial = selected?.ezcloud_serial || selected?.id_interno?.replace('ezcloud:', '')
+    if (!serial) return
     setLoadingStream(true)
     setEzStreamUrl(null)
     try {
-      const res = await ezcloudService.getStream(selected.ezcloud_serial, selected.ezcloud_channel ?? '1')
+      const res = await ezcloudService.getStream(serial, selected?.ezcloud_channel ?? '1')
       const url = (res.data as { url: string }).url
       setEzStreamUrl(url)
     } catch { setError('No se pudo obtener la URL de stream') }
     finally { setLoadingStream(false) }
+  }
+
+  const handleAsignar = async () => {
+    if (!selected || !asignarComunidadId) return
+    try {
+      setAssigning(true)
+      setError(null)
+      await dispositivoService.asignar(selected.id, {
+        comunidad_id: asignarComunidadId,
+        nombre: selected.nombre || selected.id_interno || selected.id,
+      })
+      setShowAsignar(false)
+      setAsignarComunidadId('')
+      showMsg('Dispositivo asignado a la comunidad')
+      fetchAll()
+      const com = comunidades.find(c => c.id === asignarComunidadId)
+      setSelected(s => s ? { ...s, comunidad_id: asignarComunidadId, comunidad: com ? { id: com.id, nombre: com.nombre, codigo: com.codigo } : undefined } : null)
+    } catch { setError('Error al asignar dispositivo') }
+    finally { setAssigning(false) }
   }
 
   const handleReconfig = async (e: React.FormEvent) => {
@@ -487,7 +512,7 @@ export default function DispositivoListPage() {
                     Reconfigurar
                   </button>
 
-                  {selected.comunidad_id && (
+                  {selected.comunidad_id ? (
                     <button
                       onClick={handleDesasignar}
                       disabled={unassigning}
@@ -495,6 +520,14 @@ export default function DispositivoListPage() {
                     >
                       {unassigning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Unlink className="w-3.5 h-3.5" />}
                       Desasignar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setAsignarComunidadId(''); setShowAsignar(true) }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-brand-300 bg-brand-500/10 border border-brand-500/20 rounded-lg hover:bg-brand-500/20 transition-colors"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                      Asignar a comunidad
                     </button>
                   )}
 
@@ -569,7 +602,7 @@ export default function DispositivoListPage() {
                   <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <dt className="text-gray-500">Serial</dt>
-                      <dd className="font-mono text-xs text-white">{selected.ezcloud_serial || '-'}</dd>
+                      <dd className="font-mono text-xs text-white">{selected.ezcloud_serial || selected.id_interno?.replace('ezcloud:', '') || '-'}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-gray-500">Canal</dt>
@@ -803,6 +836,47 @@ export default function DispositivoListPage() {
                   Vincular
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Asignar a comunidad ── */}
+      {showAsignar && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-gray-800 rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Asignar a comunidad</h2>
+              <button onClick={() => setShowAsignar(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Dispositivo: <span className="text-white font-medium">{selected.nombre || selected.id_interno || selected.id}</span>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Selecciona la comunidad</label>
+              <select
+                value={asignarComunidadId}
+                onChange={e => setAsignarComunidadId(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Seleccionar --</option>
+                {comunidades.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre} ({c.codigo})</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowAsignar(false)} className="px-4 py-2 text-sm text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600">Cancelar</button>
+              <button
+                onClick={handleAsignar}
+                disabled={assigning || !asignarComunidadId}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50"
+              >
+                {assigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                Asignar
+              </button>
             </div>
           </div>
         </div>
