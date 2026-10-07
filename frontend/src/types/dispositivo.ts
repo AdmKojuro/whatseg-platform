@@ -26,6 +26,9 @@ export interface Dispositivo {
   mqtt_device_id?: string
   mqtt_channel?: number
   mqtt_last_seen?: string
+  ezcloud_serial?: string
+  ezcloud_channel?: string
+  cuenta_ezcloud_id?: string
   configurado: boolean
   online: boolean
   created_at: string
@@ -47,5 +50,6 @@ export function getPlataforma(d: Dispositivo): string {
   if (d.dolynk_device_id) return 'Dolynk'
   if (d.imou_device_id) return 'Imou'
   if (d.mqtt_kind) return 'MQTT'
+  if (d.id_interno?.startsWith('ezcloud:')) return 'EZCloud (UNV)'
   return 'Desconocido'
 }

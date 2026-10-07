@@ -20,6 +20,7 @@ export const dispositivoService = {
   sincronizarThinmoo: () => api.post('/dispositivos/sync-thinmoo'),
   sincronizarDolynk: () => api.post('/dispositivos/sync-dolynk'),
   sincronizarImou: () => api.post('/dispositivos/sync-imou'),
+  sincronizarEzcloud: () => api.post('/ext/ezcloud/sync'),
   getCamaras: () => api.get('/dispositivos/camaras'),
   crearThinmoo: (data: Record<string, unknown>) => api.post('/dispositivos/crear-thinmoo', data),
 }

@@ -32,6 +32,7 @@ import incidentesRouter from './modules/incidentes/incidentes.routes'
 import cuadranteAppRouter from './modules/cuadrante-app/cuadrante-app.routes'
 import adminAppRouter from './modules/admin-app/admin-app.routes'
 import videoporteroRouter from './modules/videoportero/videoportero.routes'
+import ezcloudRouter from './modules/ezcloud/ezcloud.routes'
 
 export function createApp() {
   const app = express()
@@ -79,6 +80,7 @@ export function createApp() {
   app.use('/ext/cuadrante-app', cuadranteAppRouter)
   app.use('/ext/admin-app', adminAppRouter)
   app.use('/ext/videoportero', videoporteroRouter)
+  app.use('/ext/ezcloud', ezcloudRouter)
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'whatseg-backend-ext', version: '2.0.0' })
