@@ -68,7 +68,7 @@ export default function DispositivoListPage() {
   const [showEzcloud, setShowEzcloud] = useState(false)
   const [cuentasEz, setCuentasEz] = useState<CuentaEzcloud[]>([])
   const [loadingEz, setLoadingEz] = useState(false)
-  const [ezForm, setEzForm] = useState<CreateCuentaEzcloudInput & { id?: string }>({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })
+  const [ezForm, setEzForm] = useState<CreateCuentaEzcloudInput & { id?: string }>({ nombre: '', app_key: '', app_secret: '', base_url: 'https://os.ezcloud.uniview.com' })
   const [savingEz, setSavingEz] = useState(false)
   const [ezStreamUrl, setEzStreamUrl] = useState<string | null>(null)
   const [loadingStream, setLoadingStream] = useState(false)
@@ -151,7 +151,7 @@ export default function DispositivoListPage() {
         await ezcloudService.crearCuenta({ nombre: ezForm.nombre, app_key: ezForm.app_key, app_secret: ezForm.app_secret, base_url: ezForm.base_url })
         showMsg('Cuenta EZCloud creada')
       }
-      setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })
+      setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://os.ezcloud.uniview.com' })
       fetchCuentasEz()
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Error al guardar cuenta EZCloud')
@@ -699,7 +699,7 @@ export default function DispositivoListPage() {
                   {ezForm.id ? 'Editar cuenta' : 'Nueva cuenta'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Usa las mismas credenciales de tu cuenta EZCloud (app EZView).
+                  Obtén el <span className="text-violet-300">App ID</span> y <span className="text-violet-300">Secret Key</span> en el portal EZCloud → tu cuenta → <strong>My App</strong>.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -710,17 +710,17 @@ export default function DispositivoListPage() {
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">Usuario (correo EZCloud)</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">App ID</label>
                     <input type="text" required value={ezForm.app_key}
                       onChange={e => setEzForm(f => ({ ...f, app_key: e.target.value }))}
-                      placeholder="correo@ejemplo.com"
+                      placeholder="542497034339XXXXX"
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1">Contraseña EZCloud</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Secret Key</label>
                     <input type="password" required={!ezForm.id} value={ezForm.app_secret}
                       onChange={e => setEzForm(f => ({ ...f, app_secret: e.target.value }))}
-                      placeholder={ezForm.id ? '(sin cambios)' : 'Contraseña'}
+                      placeholder={ezForm.id ? '(sin cambios)' : '64e0d6f23a912606...'}
                       className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-violet-500" />
                   </div>
                   <div>
@@ -733,7 +733,7 @@ export default function DispositivoListPage() {
                 <div className="flex justify-end gap-2">
                   {ezForm.id && (
                     <button type="button"
-                      onClick={() => setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://global.ezcloud.uniview.com' })}
+                      onClick={() => setEzForm({ nombre: '', app_key: '', app_secret: '', base_url: 'https://os.ezcloud.uniview.com' })}
                       className="px-3 py-1.5 text-xs text-gray-400 hover:text-white">
                       Cancelar edición
                     </button>
@@ -751,8 +751,7 @@ export default function DispositivoListPage() {
                 <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div>
               ) : cuentasEz.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No hay cuentas configuradas. Agrega tu usuario y contraseña de la{' '}
-                  <span className="text-violet-400">app EZView (EZCloud)</span>.
+                  No hay cuentas configuradas. Agrega el <span className="text-violet-400">App ID</span> y <span className="text-violet-400">Secret Key</span> desde el portal EZCloud → My App.
                 </p>
               ) : (
                 <div className="space-y-2">
