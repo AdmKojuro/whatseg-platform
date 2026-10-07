@@ -35,6 +35,7 @@ import { useAuth } from '../../hooks/useAuth'
 import type { Comunidad } from '../../types/comunidad'
 import type { Cliente } from '../../types/cliente'
 import type { Dispositivo } from '../../types/dispositivo'
+import { getPlataforma } from '../../types/dispositivo'
 import type { Activacion } from '../../types/activacion'
 import type { Jefe } from '../../types/jefe'
 import { DireccionAutocomplete } from '../../components/ui/DireccionAutocomplete'
@@ -94,6 +95,14 @@ export default function ComunidadDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deletingComunidad, setDeletingComunidad] = useState(false)
   const [togglingActiva, setTogglingActiva] = useState(false)
+
+  // Assign device modal
+  const [showAsignarDispositivo, setShowAsignarDispositivo] = useState(false)
+  const [todosDispositivos, setTodosDispositivos] = useState<Dispositivo[]>([])
+  const [loadingTodosDisp, setLoadingTodosDisp] = useState(false)
+  const [asignandoDispositivoId, setAsignandoDispositivoId] = useState<string | null>(null)
+  const [desasignandoDispositivoId, setDesasignandoDispositivoId] = useState<string | null>(null)
+  const [dispSearch, setDispSearch] = useState('')
 
   const showSuccess = (msg: string) => {
     setSuccess(msg)
@@ -228,6 +237,53 @@ export default function ComunidadDetailPage() {
       setError('Error al cambiar estado de la comunidad')
     } finally {
       setTogglingActiva(false)
+    }
+  }
+
+  const handleOpenAsignarDispositivo = async () => {
+    setShowAsignarDispositivo(true)
+    setDispSearch('')
+    try {
+      setLoadingTodosDisp(true)
+      const res = await dispositivoService.list()
+      const all: Dispositivo[] = res.data
+      setTodosDispositivos(all.filter((d) => !d.comunidad_id))
+    } catch {
+      setError('Error al cargar dispositivos disponibles')
+    } finally {
+      setLoadingTodosDisp(false)
+    }
+  }
+
+  const handleAsignarDispositivo = async (dispositivo: Dispositivo) => {
+    if (!id) return
+    try {
+      setAsignandoDispositivoId(dispositivo.id)
+      await dispositivoService.asignar(dispositivo.id, {
+        comunidad_id: id,
+        nombre: dispositivo.nombre || dispositivo.id_interno || dispositivo.id,
+      })
+      setShowAsignarDispositivo(false)
+      showSuccess('Dispositivo asignado a la comunidad')
+      await fetchDispositivos()
+    } catch {
+      setError('Error al asignar dispositivo')
+    } finally {
+      setAsignandoDispositivoId(null)
+    }
+  }
+
+  const handleDesasignarDispositivo = async (dispositivo: Dispositivo) => {
+    if (!window.confirm(`¿Desasignar "${dispositivo.nombre || dispositivo.id}" de esta comunidad?`)) return
+    try {
+      setDesasignandoDispositivoId(dispositivo.id)
+      await dispositivoService.desasignar(dispositivo.id)
+      showSuccess('Dispositivo desasignado')
+      await fetchDispositivos()
+    } catch {
+      setError('Error al desasignar dispositivo')
+    } finally {
+      setDesasignandoDispositivoId(null)
     }
   }
 
@@ -914,6 +970,18 @@ export default function ComunidadDetailPage() {
 
       {activeTab === 'dispositivos' && (
         <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-gray-700">
+            <span className="text-sm text-gray-400">{dispositivos.length} dispositivo{dispositivos.length !== 1 ? 's' : ''}</span>
+            {!isAdmin && (
+              <button
+                onClick={handleOpenAsignarDispositivo}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Asignar dispositivo
+              </button>
+            )}
+          </div>
           {loadingDispositivos ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
@@ -928,12 +996,13 @@ export default function ComunidadDetailPage() {
                     <th className="text-left px-6 py-3 font-semibold text-gray-300">Estado</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-300">Configurado</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-300">Creado</th>
+                    {!isAdmin && <th className="text-right px-6 py-3 font-semibold text-gray-300">Acciones</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
                   {dispositivos.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-gray-500">
+                      <td colSpan={isAdmin ? 5 : 6} className="text-center py-12 text-gray-500">
                         No hay dispositivos en esta comunidad
                       </td>
                     </tr>
@@ -941,14 +1010,22 @@ export default function ComunidadDetailPage() {
                     dispositivos.map((dispositivo) => (
                       <tr
                         key={dispositivo.id}
-                        onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
-                        className="hover:bg-gray-700/30 transition-colors cursor-pointer"
+                        className="hover:bg-gray-700/30 transition-colors"
                       >
-                        <td className="px-6 py-4 font-medium text-white">
+                        <td
+                          className="px-6 py-4 font-medium text-white cursor-pointer"
+                          onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
+                        >
                           {dispositivo.nombre || 'Sin nombre'}
                         </td>
-                        <td className="px-6 py-4 text-gray-400">{dispositivo.tipo || '-'}</td>
-                        <td className="px-6 py-4">
+                        <td
+                          className="px-6 py-4 text-gray-400 cursor-pointer"
+                          onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
+                        >{dispositivo.tipo || '-'}</td>
+                        <td
+                          className="px-6 py-4 cursor-pointer"
+                          onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
+                        >
                           {dispositivo.online ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
                               Online
@@ -959,16 +1036,37 @@ export default function ComunidadDetailPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td
+                          className="px-6 py-4 cursor-pointer"
+                          onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
+                        >
                           {dispositivo.configurado ? (
                             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                           ) : (
                             <span className="text-gray-400 text-xs">No</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-gray-400 whitespace-nowrap">
+                        <td
+                          className="px-6 py-4 text-gray-400 whitespace-nowrap cursor-pointer"
+                          onClick={() => navigate(`/dispositivos/${dispositivo.id}`)}
+                        >
                           {new Date(dispositivo.created_at).toLocaleDateString('es-ES')}
                         </td>
+                        {!isAdmin && (
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => handleDesasignarDispositivo(dispositivo)}
+                              disabled={desasignandoDispositivoId === dispositivo.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                              title="Desasignar de esta comunidad"
+                            >
+                              {desasignandoDispositivoId === dispositivo.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <UserMinus className="w-3.5 h-3.5" />}
+                              Desasignar
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}
@@ -976,6 +1074,94 @@ export default function ComunidadDetailPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Modal: Asignar Dispositivo ───────────────────────────────── */}
+      {showAsignarDispositivo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Asignar dispositivo</h2>
+              <button onClick={() => setShowAsignarDispositivo(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o plataforma..."
+              value={dispSearch}
+              onChange={(e) => setDispSearch(e.target.value)}
+              className="w-full px-3 py-2 mb-4 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {loadingTodosDisp ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+              </div>
+            ) : (
+              <div className="overflow-y-auto flex-1">
+                {todosDispositivos.filter((d) => {
+                  const q = dispSearch.toLowerCase()
+                  return !q
+                    || (d.nombre || '').toLowerCase().includes(q)
+                    || getPlataforma(d).toLowerCase().includes(q)
+                    || (d.id_interno || '').toLowerCase().includes(q)
+                }).length === 0 ? (
+                  <p className="text-center text-gray-500 py-8 text-sm">
+                    {todosDispositivos.length === 0
+                      ? 'No hay dispositivos sin asignar disponibles'
+                      : 'No se encontraron dispositivos con ese filtro'}
+                  </p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-700/40">
+                      <tr>
+                        <th className="text-left px-4 py-2 font-medium text-gray-400">Nombre</th>
+                        <th className="text-left px-4 py-2 font-medium text-gray-400">Plataforma</th>
+                        <th className="text-left px-4 py-2 font-medium text-gray-400">Estado</th>
+                        <th className="px-4 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {todosDispositivos
+                        .filter((d) => {
+                          const q = dispSearch.toLowerCase()
+                          return !q
+                            || (d.nombre || '').toLowerCase().includes(q)
+                            || getPlataforma(d).toLowerCase().includes(q)
+                            || (d.id_interno || '').toLowerCase().includes(q)
+                        })
+                        .map((d) => (
+                          <tr key={d.id} className="hover:bg-gray-700/30 transition-colors">
+                            <td className="px-4 py-3 text-white font-medium">{d.nombre || 'Sin nombre'}</td>
+                            <td className="px-4 py-3 text-gray-400 text-xs">{getPlataforma(d)}</td>
+                            <td className="px-4 py-3">
+                              {d.online ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Online</span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">Offline</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => handleAsignarDispositivo(d)}
+                                disabled={asignandoDispositivoId === d.id}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-brand-600 text-white text-xs rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+                              >
+                                {asignandoDispositivoId === d.id
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <Plus className="w-3.5 h-3.5" />}
+                                Asignar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
