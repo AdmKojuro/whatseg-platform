@@ -193,7 +193,7 @@ export default function ComunidadDetailPage() {
     if (!desasignarClienteId) return
     try {
       setDesasignandoCliente(true)
-      await clienteService.desasignar(desasignarClienteId)
+      await clienteService.desasignar(desasignarClienteId, id!)
       setDesasignarClienteId(null)
       showSuccess('Cliente desasignado de la comunidad')
       await fetchClientes()
