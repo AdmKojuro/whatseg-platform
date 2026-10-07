@@ -155,6 +155,7 @@ async function upsertDispositivoEzcloud(
         ezcloud_serial    = ${dev.deviceSerial},
         ezcloud_channel   = '1',
         cuenta_ezcloud_id = ${cuentaId}::uuid,
+        configurado       = true,
         updated_at        = now()
       WHERE id_interno = ${idInterno}
     `
@@ -164,7 +165,7 @@ async function upsertDispositivoEzcloud(
       INSERT INTO dispositivos (
         id, nombre, tipo, id_interno, online,
         ezcloud_serial, ezcloud_channel, cuenta_ezcloud_id,
-        updated_at
+        configurado, updated_at
       )
       VALUES (
         gen_random_uuid()::text,
@@ -175,6 +176,7 @@ async function upsertDispositivoEzcloud(
         ${dev.deviceSerial},
         '1',
         ${cuentaId}::uuid,
+        true,
         now()
       )
     `
