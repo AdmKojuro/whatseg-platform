@@ -1,5 +1,6 @@
 import { prisma } from '../../shared/config/prisma'
 import { EzcloudClient } from './ezcloud.client'
+import crypto from 'crypto'
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -161,6 +162,10 @@ async function upsertDispositivoEzcloud(
     `
     return 'updated'
   } else {
+    const newId  = crypto.randomUUID()
+    const now    = new Date()
+    const tipo   = 'CAMARA'
+    const canal  = '1'
     await prisma.$executeRaw`
       INSERT INTO dispositivos (
         id, nombre, tipo, id_interno, online,
@@ -168,16 +173,16 @@ async function upsertDispositivoEzcloud(
         configurado, updated_at
       )
       VALUES (
-        gen_random_uuid()::text,
+        ${newId},
         ${dev.deviceName},
-        'CAMARA',
+        ${tipo},
         ${idInterno},
         ${online},
         ${dev.deviceSerial},
-        '1',
+        ${canal},
         ${cuentaId}::uuid,
-        true,
-        now()
+        ${true},
+        ${now}
       )
     `
     return 'created'
@@ -195,4 +200,196 @@ export async function getCuentaById(id: string): Promise<CuentaEzcloud | null> {
     LIMIT 1
   `
   return rows[0] ?? null
+}
+
+// ─── poller helpers ───────────────────────────────────────────────────────────
+
+/** Get WhatsApp numbers of clients who have PROTECCION enabled for a community.
+ *  Only clients with an explicit record (activa = true) in ezcloud_proteccion_clientes receive alerts. */
+export async function getClientesWhatsapp(comunidadId: string): Promise<string[]> {
+  const rows: { celular: string }[] = await prisma.$queryRaw`
+    SELECT c.celular
+    FROM clientes c
+    JOIN clientes_comunidades cc ON cc.cliente_id = c.id::text
+    JOIN ezcloud_proteccion_clientes epc
+      ON epc.cliente_id = c.id::uuid
+      AND epc.comunidad_id = ${comunidadId}::uuid
+    WHERE cc.comunidad_id = ${comunidadId}
+      AND c.activo = true
+      AND epc.activa = true
+  `
+  return rows.map(r => r.celular)
+}
+
+/** Get PROTECCION status for all clients in a community */
+export async function getProteccionClientes(
+  comunidadId: string
+): Promise<{ cliente_id: string; activa: boolean }[]> {
+  return prisma.$queryRaw`
+    SELECT cliente_id::text, activa
+    FROM ezcloud_proteccion_clientes
+    WHERE comunidad_id = ${comunidadId}::uuid
+  `
+}
+
+/** Enable or disable motion alert PROTECCION for a specific client in a community */
+export async function setProteccionCliente(
+  clienteId: string,
+  comunidadId: string,
+  activa: boolean
+): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO ezcloud_proteccion_clientes (cliente_id, comunidad_id, activa, updated_at)
+    VALUES (${clienteId}::uuid, ${comunidadId}::uuid, ${activa}, now())
+    ON CONFLICT (cliente_id, comunidad_id)
+    DO UPDATE SET activa = ${activa}, updated_at = now()
+  `
+}
+
+/** Check if motion alerts are enabled for a device (default: true) */
+export async function isAlertaActiva(dispositivoId: string): Promise<boolean> {
+  const rows: { alertas_activas: boolean }[] = await prisma.$queryRaw`
+    SELECT alertas_activas
+    FROM ezcloud_alertas_config
+    WHERE dispositivo_id = ${dispositivoId}
+    LIMIT 1
+  `
+  return rows[0]?.alertas_activas ?? true
+}
+
+/** Enable or disable motion alerts for a device */
+export async function setAlertaActiva(dispositivoId: string, activas: boolean): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO ezcloud_alertas_config (dispositivo_id, alertas_activas, updated_at)
+    VALUES (${dispositivoId}, ${activas}, now())
+    ON CONFLICT (dispositivo_id)
+    DO UPDATE SET alertas_activas = ${activas}, updated_at = now()
+  `
+}
+
+/** Get device + community info by EZCloud serial */
+export async function getDispositivoBySerial(
+  serial: string
+): Promise<{ id: string; comunidad_id: string | null; cuenta_ezcloud_id: string | null } | null> {
+  const rows: { id: string; comunidad_id: string | null; cuenta_ezcloud_id: string | null }[] =
+    await prisma.$queryRaw`
+      SELECT
+        id::text,
+        comunidad_id::text,
+        cuenta_ezcloud_id::text
+      FROM dispositivos
+      WHERE ezcloud_serial = ${serial}
+      LIMIT 1
+    `
+  return rows[0] ?? null
+}
+
+// ─── PROTECCION helpers (usado por wa-bot) ────────────────────────────────────
+
+/** Check if a community has any EZCloud cameras (by codigo) */
+export async function comunidadTieneEzcloud(comunidadCodigo: string): Promise<boolean> {
+  const rows: { count: bigint }[] = await prisma.$queryRaw`
+    SELECT COUNT(*)::bigint AS count
+    FROM dispositivos d
+    JOIN comunidades c ON c.id::text = d.comunidad_id::text
+    WHERE c.codigo = ${comunidadCodigo}
+      AND d.ezcloud_serial IS NOT NULL
+  `
+  return Number(rows[0]?.count ?? 0) > 0
+}
+
+/** Get per-client PROTECCION status by phone number + community code (for wa-bot) */
+export async function getProteccionClientePorCelular(
+  celular: string,
+  comunidadCodigo: string
+): Promise<boolean> {
+  const rows: { activa: boolean }[] = await prisma.$queryRaw`
+    SELECT epc.activa
+    FROM ezcloud_proteccion_clientes epc
+    JOIN clientes c ON c.id::uuid = epc.cliente_id
+    JOIN comunidades com ON com.id::uuid = epc.comunidad_id
+    WHERE REGEXP_REPLACE(c.celular, '[^0-9]', '', 'g') = REGEXP_REPLACE(${celular}, '[^0-9]', '', 'g')
+      AND com.codigo = ${comunidadCodigo}
+    LIMIT 1
+  `
+  return rows[0]?.activa ?? false
+}
+
+/** Enable or disable PROTECCION for a client by phone number + community code (for wa-bot) */
+export async function setProteccionClientePorCelular(
+  celular: string,
+  comunidadCodigo: string,
+  activa: boolean
+): Promise<void> {
+  await prisma.$executeRaw`
+    INSERT INTO ezcloud_proteccion_clientes (cliente_id, comunidad_id, activa, updated_at)
+    SELECT c.id::uuid, com.id::uuid, ${activa}, now()
+    FROM clientes c, comunidades com
+    WHERE REGEXP_REPLACE(c.celular, '[^0-9]', '', 'g') = REGEXP_REPLACE(${celular}, '[^0-9]', '', 'g')
+      AND com.codigo = ${comunidadCodigo}
+    ON CONFLICT (cliente_id, comunidad_id)
+    DO UPDATE SET activa = ${activa}, updated_at = now()
+  `
+}
+
+/** Get all EZCloud cameras assigned to a community (by codigo) */
+export async function getCamarasEzcloudPorCodigo(
+  comunidadCodigo: string
+): Promise<{ id: string; nombre: string; ezcloud_serial: string }[]> {
+  return prisma.$queryRaw`
+    SELECT d.id::text, d.nombre, d.ezcloud_serial
+    FROM dispositivos d
+    JOIN comunidades c ON c.id::text = d.comunidad_id::text
+    WHERE c.codigo = ${comunidadCodigo}
+      AND d.ezcloud_serial IS NOT NULL
+  `
+}
+
+/** Get PROTECCION status for a community: does it have EZCloud cameras + are alerts on? */
+export async function getEstadoAlertasComunidad(comunidadCodigo: string): Promise<{
+  tieneProteccion: boolean
+  alertasActivas: boolean
+  camaras: { id: string; nombre: string; serial: string; alertasActivas: boolean }[]
+}> {
+  const camaras = await getCamarasEzcloudPorCodigo(comunidadCodigo)
+  if (camaras.length === 0) return { tieneProteccion: false, alertasActivas: false, camaras: [] }
+
+  const conEstado = await Promise.all(
+    camaras.map(async (cam) => ({
+      id:              cam.id,
+      nombre:          cam.nombre,
+      serial:          cam.ezcloud_serial,
+      alertasActivas:  await isAlertaActiva(cam.id),
+    }))
+  )
+
+  return {
+    tieneProteccion: true,
+    alertasActivas:  conEstado.some(c => c.alertasActivas),
+    camaras:         conEstado,
+  }
+}
+
+/** Enable or disable motion alerts for ALL cameras in a community (by codigo) */
+export async function setAlertasComunidad(
+  comunidadCodigo: string,
+  activas: boolean
+): Promise<number> {
+  const camaras = await getCamarasEzcloudPorCodigo(comunidadCodigo)
+  await Promise.all(camaras.map(cam => setAlertaActiva(cam.id, activas)))
+  return camaras.length
+}
+
+/** Get ALARMA devices assigned to a community — used to trigger physical alarms on motion detection */
+export async function getAlarmasEnComunidad(
+  comunidadId: string
+): Promise<{ id: string; nombre: string; mqtt_device_id: string | null; mqtt_kind: string | null }[]> {
+  return prisma.$queryRaw`
+    SELECT id::text, nombre, mqtt_device_id, mqtt_kind
+    FROM dispositivos
+    WHERE comunidad_id::text = ${comunidadId}
+      AND tipo = 'ALARMA'
+      AND configurado = true
+      AND online = true
+  `
 }
